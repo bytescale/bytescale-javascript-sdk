@@ -1,0 +1,36 @@
+{
+  "name": "@upload.io/upload-js-examples",
+  "version": "0.0.0",
+  "author": "Upload.io <hello@upload.io> (https://upload.io)",
+  "private": true,
+  "scripts": {
+    "start": "npm run start:dev",
+    "start:dev": "webpack-dev-server --hot --inline --config webpack.config.dev.js",
+    "start:dist": "webpack-dev-server --hot --inline",
+    "test": "npm run test:local",
+    "preinstall": "npm cache clean --force && (cd ../lib && npm pack)",
+    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js) && webdriver-manager update --versions.chrome 85.0.4183.121",
+    "test:local": "echo \"Please ensure server has been started with 'npm start'...\" && protractor tests/config.js",
+    "test:remote": "protractor tests/config.js $1"
+  },
+  "dependencies": {
+    "upload-js": "../lib/upload-js.tgz"
+  },
+  "devDependencies": {
+    "@babel/cli": "7.11.6",
+    "@babel/core": "7.11.6",
+    "@babel/preset-env": "7.11.5",
+    "babel-loader": "8.1.0",
+    "fork-ts-checker-webpack-plugin": "5.2.0",
+    "html-webpack-plugin": "4.0.4",
+    "jasmine-reporters": "2.3.2",
+    "protractor": "7.0.0",
+    "protractor-jasmine2-screenshot-reporter": "0.5.0",
+    "terser-webpack-plugin": "4.1.0",
+    "ts-loader": "6.2.1",
+    "typescript": "3.8.3",
+    "webpack": "4.42.0",
+    "webpack-cli": "3.3.11",
+    "webpack-dev-server": "3.10.3"
+  }
+}

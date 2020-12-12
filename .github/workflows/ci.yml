@@ -1,0 +1,83 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['*']
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "root: install node & npm"
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+
+      - name: "root: npm install"
+        run: npm ci
+
+      - name: "root: check code style"
+        run: find . -type f \( -iname \*.js -o -iname \*.jsx -o -iname \*.ts -o -iname \*.tsx \) | grep -v node_modules | grep -v /dist/ | xargs ./node_modules/.bin/prettier --check
+
+      - name: "uploadjs: npm install"
+        run: npm ci
+        working-directory: ./uploadjs
+
+      - name: "uploadjs-examples: npm install"
+        run: npm install # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
+                         # project: we don't use 'packages-lock.json' because this project has a local dependency on
+                         # 'uploadjs' via tarball, which is rarely rebuilt on the developers machine, making the
+                         # 'package-lock.json' often stale, causing 'npm ci' to fail. We don't mind using 'npm install'
+                         # and missing out on the hash-checks, as we don't actually publish this package, so security
+                         # isn't as much of a concern.
+        working-directory: ./uploadjs-examples
+
+      - name: "uploadjs-examples: npm start"
+        run: npm run start:dist & # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
+                                  # rather than loading 'uploadjs' from source (for a better end-to-end test).
+        working-directory: ./uploadjs-examples
+
+      - name: "documentation: npm install"
+        run: npm ci
+        working-directory: ./docs
+
+      - name: "documentation: verify BROWSERS.md up-to-date"
+        run: |
+          npm run generate-browsers-md
+          changes=$(git --no-pager diff -- ../BROWSERS.md)
+          if [[ ! -z "$changes" ]]; then
+            echo "Changes to BROWSERS.md:"
+            echo ""
+            echo $changes
+            echo ""
+            echo "BROWSERS.md needs updating!"
+            echo ""
+            echo "Please run the following command:"
+            echo ""
+            echo "  (cd docs && npm run generate-browsers-md)"
+            echo ""
+            exit 1
+          fi
+        working-directory: ./docs
+
+      # Note: we put other steps between the 'npm start' and the test runs, just to make time for the server to spin-up.
+      - name: "uploadjs-examples: E2E tests"
+        run: npm test
+        working-directory: ./uploadjs-examples
+
+      - name: Save test report
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-report
+          path: ./uploadjs-examples/tmp/test-report

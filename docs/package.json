@@ -1,0 +1,13 @@
+{
+  "name": "@upload.io/upload-js-docs",
+  "version": "0.0.0",
+  "author": "Upload.io <hello@upload.io> (https://upload.io)",
+  "private": true,
+  "scripts": {
+    "generate-browsers-md": "node BROWSERS.md.generate.js"
+  },
+  "devDependencies": {
+    "@babel/core": "7.11.6",
+    "@babel/preset-env": "7.11.5"
+  }
+}
