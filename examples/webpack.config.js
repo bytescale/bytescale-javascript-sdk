@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-var-requires: 0 */
 const config = require("./webpack.config.dev.js");
 
 module.exports = {

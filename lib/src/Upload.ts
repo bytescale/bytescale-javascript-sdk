@@ -4,9 +4,21 @@ import { Cancellation } from "upload-js/Errors";
 export class Upload {
   constructor(private readonly apiKey: string) {}
 
-  createFileHandler(onUpload: (url: string) => void): (file: File) => void {
+  createFileHandler(onUpload: (url: string) => void, onError?: (reason: any) => void): (file: File) => void {
     return (file: File) => {
-      this.uploadFile(file, () => {}).promise.then(({ uploadedFileURL }) => onUpload(uploadedFileURL));
+      this.uploadFile(file, () => {}).promise.then(
+        ({ uploadedFileURL }) => onUpload(uploadedFileURL),
+        error => {
+          if (onError !== undefined) {
+            onError(error);
+          } else {
+            console.error(
+              "Cannot upload file. To remove this console message, handle the error explicitly by providing a second callback parameter: upload.createFileHandler(onUpload, onError)",
+              error
+            );
+          }
+        }
+      );
     };
   }
 
@@ -18,7 +30,7 @@ export class Upload {
     progress({ bytesSent: 0, bytesTotal: file.size });
 
     const xhr = new XMLHttpRequest();
-    const cancel = () => xhr.abort();
+    const cancel = (): void => xhr.abort();
     const promise = new Promise<{ uploadedFileURL: string }>((resolve, reject) => {
       xhr.upload.addEventListener(
         "progress",
@@ -35,13 +47,13 @@ export class Upload {
           try {
             json = JSON.parse(xhr.response);
           } catch {}
-          if (json) {
+          if (json !== undefined) {
             resolve(json);
           } else {
-            reject(`File upload error: unexpected response from server.`);
+            reject(new Error(`File upload error: unexpected response from server.`));
           }
         } else {
-          reject(`File upload error: status code ${xhr.status}`);
+          reject(new Error(`File upload error: status code ${xhr.status}`));
         }
       });
 

@@ -19,6 +19,9 @@
     }
   },
   "lint-staged": {
+    "*/**/*.{js,jsx,ts,tsx}": [
+      "./runForEachPackage.js eslint !"
+    ],
     "*/**/*.{ts,tsx}": [
       "./runForEachPackage.js tsc --noEmit ?"
     ],
