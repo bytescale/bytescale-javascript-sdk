@@ -1,8 +1,7 @@
 {
-  "name": "@upload.io/upload-js-docs",
-  "version": "0.0.0",
-  "author": "Upload.io <hello@upload.io> (https://upload.io)",
+  "name": "upload-js-docs",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "generate-browsers-md": "node BROWSERS.md.generate.js"
   },
