@@ -1,8 +1,12 @@
 import { CancellablePromise } from "upload-js/CommonTypes";
 import { Cancellation } from "upload-js/Errors";
+import { UploadParams } from "upload-js/UploadParams";
+
+const apiUrlOverride: string | undefined = (window as any).UPLOAD_JS_API_URL;
+const apiUrl: string = apiUrlOverride !== undefined ? apiUrlOverride : "https://api.upload.io";
 
 export class Upload {
-  constructor(private readonly apiKey: string) {}
+  constructor(private readonly params: UploadParams) {}
 
   createFileHandler(onUpload: (url: string) => void, onError?: (reason: any) => void): (file: File) => void {
     return (file: File) => {
@@ -63,8 +67,8 @@ export class Upload {
 
       const formData = new FormData();
       formData.append("file", file);
-      xhr.setRequestHeader("Authorization", `Basic ${btoa(`pkey:${this.apiKey}`)}`);
-      xhr.open("POST", `https://api.upload.io/files`);
+      xhr.setRequestHeader("Authorization", `Basic ${btoa(`apikey:${this.params.apiKey}`)}`);
+      xhr.open("POST", `${apiUrl}/files`);
       xhr.send(formData);
     });
 
