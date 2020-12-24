@@ -28,11 +28,11 @@ jobs:
       - name: "root: check code style"
         run: find . -type f \( -iname \*.js -o -iname \*.jsx -o -iname \*.ts -o -iname \*.tsx \) | grep -v node_modules | grep -v /dist/ | xargs ./node_modules/.bin/prettier --check
 
-      - name: "uploadjs: npm install"
+      - name: "lib: npm install"
         run: npm ci
-        working-directory: ./uploadjs
+        working-directory: ./lib
 
-      - name: "uploadjs-examples: npm install"
+      - name: "examples: npm install"
         run:
           npm install # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
           # project: we don't use 'packages-lock.json' because this project has a local dependency on
@@ -40,13 +40,13 @@ jobs:
           # 'package-lock.json' often stale, causing 'npm ci' to fail. We don't mind using 'npm install'
           # and missing out on the hash-checks, as we don't actually publish this package, so security
           # isn't as much of a concern.
-        working-directory: ./uploadjs-examples
+        working-directory: ./examples
 
-      - name: "uploadjs-examples: npm start"
+      - name: "examples: npm start"
         run:
           npm run start:dist & # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
           # rather than loading 'uploadjs' from source (for a better end-to-end test).
-        working-directory: ./uploadjs-examples
+        working-directory: ./examples
 
       - name: "documentation: npm install"
         run: npm ci
