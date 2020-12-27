@@ -1,4 +1,5 @@
 import { Upload } from "upload-js";
+import "regenerator-runtime/runtime.js";
 
 // For local development of Upload.js only: this is not an example of how you should set the API key in your app.
 const apiKey: string | undefined = (window as any).UPLOAD_JS_API_KEY;
@@ -11,8 +12,10 @@ const button = document.createElement("input");
 
 button.type = "file";
 button.innerHTML = "Upload";
-button.onchange = upload.createFileHandler((url: string) => {
-  console.log(`File uploaded to: ${url}`);
-}) as any;
+button.onchange = upload.createFileHandler({
+  onUpload: (url: string) => {
+    console.log(`File uploaded to: ${url}`);
+  }
+});
 
 document.body.appendChild(button);

@@ -4,13 +4,12 @@
 
 ## Polyfills Required
 
-Modern browsers do not require polyfills.
+Depending on the browsers you wish to support, your application will require some of the following polyfills.
 
-Older browsers will require some of the below polyfills.
+To support every browser in the above list, you will need to add all of these polyfills:
 
-The host application must include the correct polyfills based on the browsers it intends to support. Below is an exhaustive list of every `core-js@3` polyfill that would be required by this library (and its transitive dependencies) if _all_ the above browsers need to be supported.
-
-[polyfill-list]
+- regenerator-runtime/runtime
+  [polyfill-list]
 
 ## No Transpiling Required
 

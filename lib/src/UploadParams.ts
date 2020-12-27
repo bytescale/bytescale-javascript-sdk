@@ -1,3 +1,5 @@
 export interface UploadParams {
-  apiKey: string;
+  progress?: (status: { bytesSent: number; bytesTotal: number }) => void;
+  tag?: string;
+  userId?: string;
 }

@@ -17,28 +17,41 @@
 
 ## Polyfills Required
 
-Modern browsers do not require polyfills.
+Depending on the browsers you wish to support, your application will require some of the following polyfills.
 
-Older browsers will require some of the below polyfills.
+To support every browser in the above list, you will need to add all of these polyfills:
 
-The host application must include the correct polyfills based on the browsers it intends to support. Below is an exhaustive list of every `core-js@3` polyfill that would be required by this library (and its transitive dependencies) if _all_ the above browsers need to be supported.
-
+- regenerator-runtime/runtime
 - core-js/modules/es.symbol
 - core-js/modules/es.symbol.description
 - core-js/modules/es.symbol.iterator
 - core-js/modules/es.symbol.to-string-tag
+- core-js/modules/es.array.concat
+- core-js/modules/es.array.for-each
+- core-js/modules/es.array.from
 - core-js/modules/es.array.index-of
 - core-js/modules/es.array.iterator
+- core-js/modules/es.array.join
+- core-js/modules/es.array.map
+- core-js/modules/es.array.reduce
+- core-js/modules/es.array.slice
+- core-js/modules/es.function.name
 - core-js/modules/es.json.to-string-tag
 - core-js/modules/es.map
 - core-js/modules/es.math.to-string-tag
+- core-js/modules/es.object.assign
 - core-js/modules/es.object.get-prototype-of
+- core-js/modules/es.object.keys
 - core-js/modules/es.object.set-prototype-of
 - core-js/modules/es.object.to-string
 - core-js/modules/es.promise
 - core-js/modules/es.reflect.construct
+- core-js/modules/es.regexp.exec
 - core-js/modules/es.regexp.to-string
 - core-js/modules/es.string.iterator
+- core-js/modules/es.string.replace
+- core-js/modules/es.string.starts-with
+- core-js/modules/web.dom-collections.for-each
 - core-js/modules/web.dom-collections.iterator
 
 ## No Transpiling Required
