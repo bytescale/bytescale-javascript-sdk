@@ -3,7 +3,7 @@
 - Chrome `21+`
 - ChromeAndroid `21+`
 - Edge `12+`
-- Explorer `11+`
+- Explorer `7+`
 - Firefox `28+`
 - FirefoxAndroid `28+`
 - iOS `7+`
@@ -30,16 +30,21 @@ To support every browser in the above list, you will need to add all of these po
 - core-js/modules/es.array.for-each
 - core-js/modules/es.array.from
 - core-js/modules/es.array.index-of
+- core-js/modules/es.array.is-array
 - core-js/modules/es.array.iterator
 - core-js/modules/es.array.join
 - core-js/modules/es.array.map
 - core-js/modules/es.array.reduce
 - core-js/modules/es.array.slice
+- core-js/modules/es.date.to-string
+- core-js/modules/es.function.bind
 - core-js/modules/es.function.name
 - core-js/modules/es.json.to-string-tag
 - core-js/modules/es.map
 - core-js/modules/es.math.to-string-tag
 - core-js/modules/es.object.assign
+- core-js/modules/es.object.create
+- core-js/modules/es.object.define-property
 - core-js/modules/es.object.get-prototype-of
 - core-js/modules/es.object.keys
 - core-js/modules/es.object.set-prototype-of
