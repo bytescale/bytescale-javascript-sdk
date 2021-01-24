@@ -10,6 +10,7 @@ if (apiKey === undefined) {
 const upload = new Upload({ apiKey });
 const button = document.createElement("input");
 
+button.id = "upload"; // For acceptance testing
 button.type = "file";
 button.innerHTML = "Upload";
 button.onchange = upload.createFileInputHandler({
