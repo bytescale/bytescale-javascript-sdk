@@ -84,3 +84,25 @@ jobs:
         with:
           name: test-report
           path: ./examples/tmp/test-report
+
+      - name: "Notification on success"
+        if: github.ref == 'refs/heads/main'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: "#17BB5E"
+          SLACK_TITLE: "Built: upload-js :rocket:"
+          SLACK_FOOTER: "This package was successfully built."
+          MSG_MINIMAL: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: "Notification on failure"
+        if: github.ref == 'refs/heads/main' && failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: deployments
+          SLACK_COLOR: "#BB1717"
+          SLACK_TITLE: "Failed: upload-js :boom:"
+          SLACK_FOOTER: "No packages published."
+          MSG_MINIMAL: true
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
