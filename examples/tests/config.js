@@ -19,7 +19,7 @@ exports.config = {
   specs: ["homepage.js"],
   baseUrl: "http://localhost:3001/",
   directConnect: true,
-  ...(chromeDriverLocation ? { chromeDriver: chromeDriverLocation } : {}),
+  ...(chromeDriverLocation ? { chromeDriver: `${chromeDriverLocation}/chromedriver` } : {}),
   capabilities: {
     browserName: "chrome",
     chromeOptions: {
