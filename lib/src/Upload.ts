@@ -3,6 +3,8 @@ import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
 import { FilesService, UploadPart, OpenAPI } from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
+import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
+import { UploadResult } from "upload-js/UploadResult";
 
 const apiUrlOverride: string | undefined = (window as any).UPLOAD_JS_API_URL;
 const apiUrl: string = apiUrlOverride !== undefined ? apiUrlOverride : "https://api.upload.io";
@@ -15,12 +17,16 @@ type AddCancellationHandler = (cancellationHandler: () => void) => void;
 export class Upload {
   private readonly maxUploadConcurrency = 5;
 
-  constructor(private readonly config: UploadConfig) {}
+  constructor(private readonly config: UploadConfig) {
+    if (config.logging === true) {
+      console.log(`Upload.js: initialized with API key '${config.apiKey}'`);
+    }
+  }
 
   createFileInputHandler(
     params: UploadParams & {
       onError?: (reason: any) => void;
-      onUploaded: (url: string) => void;
+      onUploaded: (result: UploadResult) => void;
     }
   ): (file: Event) => void {
     return (event: Event) => {
@@ -34,23 +40,20 @@ export class Upload {
         throw new Error("No file selected.");
       }
 
-      this.uploadFile({ ...params, file: input.files[0] }).promise.then(
-        ({ uploadedFileURL }) => params.onUploaded(uploadedFileURL),
-        error => {
-          if (params.onError !== undefined) {
-            params.onError(error);
-          } else {
-            console.error(
-              "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileInputHandler({onUploaded, onError})",
-              error
-            );
-          }
+      this.uploadFile({ ...params, file: input.files[0] }).promise.then(params.onUploaded, error => {
+        if (params.onError !== undefined) {
+          params.onError(error);
+        } else {
+          console.error(
+            "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileInputHandler({onUploaded, onError})",
+            error
+          );
         }
-      );
+      });
     };
   }
 
-  uploadFile(params: UploadParams & { file: File }): CancellablePromise<{ uploadedFileURL: string }> {
+  uploadFile(params: UploadParams & { file: File }): CancellablePromise<UploadResult> {
     // Initial progress, raised immediately and synchronously.
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -71,18 +74,29 @@ export class Upload {
     file: File,
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
-  ): Promise<{ uploadedFileURL: string }> {
+  ): Promise<UploadResult> {
     if (params.progress !== undefined) {
       params.progress({ bytesSent: 0, bytesTotal: file.size });
     }
-    this.preflight();
-    const uploadMetadata = await FilesService.beginUpload({
+
+    const uploadRequest: BeginUploadRequest = {
       fileSize: file.size,
       fileName: file.name,
       mime: this.normalizeMimeType(file.type),
       tag: params.tag,
       userId: params.userId
-    });
+    };
+
+    if (this.config.logging === true) {
+      console.log(`Upload.js: initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
+    }
+
+    this.preflight();
+    const uploadMetadata = await FilesService.beginUpload(uploadRequest);
+
+    if (this.config.logging === true) {
+      console.log(`Upload.js: initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
+    }
 
     const incUploadIndex: () => number | undefined = (() => {
       let lastUploadIndex: number = 0;
@@ -136,7 +150,8 @@ export class Upload {
     );
 
     return {
-      uploadedFileURL: `${cdnUrl}/${uploadMetadata.fileId}`
+      fileId: uploadMetadata.fileId,
+      fileUrl: `${cdnUrl}/${uploadMetadata.fileId}`
     };
   }
 
@@ -221,11 +236,19 @@ export class Upload {
     const content: Blob =
       part.range.inclusiveEnd === -1 ? new Blob() : file.slice(part.range.inclusiveStart, part.range.inclusiveEnd + 1);
 
+    if (this.config.logging === true) {
+      console.log(`Upload.js: uploading part ${part.uploadPartIndex}.`);
+    }
+
     const { etag } = await this.putUploadPart(part.uploadUrl, content, progress, addCancellationHandler);
 
     this.preflight();
     await FilesService.completeUploadPart(part.fileId, part.uploadPartIndex, {
       etag
     });
+
+    if (this.config.logging === true) {
+      console.log(`Upload.js: uploaded part ${part.uploadPartIndex}.`);
+    }
   }
 }
