@@ -6,13 +6,13 @@
   "license": "MIT",
   "main": "dist/main.js",
   "types": "dist/index.d.ts",
-  "homepage": "https://github.com/upload-io/upload-js",
+  "homepage": "https://github.com/upload-js/upload-js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upload-io/upload-js.git"
+    "url": "git+https://github.com/upload-js/upload-js.git"
   },
   "bugs": {
-    "url": "https://github.com/upload-io/upload-js/issues"
+    "url": "https://github.com/upload-js/upload-js/issues"
   },
   "files": [
     "*"
