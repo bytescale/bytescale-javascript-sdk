@@ -34,18 +34,20 @@ jobs:
 
       - name: "examples: npm install"
         run:
-          npm install # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
+          # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
           # project: we don't use 'packages-lock.json' because this project has a local dependency on
-          # 'uploadjs' via tarball, which is rarely rebuilt on the developers machine, making the
+          # 'upload-js' via tarball, which is rarely rebuilt on the developers machine, making the
           # 'package-lock.json' often stale, causing 'npm ci' to fail. We don't mind using 'npm install'
           # and missing out on the hash-checks, as we don't actually publish this package, so security
           # isn't as much of a concern.
+          npm install
         working-directory: ./examples
 
       - name: "examples: npm start"
         run:
-          npm run start:dist & # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
-          # rather than loading 'uploadjs' from source (for a better end-to-end test).
+          # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
+          # rather than loading 'upload-js' from source (for a better end-to-end test).
+          npm run start:dist &
         working-directory: ./examples
 
       - name: "documentation: npm install"
@@ -72,13 +74,13 @@ jobs:
         working-directory: ./docs
 
       # Note: we put other steps between the 'npm start' and the test runs, just to make time for the server to spin-up.
-      - name: "uploadjs-examples: E2E tests"
+      - name: "examples: E2E tests"
         run: npm test
-        working-directory: ./uploadjs-examples
+        working-directory: ./examples
 
       - name: Save test report
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: test-report
-          path: ./uploadjs-examples/tmp/test-report
+          path: ./examples/tmp/test-report
