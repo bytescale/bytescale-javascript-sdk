@@ -72,6 +72,10 @@ export class Upload {
     }
   }
 
+  url(fileId: string): string {
+    return `${cdnUrl}/${fileId}`;
+  }
+
   private async beginFileUpload(
     file: File,
     params: UploadParams,
@@ -153,7 +157,7 @@ export class Upload {
 
     return {
       fileId: uploadMetadata.fileId,
-      fileUrl: `${cdnUrl}/${uploadMetadata.fileId}`
+      fileUrl: this.url(uploadMetadata.fileId)
     };
   }
 
