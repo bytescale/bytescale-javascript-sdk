@@ -1,15 +1,26 @@
 export interface UploadConfig {
   apiKey: string;
+  debug?: boolean;
   internal?: UploadInternalConfig;
-  logging?: boolean;
 }
 
 /**
- * Undocumented (and unsupported) config
+ * Undocumented (and unsupported) config for internal use only.
  */
-export interface UploadInternalConfig {
+export type UploadInternalConfig = (
+  | {
+      authenticateWithApiKey?: true;
+    }
+  | {
+      accountId: string;
+      authenticateWithApiKey: false;
+      headers: () => Promise<Record<string, string>>;
+    }
+) &
+  UploadInternalConfigBase;
+
+export interface UploadInternalConfigBase {
   apiUrl?: string;
-  authenticateWithApiKey?: boolean;
   cdnUrl?: string;
   headers?: () => Promise<Record<string, string>>;
 }
