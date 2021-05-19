@@ -5,6 +5,7 @@ import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
+import { FileSummary } from "upload-api-client-upload-js/src/models/FileSummary";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -161,7 +162,7 @@ export class Upload {
         return undefined;
       }
       this.preflight();
-      return await FilesService.getUploadPart(uploadMetadata.fileId, uploadPartIndex);
+      return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
     };
 
     const bytesSentByEachWorker: number[] = [];
@@ -184,7 +185,7 @@ export class Upload {
             params.onProgress({ bytesSent: totalBytesSent, bytesTotal: file.size });
           }
         };
-        await this.uploadPart(file, nextPart, progress, addCancellationHandler);
+        await this.uploadPart(file, uploadMetadata.file, nextPart, progress, addCancellationHandler);
         await uploadNextPart(workerIndex);
       }
     };
@@ -195,8 +196,8 @@ export class Upload {
 
     return {
       accountId: uploadRequest.accountId,
-      fileId: uploadMetadata.fileId,
-      fileUrl: this.url(uploadMetadata.fileId),
+      fileId: uploadMetadata.file.fileId,
+      fileUrl: this.url(uploadMetadata.file.fileId),
       file,
       tag: uploadRequest.tag,
       userId: uploadRequest.userId,
@@ -235,6 +236,7 @@ export class Upload {
 
   private async putUploadPart(
     url: string,
+    summary: FileSummary,
     content: Blob,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
@@ -280,6 +282,17 @@ export class Upload {
         xhr.ontimeout = () => reject(new Error("File upload timeout."));
 
         xhr.open("PUT", url);
+
+        xhr.setRequestHeader("content-type", summary.mime);
+        if (summary.name !== null) {
+          xhr.setRequestHeader(
+            "content-disposition",
+            `attachment; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
+              summary.name
+            )}`
+          );
+        }
+
         xhr.send(content);
       });
     } finally {
@@ -289,6 +302,7 @@ export class Upload {
 
   private async uploadPart(
     file: File,
+    summary: FileSummary,
     part: UploadPart,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
@@ -300,7 +314,7 @@ export class Upload {
       console.log(`[upload-js] Uploading part ${part.uploadPartIndex}.`);
     }
 
-    const { etag } = await this.putUploadPart(part.uploadUrl, content, progress, addCancellationHandler);
+    const { etag } = await this.putUploadPart(part.uploadUrl, summary, content, progress, addCancellationHandler);
 
     this.preflight();
     await FilesService.completeUploadPart(part.fileId, part.uploadPartIndex, {
