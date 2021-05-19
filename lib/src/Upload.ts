@@ -137,6 +137,7 @@ export class Upload {
 
     this.preflight();
     const uploadMetadata = await FilesService.beginUpload(uploadRequest);
+    const isMultipart = uploadMetadata.uploadParts.count > 1;
 
     if (this.debugMode) {
       console.log(`[upload-js] Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
@@ -185,7 +186,7 @@ export class Upload {
             params.onProgress({ bytesSent: totalBytesSent, bytesTotal: file.size });
           }
         };
-        await this.uploadPart(file, uploadMetadata.file, nextPart, progress, addCancellationHandler);
+        await this.uploadPart(file, uploadMetadata.file, isMultipart, nextPart, progress, addCancellationHandler);
         await uploadNextPart(workerIndex);
       }
     };
@@ -237,6 +238,7 @@ export class Upload {
   private async putUploadPart(
     url: string,
     summary: FileSummary,
+    isMultipart: boolean,
     content: Blob,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
@@ -283,14 +285,17 @@ export class Upload {
 
         xhr.open("PUT", url);
 
-        xhr.setRequestHeader("content-type", summary.mime);
-        if (summary.name !== null) {
-          xhr.setRequestHeader(
-            "content-disposition",
-            `attachment; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
-              summary.name
-            )}`
-          );
+        // Headers are set by the BE for multipart uploads.
+        if (!isMultipart) {
+          xhr.setRequestHeader("content-type", summary.mime);
+          if (summary.name !== null) {
+            xhr.setRequestHeader(
+              "content-disposition",
+              `attachment; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
+                summary.name
+              )}`
+            );
+          }
         }
 
         xhr.send(content);
@@ -303,6 +308,7 @@ export class Upload {
   private async uploadPart(
     file: File,
     summary: FileSummary,
+    isMultipart: boolean,
     part: UploadPart,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
@@ -314,7 +320,14 @@ export class Upload {
       console.log(`[upload-js] Uploading part ${part.uploadPartIndex}.`);
     }
 
-    const { etag } = await this.putUploadPart(part.uploadUrl, summary, content, progress, addCancellationHandler);
+    const { etag } = await this.putUploadPart(
+      part.uploadUrl,
+      summary,
+      isMultipart,
+      content,
+      progress,
+      addCancellationHandler
+    );
 
     this.preflight();
     await FilesService.completeUploadPart(part.fileId, part.uploadPartIndex, {
