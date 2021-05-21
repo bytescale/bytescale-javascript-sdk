@@ -197,12 +197,13 @@ export class Upload {
 
     return {
       accountId: uploadRequest.accountId,
-      fileId: uploadMetadata.file.fileId,
-      fileUrl: this.url(uploadMetadata.file.fileId),
       file,
+      fileId: uploadMetadata.file.fileId,
+      fileSize: uploadMetadata.file.size,
+      fileUrl: this.url(uploadMetadata.file.fileId),
       tag: uploadRequest.tag,
       userId: uploadRequest.userId,
-      mime: uploadRequest.mime
+      mime: uploadMetadata.file.mime
     };
   }
 
