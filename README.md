@@ -1,3 +1,3 @@
 # Upload.js
 
-Coming soon!
+Coming soon! (Very soon...)
