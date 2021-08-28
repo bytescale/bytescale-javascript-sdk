@@ -1,1 +1,14 @@
-../.browserslistrc
+Chrome >= 7
+ChromeAndroid >= 7
+Edge >= 12
+Explorer >= 6
+Firefox >= 5
+FirefoxAndroid >= 5
+iOS >= 7
+Opera >= 12.1
+OperaMobile >= 12.1
+QQAndroid >= 9.0
+Safari >= 6
+Samsung >= 4
+UCAndroid >= 10.7
+kaios >= 2.5
