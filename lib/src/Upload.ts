@@ -150,25 +150,25 @@ export class Upload {
     })();
 
     const nextPartQueue = [uploadMetadata.uploadParts.first];
-    const getNextPart: () => Promise<UploadPart | undefined> = async () => {
+    const getNextPart: (workerIndex: number) => Promise<UploadPart | undefined> = async workerIndex => {
       const nextPart = nextPartQueue.pop();
       if (nextPart !== undefined) {
-        this.debug(`Dequeued part ${nextPart.uploadPartIndex}`);
+        this.debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
         return nextPart;
       }
       const uploadPartIndex = incUploadIndex();
       if (uploadPartIndex === undefined) {
-        this.debug("No parts remaining.");
+        this.debug("No parts remaining.", workerIndex);
         return undefined;
       }
       this.preflight();
-      this.debug(`Fetching metadata for part ${uploadPartIndex}.`);
+      this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
       return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
     };
 
     const bytesSentByEachWorker: number[] = [];
     const uploadNextPart: (workerIndex: number) => Promise<void> = async workerIndex => {
-      const nextPart = await getNextPart();
+      const nextPart = await getNextPart(workerIndex);
       if (nextPart !== undefined) {
         let lastBytesSent = 0;
         const progress: (status: { bytesSent: number; bytesTotal: number }) => void = ({ bytesSent }) => {
@@ -186,7 +186,15 @@ export class Upload {
             params.onProgress({ bytesSent: totalBytesSent, bytesTotal: file.size });
           }
         };
-        await this.uploadPart(file, uploadMetadata.file, isMultipart, nextPart, progress, addCancellationHandler);
+        await this.uploadPart(
+          file,
+          uploadMetadata.file,
+          isMultipart,
+          nextPart,
+          progress,
+          addCancellationHandler,
+          workerIndex
+        );
         await uploadNextPart(workerIndex);
       }
     };
@@ -211,9 +219,9 @@ export class Upload {
     return uploadedFile;
   }
 
-  private debug(message: string): void {
+  private debug(message: string, workerIndex?: number): void {
     if (this.debugMode) {
-      console.log(`[upload-js] ${message}`);
+      console.log(`[upload-js] ${message}${workerIndex !== undefined ? ` (Worker ${workerIndex}.)` : ""}`);
     }
   }
 
@@ -322,12 +330,13 @@ export class Upload {
     isMultipart: boolean,
     part: UploadPart,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
-    addCancellationHandler: AddCancellationHandler
+    addCancellationHandler: AddCancellationHandler,
+    workerIndex: number
   ): Promise<void> {
     const content: Blob =
       part.range.inclusiveEnd === -1 ? new Blob() : file.slice(part.range.inclusiveStart, part.range.inclusiveEnd + 1);
 
-    this.debug(`Uploading part ${part.uploadPartIndex}.`);
+    this.debug(`Uploading part ${part.uploadPartIndex}.`, workerIndex);
 
     const { etag } = await this.putUploadPart(
       part.uploadUrl,
@@ -343,6 +352,6 @@ export class Upload {
       etag
     });
 
-    this.debug(`Uploaded part ${part.uploadPartIndex}.`);
+    this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
   }
 }
