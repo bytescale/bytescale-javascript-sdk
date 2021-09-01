@@ -1,0 +1,33 @@
+{
+  "name": "upload-js",
+  "version": "0.0.2",
+  "author": "Upload.io <hello@upload.io> (https://upload.io)",
+  "description": "Upload.js JavaScript Library",
+  "main": "dist/main.js",
+  "scripts": {
+    "clean": "rm -rf dist && rm -f upload-js.tgz",
+    "analyse": "npm run clean && webpack --config webpack.config.analyse.js",
+    "prepack": "npm run clean && webpack",
+    "prepack:fat": "npm run clean && node webpack --config webpack.config.fat.js",
+    "postpack": "mv upload-js-*.tgz upload-js.tgz"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "7.11.6",
+    "@babel/core": "7.11.6",
+    "@babel/preset-env": "7.11.5",
+    "babel-loader": "8.1.0",
+    "fork-ts-checker-webpack-plugin": "5.2.0",
+    "optimize-css-assets-webpack-plugin": "5.0.3",
+    "source-map-loader": "0.2.1",
+    "source-map-support": "0.4.14",
+    "terser-webpack-plugin": "4.1.0",
+    "ts-loader": "6.2.1",
+    "typescript": "3.8.3",
+    "url-loader": "3.0.0",
+    "webpack": "4.44.2",
+    "webpack-bundle-analyzer": "3.6.1",
+    "webpack-cli": "3.3.11",
+    "webpack-node-externals": "2.5.2"
+  }
+}
