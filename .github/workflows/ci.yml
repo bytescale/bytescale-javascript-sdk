@@ -2,9 +2,9 @@ name: Continuous Integration
 
 on:
   pull_request:
-    branches: ['*']
+    branches: ["*"]
   push:
-    branches: ['*']
+    branches: ["*"]
 
 defaults:
   run:
@@ -12,7 +12,6 @@ defaults:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -34,17 +33,19 @@ jobs:
         working-directory: ./uploadjs
 
       - name: "uploadjs-examples: npm install"
-        run: npm install # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
-                         # project: we don't use 'packages-lock.json' because this project has a local dependency on
-                         # 'uploadjs' via tarball, which is rarely rebuilt on the developers machine, making the
-                         # 'package-lock.json' often stale, causing 'npm ci' to fail. We don't mind using 'npm install'
-                         # and missing out on the hash-checks, as we don't actually publish this package, so security
-                         # isn't as much of a concern.
+        run:
+          npm install # We use 'install' rather than 'ci' due to lack of 'packages-lock.json' in this specific
+          # project: we don't use 'packages-lock.json' because this project has a local dependency on
+          # 'uploadjs' via tarball, which is rarely rebuilt on the developers machine, making the
+          # 'package-lock.json' often stale, causing 'npm ci' to fail. We don't mind using 'npm install'
+          # and missing out on the hash-checks, as we don't actually publish this package, so security
+          # isn't as much of a concern.
         working-directory: ./uploadjs-examples
 
       - name: "uploadjs-examples: npm start"
-        run: npm run start:dist & # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
-                                  # rather than loading 'uploadjs' from source (for a better end-to-end test).
+        run:
+          npm run start:dist & # Run in 'dist' mode to ensure the packaged 'uploadjs' NPM module is used,
+          # rather than loading 'uploadjs' from source (for a better end-to-end test).
         working-directory: ./uploadjs-examples
 
       - name: "documentation: npm install"

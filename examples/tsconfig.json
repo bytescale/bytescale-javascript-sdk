@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
-    "lib": [
-      "dom",
-      "es2015",
-      "es2016"
-    ],
+    "lib": ["dom", "es2015", "es2016"],
     "jsx": "preserve",
     "target": "es2015",
     "module": "es2015",
@@ -27,8 +23,5 @@
       "@upload.io/upload-js-examples/*": ["./*"]
     }
   },
-  "include": [
-    "./src/**/*",
-    "./ts-libs/**/*"
-  ]
+  "include": ["./src/**/*", "./ts-libs/**/*"]
 }
