@@ -15,6 +15,7 @@
     "preserveConstEnums": true,
     "preserveSymlinks": true,
     "skipLibCheck": true,
+    "outDir": "./dist",
     "baseUrl": "./src",
     "paths": {
       // These mappings are relative to "baseUrl".

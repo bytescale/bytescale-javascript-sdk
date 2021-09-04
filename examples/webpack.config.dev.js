@@ -50,7 +50,7 @@ module.exports = {
     ]
   },
   devServer: {
-    hotOnly: true,
+    hot: true,
     open: true,
     port: 3001,
     contentBase: [path.join(__dirname, "dist")]
