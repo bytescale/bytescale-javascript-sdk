@@ -5,7 +5,7 @@ const button = document.createElement("input");
 
 button.type = "file";
 button.innerHTML = "Upload";
-button.onchange = upload.createFileHandler(url => {
+button.onchange = upload.createFileHandler((url: string) => {
   console.log(`File uploaded to: ${url}`);
 }) as any;
 

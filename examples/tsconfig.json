@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
     "lib": ["dom", "es2015", "es2016"],
-    "jsx": "preserve",
     "target": "es2015",
     "module": "es2015",
     "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "removeComments": false,
     "preserveConstEnums": true,
     "preserveSymlinks": true,
-    "sourceMap": true,
     "skipLibCheck": true,
     "baseUrl": "./src",
     "paths": {
@@ -20,8 +21,10 @@
       // Remember to keep in sync with `webpack.config.js`
       "upload-js": ["../../lib/src"],
       "upload-js/*": ["../../lib/src/*"],
-      "@upload.io/upload-js-examples/*": ["./*"]
+      "upload-js-examples": ["./"],
+      "upload-js-examples/*": ["./*"]
     }
   },
-  "include": ["./src/**/*", "./ts-libs/**/*"]
+  "include": ["./**/*"],
+  "exclude": ["./node_modules/**/*"]
 }

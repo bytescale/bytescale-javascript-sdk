@@ -1,6 +1,5 @@
+/* eslint @typescript-eslint/no-var-requires: 0 */
 const path = require("path");
-const webpack = require("webpack");
-const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
@@ -11,11 +10,8 @@ module.exports = {
   },
   cache: true,
   mode: "development",
-  entry: ["react-hot-loader/patch", "./src/index.tsx"],
+  entry: "./src/index.tsx",
   plugins: [
-    new webpack.NoEmitOnErrorsPlugin(),
-    new ForkTsCheckerWebpackPlugin(),
-    new webpack.NamedModulesPlugin(),
     new HtmlWebpackPlugin({
       title: "Upload file",
       template: path.resolve(__dirname, "src/index.html"),
@@ -32,19 +28,9 @@ module.exports = {
             loader: "babel-loader" // Options are in 'babel.config.js'
           },
           {
-            loader: "ts-loader",
-            options: {
-              transpileOnly: true,
-              experimentalWatchApi: true
-            }
+            loader: "ts-loader"
           }
         ]
-      },
-      {
-        // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-        enforce: "pre",
-        test: /\.js$/,
-        loader: "source-map-loader"
       }
     ]
   },
