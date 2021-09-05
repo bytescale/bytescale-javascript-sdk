@@ -1,11 +1,16 @@
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
-import { FilesService, UploadPart, OpenAPI, AccountId } from "upload-api-client-upload-js";
+import { FilesService, UploadPart, OpenAPI, AccountId, ErrorResponse, request } from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
 import { FileSummary } from "upload-api-client-upload-js/src/models/FileSummary";
+import { SetAccessTokenResponseDto } from "upload-js/dtos/SetAccessTokenResponseDto";
+import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDto";
+import { AuthSession } from "upload-js/AuthSession";
+import { ApiRequestOptions } from "upload-api-client-upload-js/src/core/ApiRequestOptions";
+import { ApiResult } from "upload-api-client-upload-js/src/core/ApiResult";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -19,6 +24,11 @@ export class Upload {
   private readonly debugMode: boolean;
   private readonly headers: (() => Promise<Record<string, string>>) | undefined;
   private readonly maxUploadConcurrency = 5;
+  private readonly refreshBeforeExpirySeconds = 20;
+  private readonly retryAuthAfterErrorSeconds = 3;
+  private readonly setAccessTokenPath = "/api/v1/access_tokens";
+
+  private lastAuthSession: AuthSession | undefined = undefined;
 
   constructor(private readonly config: UploadConfig) {
     if (config.debug === true) {
@@ -57,6 +67,61 @@ export class Upload {
         );
       }
     }
+  }
+
+  /**
+   * Call after a user has signed-in to your web app.
+   *
+   * Allows the user to perform authenticated uploads and/or downloads to the Upload CDN.
+   *
+   * You must await the promise before attempting to perform any uploads or downloads that require authentication.
+   *
+   * Method is idempotent: if an auth session has already been started, it will be ended before the new one begins.
+   */
+  async beginAuthSession(authUrl: string, authHeaders: () => Record<string, string>): Promise<void> {
+    this.endAuthSession();
+
+    const authSession: AuthSession = {
+      accessToken: undefined,
+      accessTokenRefreshHandle: undefined,
+      isActive: true
+    };
+
+    // Important: must go before the following asynchronous call.
+    this.lastAuthSession = authSession;
+
+    await this.refreshAccessToken(authUrl, authHeaders, authSession);
+  }
+
+  /**
+   * Call after the user signs-out of your web app.
+   *
+   * Method is idempotent.
+   */
+  endAuthSession(): void {
+    if (this.lastAuthSession === undefined) {
+      return;
+    }
+
+    const authSession = this.lastAuthSession;
+    this.lastAuthSession = undefined;
+
+    if (authSession.accessTokenRefreshHandle !== undefined) {
+      clearTimeout(authSession.accessTokenRefreshHandle);
+    }
+
+    authSession.isActive = false;
+  }
+
+  /**
+   * This method unregisters any background timers that may have been created by the object.
+   *
+   * Must be called when the object is no-longer required.
+   *
+   * You should not attempt to continue using this object after calling this method.
+   */
+  close(): void {
+    this.endAuthSession();
   }
 
   createFileInputHandler(
@@ -225,6 +290,10 @@ export class Upload {
     }
   }
 
+  private error(message: string): void {
+    console.error(`[upload-js] ${message}`);
+  }
+
   private normalizeMimeType(mime: string): string | undefined {
     const normal = mime.toLowerCase();
     const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
@@ -232,9 +301,9 @@ export class Upload {
   }
 
   /**
-   * Call before every request. Since the connector is configured through global config, other code may have changed
-   * these since we last set them. (I.e. consider two instances of this class, configured with different API keys, and
-   * an upload is initiated on each of them at the same time...).
+   * Call before every Upload API request. Since the connector is configured through global config, other code may have
+   * changed these since we last set them. (I.e. consider two instances of this class, configured with different API
+   * keys, and an upload is initiated on each of them at the same time...).
    */
   private preflight(): void {
     OpenAPI.BASE = this.apiUrl;
@@ -247,11 +316,35 @@ export class Upload {
       delete OpenAPI.USERNAME;
       delete OpenAPI.PASSWORD;
     }
-    if (this.headers !== undefined) {
-      OpenAPI.HEADERS = this.headers;
+
+    const headers = this.headers;
+    const accessToken = this.lastAuthSession?.accessToken;
+
+    if (headers !== undefined || accessToken !== undefined) {
+      OpenAPI.HEADERS = async (): Promise<Record<string, string>> => {
+        const headersFromConfig = headers === undefined ? {} : await headers();
+        const accessToken = this.lastAuthSession?.accessToken; // Re-fetch as there's been an async boundary so state may have changed.
+        return {
+          ...headersFromConfig,
+          ...(accessToken === undefined
+            ? {}
+            : {
+                "authorization-user": accessToken
+              })
+        };
+      };
     } else {
       delete OpenAPI.HEADERS;
     }
+  }
+
+  /**
+   * Call before every non-Upload API request.
+   */
+  private preflightExternalApi(url: string): void {
+    OpenAPI.BASE = url;
+    OpenAPI.WITH_CREDENTIALS = false;
+    delete OpenAPI.HEADERS;
   }
 
   private async putUploadPart(
@@ -353,5 +446,99 @@ export class Upload {
     });
 
     this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
+  }
+
+  // Todo: keep attempting until succeeded (user might be in a tunnel!)
+  private async refreshAccessToken(
+    authUrl: string,
+    authHeaders: () => Record<string, string>,
+    authSession: AuthSession
+  ): Promise<void> {
+    // Session may have been ended while timer was waiting.
+    if (!authSession.isActive) {
+      return;
+    }
+
+    try {
+      const token = await this.getText(authUrl, authHeaders());
+
+      // Session may have been ended whilst the above request was in-flight.
+      if (!authSession.isActive) {
+        return;
+      }
+
+      const setTokenUrl = `${this.cdnUrl}${this.setAccessTokenPath}`;
+      const setTokenResult = this.handleApiError(
+        await this.postJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
+          setTokenUrl,
+          {},
+          {
+            accessToken: token,
+            accountId: this.accountId
+          }
+        )
+      );
+
+      // Session may have been ended whilst the above request was in-flight.
+      if (!authSession.isActive) {
+        return;
+      }
+
+      authSession.accessToken = setTokenResult.accessToken;
+      authSession.accessTokenRefreshHandle = window.setTimeout(() => {
+        this.refreshAccessToken(authUrl, authHeaders, authSession).then(
+          () => {},
+          e => this.error(`Permanent error when refreshing access token: ${e as string}`)
+        );
+      }, Math.max(0, (setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds) * 1000));
+    } catch (e) {
+      // Perform attempts as part of same promise, rather than via a 'setTimeout' so that the 'beginAuthSession' only
+      // returns once an auth session has been successfully established.
+      this.debug(`Error when refreshing access token: ${e as string}`);
+      await new Promise(resolve => setTimeout(resolve, this.retryAuthAfterErrorSeconds * 1000));
+      await this.refreshAccessToken(authUrl, authHeaders, authSession);
+    }
+  }
+
+  private async postJsonGetJson<TGet, TPost>(
+    url: string,
+    headers: Record<string, string>,
+    requestBody: TPost
+  ): Promise<TGet> {
+    return (
+      await this.nonUploadApiRequest({
+        method: "POST",
+        path: url,
+        headers,
+        body: requestBody
+      })
+    ).body;
+  }
+
+  private async getText(url: string, headers: Record<string, string>): Promise<string> {
+    return (
+      await this.nonUploadApiRequest({
+        method: "GET",
+        path: url,
+        headers
+      })
+    ).body;
+  }
+
+  private handleApiError<T>(result: T | ErrorResponse): T {
+    const errorMaybe: Partial<ErrorResponse> = result;
+    if (errorMaybe.error !== undefined) {
+      throw new Error(`[upload-js] ${errorMaybe.error.message}. (Code: ${errorMaybe.error.code})`);
+    }
+
+    return result as T;
+  }
+
+  private async nonUploadApiRequest(options: ApiRequestOptions): Promise<ApiResult> {
+    this.preflightExternalApi(options.path);
+    return await request({
+      ...options,
+      path: ""
+    });
   }
 }
