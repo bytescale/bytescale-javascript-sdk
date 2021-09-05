@@ -1,5 +1,6 @@
 /* eslint @typescript-eslint/no-var-requires: 0 */
 const path = require("path");
+const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const port = 3001;
 
@@ -17,6 +18,10 @@ module.exports = {
       title: "Upload file",
       template: path.resolve(__dirname, "src/index.html"),
       filename: "index.html" // output file
+    }),
+    new webpack.DefinePlugin({
+      "window.UPLOAD_JS_API_KEY": JSON.stringify(process.env.UPLOAD_JS_API_KEY),
+      "window.UPLOAD_JS_API_URL": JSON.stringify(process.env.UPLOAD_JS_API_URL)
     })
   ],
   module: {
