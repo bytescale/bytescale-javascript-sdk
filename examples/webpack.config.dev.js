@@ -1,6 +1,7 @@
 /* eslint @typescript-eslint/no-var-requires: 0 */
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const port = 3001;
 
 module.exports = {
   output: {
@@ -10,7 +11,7 @@ module.exports = {
   },
   cache: true,
   mode: "development",
-  entry: "./src/index.tsx",
+  entry: [`webpack-dev-server/client?http://localhost:${port}/`, "./src/index.ts"],
   plugins: [
     new HtmlWebpackPlugin({
       title: "Upload file",
@@ -52,7 +53,7 @@ module.exports = {
   devServer: {
     hot: true,
     open: true,
-    port: 3001,
+    port,
     contentBase: [path.join(__dirname, "dist")]
   }
 };

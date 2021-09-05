@@ -63,7 +63,7 @@ export class Upload {
 
       const formData = new FormData();
       formData.append("file", file);
-      xhr.setRequestHeader("Authorization", `Basic ${btoa(`api:${this.apiKey}`)}`);
+      xhr.setRequestHeader("Authorization", `Basic ${btoa(`pkey:${this.apiKey}`)}`);
       xhr.open("POST", `https://api.upload.io/files`);
       xhr.send(formData);
     });
