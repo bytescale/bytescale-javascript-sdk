@@ -17,7 +17,7 @@
     "clean": "rm -rf dist && rm -f upload-js.tgz",
     "analyse": "npm run clean && webpack --config webpack.config.analyse.js",
     "prepack": "npm run clean && webpack",
-    "prepack:fat": "npm run clean && node webpack --config webpack.config.fat.js",
+    "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js",
     "postpack": "mv upload-js-*.tgz upload-js.tgz"
   },
   "dependencies": {},
