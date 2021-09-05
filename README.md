@@ -1,6 +1,6 @@
 # Upload.js
 
-Upload.js Official JavaScript Library.
+Upload.js is the official JavaScript client library for [Upload](https://upload.io).
 
 ## Getting started
 
