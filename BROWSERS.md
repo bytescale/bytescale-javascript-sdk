@@ -59,6 +59,7 @@ To support every browser in the above list, you will need to add all of these po
 - core-js/modules/es.string.trim
 - core-js/modules/web.dom-collections.for-each
 - core-js/modules/web.dom-collections.iterator
+- core-js/modules/web.timers
 
 ## No Transpiling Required
 
