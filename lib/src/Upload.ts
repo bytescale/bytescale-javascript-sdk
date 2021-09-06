@@ -78,7 +78,8 @@ export class Upload {
     this.preflight();
     const uploadMetadata = await FilesService.beginUpload({
       fileSize: file.size,
-      mime: file.type,
+      fileName: file.name,
+      mime: this.normalizeMimeType(file.type),
       tag: params.tag,
       userId: params.userId
     });
@@ -137,6 +138,12 @@ export class Upload {
     return {
       uploadedFileURL: `${cdnUrl}/${uploadMetadata.fileId}`
     };
+  }
+
+  private normalizeMimeType(mime: string): string | undefined {
+    const normal = mime.toLowerCase();
+    const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
+    return regex.test(normal) ? normal : undefined;
   }
 
   /**
