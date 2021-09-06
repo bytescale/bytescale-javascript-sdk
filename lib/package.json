@@ -5,6 +5,7 @@
   "description": "Upload.js JavaScript Library",
   "license": "MIT",
   "main": "dist/main.js",
+  "types": "dist/index.d.ts",
   "homepage": "https://github.com/upload-io/upload-js",
   "repository": {
     "type": "git",
@@ -13,6 +14,9 @@
   "bugs": {
     "url": "https://github.com/upload-io/upload-js/issues"
   },
+  "files": [
+    "*"
+  ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
     "analyse": "npm run clean && webpack --config webpack.config.analyse.js",
@@ -20,7 +24,9 @@
     "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js",
     "postpack": "mv upload-js-*.tgz upload-js.tgz"
   },
-  "dependencies": {},
+  "dependencies": {
+    "upload-api-client-upload-js": "0.0.9"
+  },
   "devDependencies": {
     "@babel/cli": "7.11.6",
     "@babel/core": "7.11.6",

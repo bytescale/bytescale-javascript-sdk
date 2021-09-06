@@ -21,7 +21,8 @@ module.exports = {
     }),
     new webpack.DefinePlugin({
       "window.UPLOAD_JS_API_KEY": JSON.stringify(process.env.UPLOAD_JS_API_KEY),
-      "window.UPLOAD_JS_API_URL": JSON.stringify(process.env.UPLOAD_JS_API_URL)
+      "window.UPLOAD_JS_API_URL": JSON.stringify(process.env.UPLOAD_JS_API_URL),
+      "window.UPLOAD_JS_CDN_URL": JSON.stringify(process.env.UPLOAD_JS_CDN_URL)
     })
   ],
   module: {
@@ -45,7 +46,7 @@ module.exports = {
     alias: {
       // Remember to keep in sync with `tsconfig.json`
       "@upload.io/upload-js-examples": path.resolve(__dirname, "../examples/src"),
-      "upload-js-ui-react": path.resolve(__dirname, "../lib/src")
+      "upload-js": path.resolve(__dirname, "../lib/src")
     },
     modules: [
       // Default value (resolve relative 'node_modules' from current dir, and up the ancestors).
