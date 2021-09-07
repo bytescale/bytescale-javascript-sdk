@@ -13,7 +13,7 @@ const button = document.createElement("input");
 button.type = "file";
 button.innerHTML = "Upload";
 button.onchange = upload.createFileHandler({
-  onUpload: (url: string) => {
+  onUploaded: (url: string) => {
     console.log(`File uploaded to: ${url}`);
   }
 });

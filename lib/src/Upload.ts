@@ -20,7 +20,7 @@ export class Upload {
   createFileHandler(
     params: UploadParams & {
       onError?: (reason: any) => void;
-      onUpload: (url: string) => void;
+      onUploaded: (url: string) => void;
     }
   ): (file: Event) => void {
     return (event: Event) => {
@@ -35,13 +35,13 @@ export class Upload {
       }
 
       this.uploadFile({ ...params, file: input.files[0] }).promise.then(
-        ({ uploadedFileURL }) => params.onUpload(uploadedFileURL),
+        ({ uploadedFileURL }) => params.onUploaded(uploadedFileURL),
         error => {
           if (params.onError !== undefined) {
             params.onError(error);
           } else {
             console.error(
-              "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileHandler({onUpload, onError})",
+              "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileHandler({onUploaded, onError})",
               error
             );
           }
