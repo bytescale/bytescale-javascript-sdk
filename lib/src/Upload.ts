@@ -1,7 +1,7 @@
 import { CancellablePromise } from "upload-js/CommonTypes";
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
-import { FilesService, UploadPartDto, OpenAPI } from "upload-api-client-upload-js";
+import { FilesService, UploadPart, OpenAPI } from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 
 const apiUrlOverride: string | undefined = (window as any).UPLOAD_JS_API_URL;
@@ -95,7 +95,7 @@ export class Upload {
     })();
 
     const nextPartQueue = [uploadMetadata.uploadParts.first];
-    const getNextPart: () => Promise<UploadPartDto | undefined> = async () => {
+    const getNextPart: () => Promise<UploadPart | undefined> = async () => {
       if (nextPartQueue.length > 0) {
         return nextPartQueue.pop();
       }
@@ -214,7 +214,7 @@ export class Upload {
 
   private async uploadPart(
     file: File,
-    part: UploadPartDto,
+    part: UploadPart,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
   ): Promise<void> {

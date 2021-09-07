@@ -25,7 +25,7 @@
     "postpack": "mv upload-js-*.tgz upload-js.tgz"
   },
   "dependencies": {
-    "upload-api-client-upload-js": "0.2.0"
+    "upload-api-client-upload-js": "1.0.0"
   },
   "devDependencies": {
     "@babel/cli": "7.11.6",
