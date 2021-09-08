@@ -17,7 +17,7 @@ export class Upload {
 
   constructor(private readonly config: UploadConfig) {}
 
-  createFileHandler(
+  createFileInputHandler(
     params: UploadParams & {
       onError?: (reason: any) => void;
       onUploaded: (url: string) => void;
@@ -27,7 +27,7 @@ export class Upload {
       const input = event.target as HTMLInputElement;
       if (input.files === undefined || input.files === null) {
         throw new Error(
-          "No property 'files' on input element: ensure 'createFileHandler' is set to the 'onchange' attribute on an input of type 'file'."
+          "No property 'files' on input element: ensure 'createFileInputHandler' is set to the 'onchange' attribute on an input of type 'file'."
         );
       }
       if (input.files[0] === undefined) {
@@ -41,7 +41,7 @@ export class Upload {
             params.onError(error);
           } else {
             console.error(
-              "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileHandler({onUploaded, onError})",
+              "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileInputHandler({onUploaded, onError})",
               error
             );
           }
