@@ -79,7 +79,7 @@ export class Upload {
    * You must await the promise before attempting to perform any uploads or downloads that require authentication.
    *
    * Method safety:
-   * - IS idempotent: if an auth session has already been started, it will be ended before the new one begins.
+   * - IS idempotent: you may call this method multiple times, contiguously. (The previous auth session will be ended.)
    * - IS reentrant: can be called before another *AuthSession method has finished executing.
    *
    * @param authUrl The fully-qualified URL for your backend API's auth endpoint.
