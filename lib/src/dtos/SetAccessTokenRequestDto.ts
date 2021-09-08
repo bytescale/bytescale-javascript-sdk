@@ -3,5 +3,4 @@
  */
 export interface SetAccessTokenRequestDto {
   accessToken: string;
-  accountId: string;
 }

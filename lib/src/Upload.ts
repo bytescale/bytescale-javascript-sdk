@@ -26,7 +26,7 @@ export class Upload {
   private readonly maxUploadConcurrency = 5;
   private readonly refreshBeforeExpirySeconds = 20;
   private readonly retryAuthAfterErrorSeconds = 5;
-  private readonly setAccessTokenPath = "/api/v1/access_tokens";
+  private readonly setAccessTokenPathBase = "/api/v1/access_tokens/";
 
   private lastAuthSession: AuthSession | undefined = undefined;
 
@@ -450,7 +450,6 @@ export class Upload {
     this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
   }
 
-  // Todo: keep attempting until succeeded (user might be in a tunnel!)
   private async refreshAccessToken(
     authUrl: string,
     authHeaders: () => Promise<Record<string, string>>,
@@ -469,14 +468,13 @@ export class Upload {
         return;
       }
 
-      const setTokenUrl = `${this.cdnUrl}${this.setAccessTokenPath}`;
+      const setTokenUrl = `${this.cdnUrl}${this.setAccessTokenPathBase}${this.accountId}`;
       const setTokenResult = this.handleApiError(
-        await this.postJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
+        await this.putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
           setTokenUrl,
           {},
           {
-            accessToken: token,
-            accountId: this.accountId
+            accessToken: token
           },
           true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
         )
@@ -499,11 +497,13 @@ export class Upload {
       // returns once an auth session has been successfully established.
       this.debug(`Error when refreshing access token: ${e as string}`);
       await new Promise(resolve => setTimeout(resolve, this.retryAuthAfterErrorSeconds * 1000));
+
+      // Todo: is this stack safe?
       await this.refreshAccessToken(authUrl, authHeaders, authSession);
     }
   }
 
-  private async postJsonGetJson<TGet, TPost>(
+  private async putJsonGetJson<TGet, TPost>(
     url: string,
     headers: Record<string, string>,
     requestBody: TPost,
@@ -512,7 +512,7 @@ export class Upload {
     return (
       await this.nonUploadApiRequest(
         {
-          method: "POST",
+          method: "PUT",
           path: url,
           headers,
           body: requestBody
