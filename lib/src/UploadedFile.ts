@@ -1,3 +1,5 @@
+import { FileTag } from "upload-api-client-upload-js/src/models/FileTag";
+
 export interface UploadedFile {
   accountId: string;
   file: File;
@@ -5,5 +7,5 @@ export interface UploadedFile {
   fileSize: number;
   fileUrl: string;
   mime: string;
-  tags: string[];
+  tags: FileTag[];
 }
