@@ -23,6 +23,11 @@ import { Mutex } from "upload-js/Mutex";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
+/**
+ * You must only instantiate one instance of this class in your web app.
+ *
+ * This is particularly important when using the 'beginAuthSession' and 'endAuthSession' methods.
+ */
 export class Upload {
   private readonly accountId: AccountId;
   private readonly accountIdLength = 7; // Sync with: upload/shared/**/AccountIdUtils
