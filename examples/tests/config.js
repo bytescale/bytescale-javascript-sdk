@@ -1,3 +1,4 @@
+/* eslint-disable */
 const jasmineReporters = require("jasmine-reporters");
 const HtmlScreenshotReporter = require("protractor-jasmine2-screenshot-reporter");
 
@@ -12,10 +13,13 @@ const screenshotReporter = new HtmlScreenshotReporter({
   filename: "screenshots.html"
 });
 
+const chromeDriverLocation = process.env.CHROMEWEBDRIVER; // CI may provide its own chrome driver.
+
 exports.config = {
   specs: ["homepage.js"],
   baseUrl: "http://localhost:3001/",
   directConnect: true,
+  ...(chromeDriverLocation ? { chromeDriver: chromeDriverLocation } : {}),
   capabilities: {
     browserName: "chrome",
     chromeOptions: {
@@ -23,13 +27,13 @@ exports.config = {
     }
   },
 
-  beforeLaunch: function () {
+  beforeLaunch() {
     return new Promise(function (resolve) {
       screenshotReporter.beforeLaunch(resolve);
     });
   },
 
-  onPrepare: function () {
+  onPrepare() {
     // Disables waiting for Angular.
     browser.ignoreSynchronization = true;
 
@@ -38,7 +42,7 @@ exports.config = {
   },
 
   // Close the report after all tests finish
-  afterLaunch: function (exitCode) {
+  afterLaunch(exitCode) {
     return new Promise(function (resolve) {
       screenshotReporter.afterLaunch(resolve.bind(this, exitCode));
     });
