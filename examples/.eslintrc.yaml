@@ -7,7 +7,15 @@ parserOptions:
   project: "./tsconfig.json"
 plugins:
   - "@typescript-eslint"
+  - jest
+  - protractor
 rules:
+  "jest/no-disabled-tests": "error"
+  "jest/no-focused-tests": "error"
+  "jest/no-identical-title": "error"
+  "jest/prefer-to-have-length": "error"
+  "jest/valid-expect": "error"
+
   "no-else-return": error
   "object-shorthand": error
   "@typescript-eslint/no-var-requires": error
@@ -91,3 +99,5 @@ extends:
   - prettier/@typescript-eslint
 env:
   node: true
+  jest/globals: true
+  protractor: true
