@@ -5,11 +5,11 @@
   "private": true,
   "scripts": {
     "start": "npm run start:dev",
-    "start:dev": "webpack serve --config webpack.config.dev.js",
+    "start:dev": "webpack serve webpack.config.dev.js",
     "start:dist": "webpack serve",
     "test": "npm run test:local",
     "preinstall": "npm cache clean --force && (cd ../lib && npm pack)",
-    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js) && webdriver-manager update --versions.chrome 85.0.4183.121",
+    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js) && webdriver-manager update",
     "test:local": "echo \"Please ensure server has been started with 'npm start'...\" && protractor tests/config.js",
     "test:remote": "protractor tests/config.js $1"
   },
