@@ -92,7 +92,7 @@ jobs:
           tag_name: "v%s"
           tag_message: "v%s"
           commit_pattern: "^Release (\\S+)"
-          workspace: "./sdk"
+          workspace: "./lib"
           publish_command: "yarn"
           publish_args: "--non-interactive"
         env:
