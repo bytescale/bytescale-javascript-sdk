@@ -22,7 +22,7 @@
     "analyse": "npm run clean && webpack --config webpack.config.analyse.js",
     "prepack": "npm run clean && webpack",
     "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js",
-    "postpack": "mv upload-js-*.tgz upload-js.tgz"
+    "postpack": "[ ! -f upload-js-*.tgz ] || mv upload-js-*.tgz upload-js.tgz"
   },
   "dependencies": {
     "upload-api-client-upload-js": "1.0.0"
