@@ -75,8 +75,8 @@ export class Upload {
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
   ): Promise<UploadResult> {
-    if (params.progress !== undefined) {
-      params.progress({ bytesSent: 0, bytesTotal: file.size });
+    if (params.onProgress !== undefined) {
+      params.onProgress({ bytesSent: 0, bytesTotal: file.size });
     }
 
     const uploadRequest: BeginUploadRequest = {
@@ -135,9 +135,9 @@ export class Upload {
             lastBytesSent = bytesSent;
           }
 
-          if (params.progress !== undefined) {
+          if (params.onProgress !== undefined) {
             const totalBytesSent = bytesSentByEachWorker.reduce((a, b) => a + b);
-            params.progress({ bytesSent: totalBytesSent, bytesTotal: file.size });
+            params.onProgress({ bytesSent: totalBytesSent, bytesTotal: file.size });
           }
         };
         await this.uploadPart(file, nextPart, progress, addCancellationHandler);
