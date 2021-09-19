@@ -1,4 +1,3 @@
-import { CancellablePromise } from "upload-js/CommonTypes";
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
 import { FilesService, UploadPart, OpenAPI } from "upload-api-client-upload-js";
@@ -40,7 +39,7 @@ export class Upload {
         throw new Error("No file selected.");
       }
 
-      this.uploadFile({ ...params, file: input.files[0] }).promise.then(params.onUploaded, error => {
+      this.uploadFile({ ...params, file: input.files[0] }).then(params.onUploaded, error => {
         if (params.onError !== undefined) {
           params.onError(error);
         } else {
@@ -53,7 +52,7 @@ export class Upload {
     };
   }
 
-  uploadFile(params: UploadParams & { file: File }): CancellablePromise<UploadResult> {
+  async uploadFile(params: UploadParams & { file: File }): Promise<UploadResult> {
     // Initial progress, raised immediately and synchronously.
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -61,13 +60,16 @@ export class Upload {
     };
     const cancel = (): void => cancellationHandlers.forEach(x => x());
 
-    return {
-      promise: this.beginFileUpload(params.file, params, addCancellationHandler).catch(e => {
-        cancel();
-        throw e;
-      }),
-      cancel
-    };
+    if (params.onBegin !== undefined) {
+      params.onBegin({ cancel });
+    }
+
+    try {
+      return await this.beginFileUpload(params.file, params, addCancellationHandler);
+    } catch (e) {
+      cancel();
+      throw e;
+    }
   }
 
   private async beginFileUpload(
