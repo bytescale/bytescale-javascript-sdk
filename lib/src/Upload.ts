@@ -9,7 +9,9 @@ type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
 export class Upload {
   private readonly apiUrl: string;
+  private readonly authenticateWithApiKey: boolean;
   private readonly cdnUrl: string;
+  private readonly headers: (() => Promise<Record<string, string>>) | undefined;
   private readonly maxUploadConcurrency = 5;
 
   constructor(private readonly config: UploadConfig) {
@@ -18,6 +20,8 @@ export class Upload {
     }
     this.apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
     this.cdnUrl = config.internal?.cdnUrl ?? "https://cdn.upload.io";
+    this.authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
+    this.headers = config.internal?.headers;
   }
 
   createFileInputHandler(
@@ -172,9 +176,20 @@ export class Upload {
    */
   private preflight(): void {
     OpenAPI.BASE = this.apiUrl;
-    OpenAPI.WITH_CREDENTIALS = true;
-    OpenAPI.USERNAME = "apikey";
-    OpenAPI.PASSWORD = this.config.apiKey;
+    if (this.authenticateWithApiKey) {
+      OpenAPI.WITH_CREDENTIALS = true;
+      OpenAPI.USERNAME = "apikey";
+      OpenAPI.PASSWORD = this.config.apiKey;
+    } else {
+      OpenAPI.WITH_CREDENTIALS = false;
+      delete OpenAPI.USERNAME;
+      delete OpenAPI.PASSWORD;
+    }
+    if (this.headers !== undefined) {
+      OpenAPI.HEADERS = this.headers;
+    } else {
+      delete OpenAPI.HEADERS;
+    }
   }
 
   private async putUploadPart(

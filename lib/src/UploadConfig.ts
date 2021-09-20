@@ -9,5 +9,7 @@ export interface UploadConfig {
  */
 export interface UploadInternalConfig {
   apiUrl?: string;
+  authenticateWithApiKey?: boolean;
   cdnUrl?: string;
+  headers?: () => Promise<Record<string, string>>;
 }
