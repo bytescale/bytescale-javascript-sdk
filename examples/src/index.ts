@@ -7,7 +7,10 @@ if (apiKey === undefined) {
   throw new Error("You must set the environment variable 'UPLOAD_JS_API_KEY' before running webpack.");
 }
 
-const upload = new Upload({ apiKey });
+const upload = new Upload({
+  apiKey,
+  internal: { apiUrl: (window as any).UPLOAD_JS_API_URL, cdnUrl: (window as any).UPLOAD_JS_CDN_URL }
+});
 const button = document.createElement("input");
 
 button.id = "upload"; // For acceptance testing

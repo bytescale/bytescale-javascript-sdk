@@ -5,21 +5,19 @@ import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadResult } from "upload-js/UploadResult";
 
-const apiUrlOverride: string | undefined = (window as any).UPLOAD_JS_API_URL;
-const apiUrl: string = apiUrlOverride !== undefined ? apiUrlOverride : "https://api.upload.io";
-
-const cdnUrlOverride: string | undefined = (window as any).UPLOAD_JS_CDN_URL;
-const cdnUrl: string = cdnUrlOverride !== undefined ? cdnUrlOverride : "https://cdn.upload.io";
-
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
 export class Upload {
+  private readonly apiUrl: string;
+  private readonly cdnUrl: string;
   private readonly maxUploadConcurrency = 5;
 
   constructor(private readonly config: UploadConfig) {
     if (config.logging === true) {
       console.log(`Upload.js: initialized with API key '${config.apiKey}'`);
     }
+    this.apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
+    this.cdnUrl = config.internal?.cdnUrl ?? "https://cdn.upload.io";
   }
 
   createFileInputHandler(
@@ -73,7 +71,7 @@ export class Upload {
   }
 
   url(fileId: string): string {
-    return `${cdnUrl}/${fileId}`;
+    return `${this.cdnUrl}/${fileId}`;
   }
 
   private async beginFileUpload(
@@ -173,7 +171,7 @@ export class Upload {
    * an upload is initiated on each of them at the same time...).
    */
   private preflight(): void {
-    OpenAPI.BASE = apiUrl;
+    OpenAPI.BASE = this.apiUrl;
     OpenAPI.WITH_CREDENTIALS = true;
     OpenAPI.USERNAME = "apikey";
     OpenAPI.PASSWORD = this.config.apiKey;
