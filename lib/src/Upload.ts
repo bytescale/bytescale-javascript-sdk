@@ -1,6 +1,6 @@
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
-import { FilesService, UploadPart, OpenAPI } from "upload-api-client-upload-js";
+import { FilesService, UploadPart, OpenAPI, AccountId } from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadResult } from "upload-js/UploadResult";
@@ -8,20 +8,53 @@ import { UploadResult } from "upload-js/UploadResult";
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
 export class Upload {
+  private readonly accountId: AccountId;
+  private readonly accountIdLength = 9; // Sync with: upload/shared/**/AccountIdUtils
+  private readonly apiKeyPrefix = "public_";
   private readonly apiUrl: string;
   private readonly authenticateWithApiKey: boolean;
   private readonly cdnUrl: string;
+  private readonly debugMode: boolean;
   private readonly headers: (() => Promise<Record<string, string>>) | undefined;
   private readonly maxUploadConcurrency = 5;
 
   constructor(private readonly config: UploadConfig) {
-    if (config.logging === true) {
-      console.log(`Upload.js: initialized with API key '${config.apiKey}'`);
+    if (config.debug === true) {
+      console.log(`[upload-js] Initialized with API key '${config.apiKey}'`);
     }
     this.apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
     this.cdnUrl = config.internal?.cdnUrl ?? "https://cdn.upload.io";
     this.authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
     this.headers = config.internal?.headers;
+    this.debugMode = config.debug === true;
+
+    if (config.apiKey.trim() !== config.apiKey) {
+      // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
+      // everywhere in perpetuity (since removing the trimming would be a breaking change).
+      throw new Error(
+        "[upload-js] Invalid API key. Whitespace detected: please remove whitespace from the API key and try again."
+      );
+    }
+
+    // Non-api-key authentication is required by Upload Dashboard, which uses bearer tokens instead of API keys because
+    // the user may not have any active API keys, but might still want to upload files via the Upload Dashboard.
+    if (config.internal?.authenticateWithApiKey === false) {
+      this.accountId = config.internal.accountId;
+    } else {
+      if (!config.apiKey.startsWith(this.apiKeyPrefix)) {
+        throw new Error(`[upload-js] Invalid API key. API keys must start with '${this.apiKeyPrefix}'`);
+      }
+
+      this.accountId = config.apiKey.substr(this.apiKeyPrefix.length, this.accountIdLength);
+
+      if (this.accountId.length !== this.accountIdLength) {
+        throw new Error(
+          `[upload-js] Invalid API key. API keys must be at least ${
+            this.apiKeyPrefix.length + this.accountIdLength
+          } characters long, but the API key you provided is ${this.apiKeyPrefix.length + this.accountId.length}.`
+        );
+      }
+    }
   }
 
   createFileInputHandler(
@@ -88,6 +121,7 @@ export class Upload {
     }
 
     const uploadRequest: BeginUploadRequest = {
+      accountId: this.accountId,
       fileSize: file.size,
       fileName: file.name,
       mime: this.normalizeMimeType(file.type),
@@ -95,15 +129,15 @@ export class Upload {
       userId: params.userId
     };
 
-    if (this.config.logging === true) {
-      console.log(`Upload.js: initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
+    if (this.debugMode) {
+      console.log(`[upload-js] Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
     }
 
     this.preflight();
     const uploadMetadata = await FilesService.beginUpload(uploadRequest);
 
-    if (this.config.logging === true) {
-      console.log(`Upload.js: initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
+    if (this.debugMode) {
+      console.log(`[upload-js] Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
     }
 
     const incUploadIndex: () => number | undefined = (() => {
@@ -255,8 +289,8 @@ export class Upload {
     const content: Blob =
       part.range.inclusiveEnd === -1 ? new Blob() : file.slice(part.range.inclusiveStart, part.range.inclusiveEnd + 1);
 
-    if (this.config.logging === true) {
-      console.log(`Upload.js: uploading part ${part.uploadPartIndex}.`);
+    if (this.debugMode) {
+      console.log(`[upload-js] Uploading part ${part.uploadPartIndex}.`);
     }
 
     const { etag } = await this.putUploadPart(part.uploadUrl, content, progress, addCancellationHandler);
@@ -266,8 +300,8 @@ export class Upload {
       etag
     });
 
-    if (this.config.logging === true) {
-      console.log(`Upload.js: uploaded part ${part.uploadPartIndex}.`);
+    if (this.debugMode) {
+      console.log(`[upload-js] Uploaded part ${part.uploadPartIndex}.`);
     }
   }
 }
