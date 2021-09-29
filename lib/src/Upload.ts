@@ -174,8 +174,9 @@ export class Upload {
           } else {
             bytesSentByEachWorker[workerIndex] -= lastBytesSent;
             bytesSentByEachWorker[workerIndex] += bytesSent;
-            lastBytesSent = bytesSent;
           }
+
+          lastBytesSent = bytesSent;
 
           if (params.onProgress !== undefined) {
             const totalBytesSent = bytesSentByEachWorker.reduce((a, b) => a + b);
