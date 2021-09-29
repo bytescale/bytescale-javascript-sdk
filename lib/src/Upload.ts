@@ -3,7 +3,7 @@ import { UploadConfig } from "upload-js/UploadConfig";
 import { FilesService, UploadPart, OpenAPI, AccountId } from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
-import { UploadResult } from "upload-js/UploadResult";
+import { UploadedFile } from "upload-js/UploadedFile";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -60,7 +60,7 @@ export class Upload {
   createFileInputHandler(
     params: UploadParams & {
       onError?: (reason: any) => void;
-      onUploaded: (result: UploadResult) => void;
+      onUploaded: (result: UploadedFile) => void;
     }
   ): (file: Event) => void {
     return (event: Event) => {
@@ -87,7 +87,7 @@ export class Upload {
     };
   }
 
-  async uploadFile(params: UploadParams & { file: File }): Promise<UploadResult> {
+  async uploadFile(params: UploadParams & { file: File }): Promise<UploadedFile> {
     // Initial progress, raised immediately and synchronously.
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -115,7 +115,7 @@ export class Upload {
     file: File,
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
-  ): Promise<UploadResult> {
+  ): Promise<UploadedFile> {
     if (params.onProgress !== undefined) {
       params.onProgress({ bytesSent: 0, bytesTotal: file.size });
     }
@@ -193,8 +193,13 @@ export class Upload {
     );
 
     return {
+      accountId: uploadRequest.accountId,
       fileId: uploadMetadata.fileId,
-      fileUrl: this.url(uploadMetadata.fileId)
+      fileUrl: this.url(uploadMetadata.fileId),
+      file,
+      tag: uploadRequest.tag,
+      userId: uploadRequest.userId,
+      mime: uploadRequest.mime
     };
   }
 
