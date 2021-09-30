@@ -4,6 +4,7 @@ import { FilesService, UploadPart, OpenAPI, AccountId } from "upload-api-client-
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadedFile } from "upload-js/UploadedFile";
+import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -62,9 +63,9 @@ export class Upload {
       onError?: (reason: any) => void;
       onUploaded: (result: UploadedFile) => void;
     }
-  ): (file: Event) => void {
-    return (event: Event) => {
-      const input = event.target as HTMLInputElement;
+  ): (file: FileInputChangeEvent) => void {
+    return (event: FileInputChangeEvent) => {
+      const input = event.target;
       if (input.files === undefined || input.files === null) {
         throw new Error(
           "No property 'files' on input element: ensure 'createFileInputHandler' is set to the 'onchange' attribute on an input of type 'file'."
