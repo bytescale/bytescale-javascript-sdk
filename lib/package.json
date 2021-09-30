@@ -20,8 +20,8 @@
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
     "analyse": "npm run clean && webpack --config webpack.config.analyse.js",
-    "prepack": "npm run clean && webpack",
-    "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js",
+    "prepack": "npm run clean && webpack && tsc-alias",
+    "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js && tsc-alias",
     "postpack": "[ ! -f upload-js-*.tgz ] || mv upload-js-*.tgz upload-js.tgz"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.1.0",
     "ts-loader": "8.0.11",
+    "tsc-alias": "1.2.10",
     "typescript": "4.1.2",
     "webpack": "5.5.1",
     "webpack-bundle-analyzer": "4.2.0",
