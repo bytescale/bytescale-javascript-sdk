@@ -11,7 +11,7 @@ type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
 export class Upload {
   private readonly accountId: AccountId;
-  private readonly accountIdLength = 9; // Sync with: upload/shared/**/AccountIdUtils
+  private readonly accountIdLength = 7; // Sync with: upload/shared/**/AccountIdUtils
   private readonly apiKeyPrefix = "public_";
   private readonly apiUrl: string;
   private readonly authenticateWithApiKey: boolean;
