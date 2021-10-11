@@ -131,17 +131,13 @@ export class Upload {
       userId: params.userId
     };
 
-    if (this.debugMode) {
-      console.log(`[upload-js] Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
-    }
+    this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
     this.preflight();
     const uploadMetadata = await FilesService.beginUpload(uploadRequest);
     const isMultipart = uploadMetadata.uploadParts.count > 1;
 
-    if (this.debugMode) {
-      console.log(`[upload-js] Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
-    }
+    this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
 
     const incUploadIndex: () => number | undefined = (() => {
       let lastUploadIndex: number = 0;
@@ -155,14 +151,18 @@ export class Upload {
 
     const nextPartQueue = [uploadMetadata.uploadParts.first];
     const getNextPart: () => Promise<UploadPart | undefined> = async () => {
-      if (nextPartQueue.length > 0) {
-        return nextPartQueue.pop();
+      const nextPart = nextPartQueue.pop();
+      if (nextPart !== undefined) {
+        this.debug(`Dequeued part ${nextPart.uploadPartIndex}`);
+        return nextPart;
       }
       const uploadPartIndex = incUploadIndex();
       if (uploadPartIndex === undefined) {
+        this.debug("No parts remaining.");
         return undefined;
       }
       this.preflight();
+      this.debug(`Fetching metadata for part ${uploadPartIndex}.`);
       return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
     };
 
@@ -195,7 +195,7 @@ export class Upload {
       [...Array(this.maxUploadConcurrency).keys()].map(async workerIndex => await uploadNextPart(workerIndex))
     );
 
-    return {
+    const uploadedFile: UploadedFile = {
       accountId: uploadRequest.accountId,
       file,
       fileId: uploadMetadata.file.fileId,
@@ -205,6 +205,16 @@ export class Upload {
       userId: uploadRequest.userId,
       mime: uploadMetadata.file.mime
     };
+
+    this.debug(`File upload completed. File = ${JSON.stringify(uploadedFile)}`);
+
+    return uploadedFile;
+  }
+
+  private debug(message: string): void {
+    if (this.debugMode) {
+      console.log(`[upload-js] ${message}`);
+    }
   }
 
   private normalizeMimeType(mime: string): string | undefined {
@@ -317,9 +327,7 @@ export class Upload {
     const content: Blob =
       part.range.inclusiveEnd === -1 ? new Blob() : file.slice(part.range.inclusiveStart, part.range.inclusiveEnd + 1);
 
-    if (this.debugMode) {
-      console.log(`[upload-js] Uploading part ${part.uploadPartIndex}.`);
-    }
+    this.debug(`Uploading part ${part.uploadPartIndex}.`);
 
     const { etag } = await this.putUploadPart(
       part.uploadUrl,
@@ -335,8 +343,6 @@ export class Upload {
       etag
     });
 
-    if (this.debugMode) {
-      console.log(`[upload-js] Uploaded part ${part.uploadPartIndex}.`);
-    }
+    this.debug(`Uploaded part ${part.uploadPartIndex}.`);
   }
 }
