@@ -221,7 +221,7 @@ export class Upload {
 
   private debug(message: string, workerIndex?: number): void {
     if (this.debugMode) {
-      console.log(`[upload-js] ${message}${workerIndex !== undefined ? ` (Worker ${workerIndex}.)` : ""}`);
+      console.log(`[upload-js] ${message}${workerIndex !== undefined ? ` (Worker ${workerIndex})` : ""}`);
     }
   }
 
