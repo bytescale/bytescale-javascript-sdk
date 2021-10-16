@@ -78,7 +78,7 @@ export class Upload {
    *
    * Method is idempotent: if an auth session has already been started, it will be ended before the new one begins.
    */
-  async beginAuthSession(authUrl: string, authHeaders: () => Record<string, string>): Promise<void> {
+  async beginAuthSession(authUrl: string, authHeaders: () => Promise<Record<string, string>>): Promise<void> {
     this.endAuthSession();
 
     const authSession: AuthSession = {
@@ -451,7 +451,7 @@ export class Upload {
   // Todo: keep attempting until succeeded (user might be in a tunnel!)
   private async refreshAccessToken(
     authUrl: string,
-    authHeaders: () => Record<string, string>,
+    authHeaders: () => Promise<Record<string, string>>,
     authSession: AuthSession
   ): Promise<void> {
     // Session may have been ended while timer was waiting.
@@ -460,7 +460,7 @@ export class Upload {
     }
 
     try {
-      const token = await this.getText(authUrl, authHeaders());
+      const token = await this.getText(authUrl, await authHeaders());
 
       // Session may have been ended whilst the above request was in-flight.
       if (!authSession.isActive) {
