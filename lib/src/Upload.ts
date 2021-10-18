@@ -25,7 +25,7 @@ export class Upload {
   private readonly headers: (() => Promise<Record<string, string>>) | undefined;
   private readonly maxUploadConcurrency = 5;
   private readonly refreshBeforeExpirySeconds = 20;
-  private readonly retryAuthAfterErrorSeconds = 3;
+  private readonly retryAuthAfterErrorSeconds = 5;
   private readonly setAccessTokenPath = "/api/v1/access_tokens";
 
   private lastAuthSession: AuthSession | undefined = undefined;
