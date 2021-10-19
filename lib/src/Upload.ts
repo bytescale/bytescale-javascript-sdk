@@ -344,6 +344,8 @@ export class Upload {
   private preflightExternalApi(url: string): void {
     OpenAPI.BASE = url;
     OpenAPI.WITH_CREDENTIALS = false;
+    delete OpenAPI.USERNAME;
+    delete OpenAPI.PASSWORD;
     delete OpenAPI.HEADERS;
   }
 
