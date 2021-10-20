@@ -26,7 +26,7 @@ export class Upload {
   private readonly maxUploadConcurrency = 5;
   private readonly refreshBeforeExpirySeconds = 20;
   private readonly retryAuthAfterErrorSeconds = 5;
-  private readonly setAccessTokenPathBase = "/api/v1/access_tokens/";
+  private readonly accessTokenPathBase = "/api/v1/access_tokens/";
 
   private lastAuthSession: AuthSession | undefined = undefined;
 
@@ -79,7 +79,7 @@ export class Upload {
    * Method is idempotent: if an auth session has already been started, it will be ended before the new one begins.
    */
   async beginAuthSession(authUrl: string, authHeaders: () => Promise<Record<string, string>>): Promise<void> {
-    this.endAuthSession();
+    await this.endAuthSession();
 
     const authSession: AuthSession = {
       accessToken: undefined,
@@ -98,7 +98,7 @@ export class Upload {
    *
    * Method is idempotent.
    */
-  endAuthSession(): void {
+  async endAuthSession(): Promise<void> {
     if (this.lastAuthSession === undefined) {
       return;
     }
@@ -111,17 +111,8 @@ export class Upload {
     }
 
     authSession.isActive = false;
-  }
 
-  /**
-   * This method unregisters any background timers that may have been created by the object.
-   *
-   * Must be called when the object is no-longer required.
-   *
-   * You should not attempt to continue using this object after calling this method.
-   */
-  close(): void {
-    this.endAuthSession();
+    await this.deleteAccessToken();
   }
 
   createFileInputHandler(
@@ -450,6 +441,18 @@ export class Upload {
     this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
   }
 
+  private accessTokenPath(): string {
+    return `${this.cdnUrl}${this.accessTokenPathBase}${this.accountId}`;
+  }
+
+  private async deleteAccessToken(): Promise<void> {
+    await this.deleteNoResponse(
+      this.accessTokenPath(),
+      {},
+      true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
+    );
+  }
+
   private async refreshAccessToken(
     authUrl: string,
     authHeaders: () => Promise<Record<string, string>>,
@@ -468,10 +471,9 @@ export class Upload {
         return;
       }
 
-      const setTokenUrl = `${this.cdnUrl}${this.setAccessTokenPathBase}${this.accountId}`;
       const setTokenResult = this.handleApiError(
         await this.putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
-          setTokenUrl,
+          this.accessTokenPath(),
           {},
           {
             accessToken: token
@@ -533,6 +535,21 @@ export class Upload {
         false
       )
     ).body;
+  }
+
+  private async deleteNoResponse(
+    url: string,
+    headers: Record<string, string>,
+    withCredentials: boolean
+  ): Promise<void> {
+    await this.nonUploadApiRequest(
+      {
+        method: "DELETE",
+        path: url,
+        headers
+      },
+      withCredentials
+    );
   }
 
   private handleApiError<T>(result: T | ErrorResponse): T {
