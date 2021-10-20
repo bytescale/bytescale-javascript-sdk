@@ -341,9 +341,9 @@ export class Upload {
   /**
    * Call before every non-Upload API request.
    */
-  private preflightExternalApi(url: string): void {
+  private preflightExternalApi(url: string, withCredentials: boolean): void {
     OpenAPI.BASE = url;
-    OpenAPI.WITH_CREDENTIALS = false;
+    OpenAPI.WITH_CREDENTIALS = withCredentials;
     delete OpenAPI.USERNAME;
     delete OpenAPI.PASSWORD;
     delete OpenAPI.HEADERS;
@@ -477,7 +477,8 @@ export class Upload {
           {
             accessToken: token,
             accountId: this.accountId
-          }
+          },
+          true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
         )
       );
 
@@ -505,25 +506,32 @@ export class Upload {
   private async postJsonGetJson<TGet, TPost>(
     url: string,
     headers: Record<string, string>,
-    requestBody: TPost
+    requestBody: TPost,
+    withCredentials: boolean
   ): Promise<TGet> {
     return (
-      await this.nonUploadApiRequest({
-        method: "POST",
-        path: url,
-        headers,
-        body: requestBody
-      })
+      await this.nonUploadApiRequest(
+        {
+          method: "POST",
+          path: url,
+          headers,
+          body: requestBody
+        },
+        withCredentials
+      )
     ).body;
   }
 
   private async getText(url: string, headers: Record<string, string>): Promise<string> {
     return (
-      await this.nonUploadApiRequest({
-        method: "GET",
-        path: url,
-        headers
-      })
+      await this.nonUploadApiRequest(
+        {
+          method: "GET",
+          path: url,
+          headers
+        },
+        false
+      )
     ).body;
   }
 
@@ -536,8 +544,8 @@ export class Upload {
     return result as T;
   }
 
-  private async nonUploadApiRequest(options: ApiRequestOptions): Promise<ApiResult> {
-    this.preflightExternalApi(options.path);
+  private async nonUploadApiRequest(options: ApiRequestOptions, withCredentials: boolean): Promise<ApiResult> {
+    this.preflightExternalApi(options.path, withCredentials);
     return await request({
       ...options,
       path: ""
