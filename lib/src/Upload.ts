@@ -76,7 +76,9 @@ export class Upload {
    *
    * You must await the promise before attempting to perform any uploads or downloads that require authentication.
    *
-   * Method is idempotent: if an auth session has already been started, it will be ended before the new one begins.
+   * Method safety:
+   * - IS idempotent: if an auth session has already been started, it will be ended before the new one begins.
+   * - NOT thread-safe: you must wait for *AuthSession methods to complete before calling other *AuthSession methods.
    */
   async beginAuthSession(authUrl: string, authHeaders: () => Promise<Record<string, string>>): Promise<void> {
     await this.endAuthSession();
@@ -96,7 +98,9 @@ export class Upload {
   /**
    * Call after the user signs-out of your web app.
    *
-   * Method is idempotent.
+   * Method safety:
+   * - IS idempotent: you may call this method multiple times, contiguously.
+   * - NOT thread-safe: you must wait for *AuthSession methods to complete before calling other *AuthSession methods.
    */
   async endAuthSession(): Promise<void> {
     if (this.lastAuthSession === undefined) {
