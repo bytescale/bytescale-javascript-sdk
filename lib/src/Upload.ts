@@ -11,6 +11,7 @@ import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDt
 import { AuthSession } from "upload-js/AuthSession";
 import { ApiRequestOptions } from "upload-api-client-upload-js/src/core/ApiRequestOptions";
 import { ApiResult } from "upload-api-client-upload-js/src/core/ApiResult";
+import { Mutex } from "upload-js/Mutex";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -27,6 +28,7 @@ export class Upload {
   private readonly refreshBeforeExpirySeconds = 20;
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly accessTokenPathBase = "/api/v1/access_tokens/";
+  private readonly authMutex = new Mutex();
 
   private lastAuthSession: AuthSession | undefined = undefined;
 
@@ -78,7 +80,11 @@ export class Upload {
    *
    * Method safety:
    * - IS idempotent: if an auth session has already been started, it will be ended before the new one begins.
-   * - NOT thread-safe: you must wait for *AuthSession methods to complete before calling other *AuthSession methods.
+   * - IS reentrant: can be called before another *AuthSession method has finished executing.
+   *
+   * @param authUrl The fully-qualified URL for your backend API's auth endpoint.
+   * @param authHeaders Headers to send to your backend API.
+   *                    IMPORTANT: do not call '*AuthSession' inside this callback, as this will cause a deadlock.
    */
   async beginAuthSession(authUrl: string, authHeaders: () => Promise<Record<string, string>>): Promise<void> {
     await this.endAuthSession();
@@ -89,7 +95,9 @@ export class Upload {
       isActive: true
     };
 
-    // Important: must go before the following asynchronous call.
+    // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
+    // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
+    // can interject and b) nothing has interjected since the lock was relinquished).
     this.lastAuthSession = authSession;
 
     await this.refreshAccessToken(authUrl, authHeaders, authSession);
@@ -100,23 +108,25 @@ export class Upload {
    *
    * Method safety:
    * - IS idempotent: you may call this method multiple times, contiguously.
-   * - NOT thread-safe: you must wait for *AuthSession methods to complete before calling other *AuthSession methods.
+   * - IS reentrant: can be called before another *AuthSession method has finished executing
    */
   async endAuthSession(): Promise<void> {
-    if (this.lastAuthSession === undefined) {
-      return;
-    }
+    await this.authMutex.safe(async () => {
+      if (this.lastAuthSession === undefined) {
+        return;
+      }
 
-    const authSession = this.lastAuthSession;
-    this.lastAuthSession = undefined;
+      const authSession = this.lastAuthSession;
+      this.lastAuthSession = undefined;
 
-    if (authSession.accessTokenRefreshHandle !== undefined) {
-      clearTimeout(authSession.accessTokenRefreshHandle);
-    }
+      if (authSession.accessTokenRefreshHandle !== undefined) {
+        clearTimeout(authSession.accessTokenRefreshHandle);
+      }
 
-    authSession.isActive = false;
+      authSession.isActive = false;
 
-    await this.deleteAccessToken();
+      await this.deleteAccessToken();
+    });
   }
 
   createFileInputHandler(
@@ -462,42 +472,33 @@ export class Upload {
     authHeaders: () => Promise<Record<string, string>>,
     authSession: AuthSession
   ): Promise<void> {
-    // Session may have been ended while timer was waiting.
-    if (!authSession.isActive) {
-      return;
-    }
-
     try {
-      const token = await this.getText(authUrl, await authHeaders());
+      await this.authMutex.safe(async () => {
+        // Session may have been ended while timer was waiting.
+        if (!authSession.isActive) {
+          return;
+        }
 
-      // Session may have been ended whilst the above request was in-flight.
-      if (!authSession.isActive) {
-        return;
-      }
-
-      const setTokenResult = this.handleApiError(
-        await this.putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
-          this.accessTokenPath(),
-          {},
-          {
-            accessToken: token
-          },
-          true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
-        )
-      );
-
-      // Session may have been ended whilst the above request was in-flight.
-      if (!authSession.isActive) {
-        return;
-      }
-
-      authSession.accessToken = setTokenResult.accessToken;
-      authSession.accessTokenRefreshHandle = window.setTimeout(() => {
-        this.refreshAccessToken(authUrl, authHeaders, authSession).then(
-          () => {},
-          e => this.error(`Permanent error when refreshing access token: ${e as string}`)
+        const token = await this.getText(authUrl, await authHeaders());
+        const setTokenResult = this.handleApiError(
+          await this.putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
+            this.accessTokenPath(),
+            {},
+            {
+              accessToken: token
+            },
+            true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
+          )
         );
-      }, Math.max(0, (setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds) * 1000));
+
+        authSession.accessToken = setTokenResult.accessToken;
+        authSession.accessTokenRefreshHandle = window.setTimeout(() => {
+          this.refreshAccessToken(authUrl, authHeaders, authSession).then(
+            () => {},
+            e => this.error(`Permanent error when refreshing access token: ${e as string}`)
+          );
+        }, Math.max(0, (setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds) * 1000));
+      });
     } catch (e) {
       // Perform attempts as part of same promise, rather than via a 'setTimeout' so that the 'beginAuthSession' only
       // returns once an auth session has been successfully established.
