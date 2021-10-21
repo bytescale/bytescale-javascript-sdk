@@ -23,7 +23,6 @@ $RECYCLE.BIN/
 
 # Node.js
 node_modules/
-peer_modules/
 npm-debug.log*
 
 # NPM Packages
