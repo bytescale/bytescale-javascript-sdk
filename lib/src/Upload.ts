@@ -1,6 +1,14 @@
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
-import { FilesService, UploadPart, OpenAPI, AccountId, ErrorResponse, request } from "upload-api-client-upload-js";
+import {
+  FilesService,
+  UploadPart,
+  OpenAPI,
+  AccountId,
+  ErrorResponse,
+  request,
+  FileTag
+} from "upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadedFile } from "upload-js/UploadedFile";
@@ -197,7 +205,7 @@ export class Upload {
       fileSize: file.size,
       fileName: file.name,
       mime: this.normalizeMimeType(file.type),
-      tags: params.tags ?? []
+      tags: (params.tags ?? []).map((x): FileTag => (typeof x === "string" ? { name: x, searchable: true } : x))
     };
 
     this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
