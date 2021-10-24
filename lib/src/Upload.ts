@@ -286,7 +286,7 @@ export class Upload {
       fileId: uploadMetadata.file.fileId,
       fileSize: uploadMetadata.file.size,
       fileUrl: this.url(uploadMetadata.file.fileId),
-      tags: uploadRequest.tags,
+      tags: uploadMetadata.file.tags,
       mime: uploadMetadata.file.mime
     };
 
