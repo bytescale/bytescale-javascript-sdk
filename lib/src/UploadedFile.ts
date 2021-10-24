@@ -5,6 +5,5 @@ export interface UploadedFile {
   fileSize: number;
   fileUrl: string;
   mime: string;
-  tag: string | undefined;
-  userId: string | undefined;
+  tags: string[];
 }

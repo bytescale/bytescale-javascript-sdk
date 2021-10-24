@@ -197,8 +197,7 @@ export class Upload {
       fileSize: file.size,
       fileName: file.name,
       mime: this.normalizeMimeType(file.type),
-      tag: params.tag,
-      userId: params.userId
+      tags: params.tags ?? []
     };
 
     this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
@@ -279,8 +278,7 @@ export class Upload {
       fileId: uploadMetadata.file.fileId,
       fileSize: uploadMetadata.file.size,
       fileUrl: this.url(uploadMetadata.file.fileId),
-      tag: uploadRequest.tag,
-      userId: uploadRequest.userId,
+      tags: uploadRequest.tags,
       mime: uploadMetadata.file.mime
     };
 
