@@ -3,11 +3,11 @@ const path = require("path");
 const fs = require("fs");
 const babel = require("@babel/core");
 
-const browsersMD = path.resolve(__dirname, "../BROWSERS.md");
-const browsersMDTemplate = path.resolve(__dirname, "BROWSERS.md.template.md");
+const browsersMD = path.resolve(__dirname, "../POLYFILLS.md");
+const browsersMDTemplate = path.resolve(__dirname, "POLYFILLS.md.template.md");
 const reactUploaderDir = path.resolve(__dirname, "../lib");
 const distFile = path.resolve(reactUploaderDir, "dist/index-fat.js");
-const browsersList = path.resolve(reactUploaderDir, ".browserslistrc");
+const coreJsVersion = "3.19";
 
 // See: https://stackoverflow.com/a/32197381/592768
 const deleteFolderRecursive = function (dir) {
@@ -53,7 +53,7 @@ const { code: polyfilledCode } = babel.transformSync(distCode, {
       "@babel/preset-env",
       {
         useBuiltIns: "usage",
-        corejs: 3,
+        corejs: coreJsVersion,
         debug: true
       }
     ]
@@ -64,27 +64,11 @@ const { code: polyfilledCode } = babel.transformSync(distCode, {
 const requireLines = splitLines(polyfilledCode).filter(l => l.startsWith("require("));
 const requireModules = requireLines.map(m => m.replace(/^.*?['"]([^'"]*).*$/, "$1"));
 const requireCoreJS = requireModules.filter(m => m.startsWith("core-js/"));
-const requireCoreJSFormatted = requireCoreJS.map(x => `- ${x}`);
+const requireCoreJSFormatted = requireCoreJS.map(x => `  - ${x}`);
 if (requireCoreJSFormatted.length === 0) throw new Error("Did not find any core-js modules.");
 
-// Extract all supported browsers
-const splitBrowserLine = line => {
-  let split = line.split(">=");
-  if (split.length === 1) split = line.split(" ");
-  return { browser: split[0].trim(), minVersion: split[1].trim() };
-};
-const supportedBrowsersString = fs.readFileSync(browsersList).toString();
-const supportedBrowsers = splitLines(supportedBrowsersString);
-const supportedBrowsersFormatted = supportedBrowsers
-  .filter(x => !!x)
-  .map(splitBrowserLine)
-  .map(x => `- ${x.browser} \`${x.minVersion}+\``);
-if (supportedBrowsersFormatted.length === 0) throw new Error("Did not find any browsers.");
-
-// Generate new 'BROWSERS.md' file
+// Generate new 'POLYFILLS.md' file
 fs.copyFileSync(browsersMDTemplate, browsersMD);
 updateFileContents(browsersMD, x =>
-  x
-    .replace("[browser-list]", supportedBrowsersFormatted.join("\n"))
-    .replace("[polyfill-list]", requireCoreJSFormatted.join("\n"))
+  x.replace("[polyfill-list]", requireCoreJSFormatted.join("\n")).replace("[core-js-version]", coreJsVersion)
 );

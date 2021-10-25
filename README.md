@@ -121,45 +121,6 @@ angular
 
 ## Browser compatibility
 
-Upload.js provides two packages:
+Supported browsers: [`> .01%`](https://browserslist.dev/?q=PiAuMDEl)
 
-- `upload-js`: the standard package.
-- `upload-js-compat`: the compatibility package, designed for older browsers (including IE11).
-
-The browser compatibility of each package is as follows:
-
-| Package          | Browser Support                                                                                   |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| upload-js        | [`> .01%, not dead, not IE 11`](https://browserslist.dev/?q=PiAuMDElLCBub3QgZGVhZCwgbm90IElFIDEx) |
-| upload-js-compat | [`> .01%`](https://browserslist.dev/?q=PiAuMDEl)                                                  |
-
-### Using the `upload-js` package
-
-No additional steps are required. Simply follow the [Getting started](#getting-started) section.
-
-### Using the `upload-js-compat` package
-
-The `upload-js-compat` package requires the following additional steps:
-
-1. Install `regenerator-runtime`.
-2. Initialize `regenerator-runtime`.
-
-Installing with NPM:
-
-```bash
-npm install regenerator-runtime
-```
-
-Initializing the runtime:
-
-```javascript
-import "regenerator-runtime/runtime.js";
-import { Upload } from "upload-js-compat";
-```
-
-**Or:**
-
-```html
-<script src="https://unpkg.com/regenerator-runtime@0.13.9/runtime.js"></script>
-<script src="https://js.upload.io/upload-js-compat/v1"></script>
-```
+_Note: some of these browsers will require polyfills ([`POLYFILLS.md`](POLYFILLS.md))._
