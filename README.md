@@ -1,6 +1,6 @@
 # Upload.js
 
-Upload.js is the file upload library that handles everything.
+The upload library that handles everything, including the hosting of your files.
 
 _Note: [you need an API key to use Upload.js](https://upload.io)._
 
