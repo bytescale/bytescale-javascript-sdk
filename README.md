@@ -1,20 +1,18 @@
 # Upload.js
 
-Upload.js is the file upload library that handles everything, including the hosting of your files.
+Upload.js is the file upload library that handles everything!
 
-Note: [you need an API key to use Upload.js](https://upload.io).
+_Note: [you need an API key to use Upload.js](https://upload.io)._
 
 ## What does Upload.js do?
 
-Upload.js provides a helper function for the `onchange` attribute for `<input type="file" ... />`: the function automatically uploads the selected file to [`upload.io`](https://upload.io), which then becomes hosted on the Upload CDN.
+Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where you can enjoy:
 
-Files hosted on the Upload CDN benefit from:
+- Fast downloads: 200+ edge locations across 47 countries.
 
-- Transformations: you can easily transform any file hosted on the Upload CDN (e.g. resizing images, extracting archives, etc.)
+- Transformations: you can use URL-based transformations to transform any uploaded file on-demand (e.g. resizing images, extracting archives, etc.)
 
-- Security: you can select whether users must be signed-in to your web app before downloading any of your uploaded files.
-
-- Fast downloads: 200+ edge locations across 47 countries. Files hosted on the Upload CDN download with **minimal** latency.
+- Security: you can select whether users must be signed-in to your web app before downloading your files, or whether anyone on the Internet can access them.
 
 ## Getting started
 
@@ -24,10 +22,10 @@ npm install upload-js
 
 **Examples:**
 
-- [Plain HTML](#Plain HTML)
-- [React](#React)
-- [Vue.js](#Vue.js)
-- [Angular](#Angular)
+- [Plain HTML](#plain-html)
+- [React](#react)
+- [Vue.js](#vuejs)
+- [Angular](#angular)
 
 ### Plain HTML
 
@@ -121,7 +119,7 @@ angular
   }));
 ```
 
-## Cross-browser support
+## Browser compatibility
 
 Upload.js provides two packages:
 
@@ -137,14 +135,14 @@ The browser compatibility of each package is as follows:
 
 ### Using the `upload-js` package
 
-No additional steps required (just follow the [Getting started](#Getting started) section).
+No additional steps are required. Simply follow the [Getting started](#getting-started) section.
 
 ### Using the `upload-js-compat` package
 
 The `upload-js-compat` package requires the following additional steps:
 
-1. Install [`regenerator-runtime`](https://www.npmjs.com/package/regenerator-runtime).
-2. Initialize [`regenerator-runtime`](https://www.npmjs.com/package/regenerator-runtime).
+1. Install `regenerator-runtime`.
+2. Initialize `regenerator-runtime`.
 
 Installing with NPM:
 
