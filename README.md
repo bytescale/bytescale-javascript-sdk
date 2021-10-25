@@ -6,7 +6,7 @@ _Note: [you need an API key to use Upload.js](https://upload.io)._
 
 ## What does Upload.js do?
 
-Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where your files benefit from:
+Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where it benefits from:
 
 - Fast downloads: 200+ edge locations across 47 countries.
 
