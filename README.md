@@ -1,12 +1,12 @@
 # Upload.js
 
-Upload.js is the file upload library that handles everything!
+Upload.js is the file upload library that handles everything.
 
 _Note: [you need an API key to use Upload.js](https://upload.io)._
 
 ## What does Upload.js do?
 
-Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where you can enjoy:
+Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where you benefit from:
 
 - Fast downloads: 200+ edge locations across 47 countries.
 
