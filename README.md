@@ -44,6 +44,10 @@ Or:
 <script src="https://js.upload.io/upload-js/v1"></script>
 ```
 
+## Documentation
+
+See: [Upload.js documentation](https://upload.io/docs/upload-js).
+
 ## Examples
 
 - [Plain HTML](#plain-html)
