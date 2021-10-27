@@ -1,26 +1,50 @@
 # Upload.js
 
-The upload library that handles everything, including the hosting of your files.
+**New library: launched December 2021!**
 
-_Note: [you need an API key to use Upload.js](https://upload.io)._
+How to use:
+
+1.  [Create an Upload.js account](https://upload.io).
+
+2.  Grab your API key.
+
+3.  Use one of [the examples](#examples) to create an upload button!
 
 ## What does Upload.js do?
 
-Upload.js provides a helper function for the `onchange` attribute for `<input type="file">` elements: the function uploads the selected file to the Upload CDN ([upload.io](https://upload.io)) from where it benefits from:
+**Upload.js makes it incredibly easy to add file uploads and file transformations to your website.**
 
-- Fast downloads: 200+ edge locations across 47 countries.
+Upload.js is both a platform ([upload.io](https://upload.io/)) and an NPM package (`upload-js`): the platform provides beautiful dashboards to monitor usage and for creating URL-based file transformations, while the NPM package provides a lightweight helper function for easily adding file upload buttons to your website.
 
-- Transformations: you can use URL-based transformations to transform any uploaded file on-demand (e.g. resizing images, extracting archives, etc.)
+Upload.js benefits:
 
-- Security: you can select whether users must be signed-in to your web app before downloading your files, or whether anyone on the Internet can access them.
+- **🚀 Fast uploads & downloads** 
+
+  Our CDN covers 200+ edge locations across 47 countries.
+
+- **🏗 URL-based transformations**
+
+  Transform any uploaded file on-demand, e.g. resizing images, extracting archives, etc.
+
+- **🔓 File security**
+
+  Limit downloads to only the signed-in users of your web app, or grant access to everyone on the Internet.
 
 ## Getting started
+
+### Installing Upload.js
 
 ```bash
 npm install upload-js
 ```
 
-**Examples:**
+Or:
+
+```html
+<script src="https://js.upload.io/upload-js/v1"></script>
+```
+
+## Examples
 
 - [Plain HTML](#plain-html)
 - [React](#react)
