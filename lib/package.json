@@ -23,7 +23,9 @@
     "prepack": "npm run clean && webpack --config webpack.config.js && tsc-alias",
     "prepack:fat": "npm run clean && webpack --config webpack.config.fat.js && tsc-alias",
     "prepack:script": "npm run clean && webpack --config webpack.config.script.js && find dist -name \"*.ts\" -type f -delete && for f in dist/*.js; do cp -- \"$f\" \"${f%.js}\"; done",
-    "postpack": "[ ! -f upload-js-*.tgz ] || mv upload-js-*.tgz upload-js.tgz"
+    "postpack": "[ ! -f upload-js-*.tgz ] || mv upload-js-*.tgz upload-js.tgz",
+    "postpublish": "npm run publish:script",
+    "publish:script": "npm run prepack:script && aws s3 cp --recursive --content-type application/json dist/ s3://upload-js-releases/upload-js/"
   },
   "dependencies": {
     "upload-api-client-upload-js": "1.9.0"
