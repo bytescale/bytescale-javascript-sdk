@@ -98,6 +98,7 @@ var MyUploadButton = () => {
 //
 // HTML: <input type="file" on-change="uploadFile" />
 //
+var { Upload } = require("upload-js");
 var upload = new Upload({ apiKey: "..." });
 angular
   .module("exampleApp", [])
@@ -121,6 +122,7 @@ angular
 //
 // HTML: <input id="example" type="file" @change="uploadFile" />
 //
+var { Upload } = require("upload-js");
 var upload = new Upload({ apiKey: "..." });
 var uploadFile = upload.createFileInputHandler({
   onUploaded: ({ fileUrl, fileId }) => {
@@ -137,7 +139,7 @@ var vueApp = new Vue({
 
 If you would like to contribute to Upload.js:
 
-1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling generous!).
+1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (only if you're having a good day!).
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 
