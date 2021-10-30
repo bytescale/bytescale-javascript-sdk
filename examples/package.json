@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "start": "npm run start:dev",
-    "start:dev": "webpack serve webpack.config.dev.js",
+    "start:dev": "webpack serve --config webpack.config.dev.js",
     "start:dist": "webpack serve",
     "test": "npm run test:local",
     "preinstall": "npm cache clean --force && (cd ../lib && npm pack)",
@@ -14,7 +14,6 @@
     "test:remote": "protractor tests/config.js $1"
   },
   "dependencies": {
-    "regenerator-runtime": "0.13.7",
     "upload-js": "../lib/upload-js.tgz"
   },
   "devDependencies": {
