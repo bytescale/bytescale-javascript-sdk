@@ -54,20 +54,20 @@ jobs:
         run: npm ci
         working-directory: ./docs
 
-      - name: "Verify BROWSERS.md up-to-date"
+      - name: "Verify POLYFILLS.md up-to-date"
         run: |
-          npm run generate-browsers-md
-          changes=$(git --no-pager diff -- ../BROWSERS.md)
+          npm run generate-polyfills-md
+          changes=$(git --no-pager diff -- ../POLYFILLS.md)
           if [[ ! -z "$changes" ]]; then
-            echo "Changes to BROWSERS.md:"
+            echo "Changes to POLYFILLS.md:"
             echo ""
             echo $changes
             echo ""
-            echo "BROWSERS.md needs updating!"
+            echo "POLYFILLS.md needs updating!"
             echo ""
             echo "Please run the following command:"
             echo ""
-            echo "  (cd docs && npm run generate-browsers-md)"
+            echo "  (cd docs && npm run generate-polyfills-md)"
             echo ""
             exit 1
           fi
