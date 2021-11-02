@@ -1,6 +1,6 @@
 # Polyfills
 
-Depending on the browsers you wish to support, your application will require some of the following polyfills:
+Depending on the browsers you wish to support, your application may require some of the following polyfills:
 
 - core-js (v[core-js-version])
 [polyfill-list]
