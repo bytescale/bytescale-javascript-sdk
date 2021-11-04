@@ -1,88 +1,87 @@
-# Upload.js
+<h1 align="center">
+  <a href="https://upload.io/">
+    <img alt="Upload.js" width="280" height="50" src="https://raw.githubusercontent.com/upload-io/assets/master/logo.svg">
+  </a>
+</h1>
 
-**New library: launched December 2021!**
+<p align="center"><b>File uploads & transformations made easy.</b></p>
+<br/>
+<p align="center">
+  <a href="https://github.com/upload-js/upload-js/">
+    <img src="https://img.shields.io/badge/gzipped-7%20kb-75C46B" />
+  </a>
 
-How to use:
+  <a href="https://www.npmjs.com/package/upload-js">
+    <img src="https://img.shields.io/badge/upload--js-npm-75C46B" />
+  </a>
 
-1.  [Create an Upload.js account](https://upload.io).
+  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/badge/build-passing-75C46B" />
+  </a>
 
-2.  Grab your API key.
+  <a href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20Upload.js%20lets%20you%20resize%2C%20crop%20and%20convert%20uploaded%20images%20%E2%80%94%20they%20take%20care%20of%20the%20file%20hosting%20%E2%80%94%20only%20needs%207%20lines%20of%20code%20to%20install%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
+    <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js%2F" />
+  </a>
 
-3.  Use one of [the examples](#examples) to create an upload button!
+</p>
+<br/>
+<p align="center"><a href="https://github.com/upload-js/upload-js/"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-## What does Upload.js do?
-
-**Upload.js makes it incredibly easy to add file uploads and file transformations to your website.**
-
-Upload.js is both a platform ([upload.io](https://upload.io/)) and an NPM package (`upload-js`): the platform provides beautiful dashboards to monitor usage and for creating URL-based file transformations, while the NPM package provides a lightweight helper function for easily adding file upload buttons to your website.
-
-Upload.js benefits:
-
-- **🚀 Fast uploads & downloads** 
-
-  Our CDN covers 200+ edge locations across 47 countries.
-
-- **🏗 URL-based transformations**
-
-  Transform any uploaded file on-demand, e.g. resizing images, extracting archives, etc.
-
-- **🔓 File security**
-
-  Limit downloads to only the signed-in users of your web app, or grant access to everyone on the Internet.
-
-## Getting started
-
-### Installing Upload.js
-
-```bash
-npm install upload-js
-```
-
-Or:
-
-```html
-<script src="https://js.upload.io/upload-js/v1"></script>
-```
-
-## Documentation
-
-See: [Upload.js documentation](https://upload.io/docs/upload-js).
-
-## Examples
-
-- [Plain HTML](#plain-html)
-- [React](#react)
-- [Vue.js](#vuejs)
-- [Angular](#angular)
-
-### Plain HTML
-
-#### `index.html`
-
-```html
-<input type="file" onchange="uploadFile(event)" />
-```
-
-#### `index.js`
+## 🚀 Quickstart
 
 ```javascript
+//
+// <input type="file" onchange="uploadMyFile(event)" />
+//
 var upload = new Upload({ apiKey: "..." });
-var uploadFile = upload.createFileInputHandler({
+var uploadMyFile = upload.createFileInputHandler({
   onUploaded: ({ fileUrl, fileId }) => {
     alert(`File uploaded! ${fileUrl}`);
   }
 });
 ```
 
-### React
+## ⚙️ Prerequisites
 
-#### `index.js`
+1.  You must have an [Upload.js account](https://upload.io).
+
+2.  You also need to install Upload.js:
+
+    ```bash
+    npm install upload-js
+    ```
+
+    Or:
+
+    ```html
+    <script src="https://js.upload.io/upload-js/v1"></script>
+    ```
+
+## 🎯 Features
+
+Upload.js is a small file upload library (7KB) powered by a powerful file processing platform ([upload.io](https://upload.io/)).
+
+You can use them together to:
+
+- Upload files with [7 lines of code](#-examples). (Files are uploaded to the Upload CDN.)
+- Download files with minimal latency. (Our CDN covers 200+ locations worldwide.)
+- Limit file access. (Upload.js can integrate with your app's auth layer to decide who can download files.)
+- Custom file transformations. (Build custom transformation plugins for the Upload CDN using JavaScript.)
+- Resize images, crop images & convert images.
+- And much more, [explore Upload.js](https://upload.io/docs/upload-js).
+
+## 👀 Examples
+
+#### 📖 **Uploading Files (React)**
 
 ```javascript
+//
+// <MyUploadButton />
+//
 var { Upload } = require("upload-js");
 var upload = new Upload({ apiKey: "..." });
 
-var UploadButton = () => {
+var MyUploadButton = () => {
   var uploadFile = upload.createFileInputHandler({
     onUploaded: ({ fileUrl, fileId }) => {
       alert(`File uploaded! ${fileUrl}`);
@@ -91,46 +90,15 @@ var UploadButton = () => {
 
   return <input type="file" onChange={uploadFile} />;
 };
-
-ReactDOM.render(<UploadButton />, document.querySelector("body"));
 ```
 
-### Vue.js
-
-#### `index.html`
-
-```html
-<input id="example" type="file" @change="uploadFile" />
-```
-
-#### `index.js`
+#### 📖 **Uploading Files (Angular)**
 
 ```javascript
+//
+// <input type="file" on-change="uploadFile" />
+//
 var upload = new Upload({ apiKey: "..." });
-var uploadFile = upload.createFileInputHandler({
-  onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded! ${fileUrl}`);
-  }
-});
-var vueApp = new Vue({
-  el: "#example",
-  methods: { uploadFile }
-});
-```
-
-### Angular
-
-#### `index.html`
-
-```html
-<input type="file" on-change="uploadFile" />
-```
-
-#### `index.js`
-
-```javascript
-var upload = new Upload({ apiKey: "..." });
-
 angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
@@ -147,8 +115,46 @@ angular
   }));
 ```
 
-## Browser compatibility
+#### 📖 **Uploading Files (Vue.js)**
 
-Supported browsers: [`> .01%`](https://browserslist.dev/?q=PiAuMDEl)
+```javascript
+//
+// <input id="example" type="file" @change="uploadFile" />
+//
+var upload = new Upload({ apiKey: "..." });
+var uploadFile = upload.createFileInputHandler({
+  onUploaded: ({ fileUrl, fileId }) => {
+    alert(`File uploaded! ${fileUrl}`);
+  }
+});
+var vueApp = new Vue({
+  el: "#example",
+  methods: { uploadFile }
+});
+```
 
-_Note: some of these browsers will require polyfills ([`POLYFILLS.md`](POLYFILLS.md))._
+#### 📖 **Uploading Files (Plain HTML & JS)**
+
+```javascript
+//
+// <input type="file" onchange="uploadFile(event)" />
+//
+var upload = new Upload({ apiKey: "..." });
+var uploadFile = upload.createFileInputHandler({
+  onUploaded: ({ fileUrl, fileId }) => {
+    alert(`File uploaded! ${fileUrl}`);
+  }
+});
+```
+
+## Contribute
+
+If you would like to contribute to Upload.js:
+
+1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling nice!).
+2. Determine whether you're raising a bug, feature request or question.
+3. Raise your issue or PR. 🚀
+
+## License
+
+[MIT](LICENSE)
