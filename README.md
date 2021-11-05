@@ -27,25 +27,11 @@
 <br/>
 <p align="center"><a href="https://github.com/upload-js/upload-js/"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-## 🚀 Quickstart
-
-```javascript
-//
-// <input type="file" onchange="uploadMyFile(event)" />
-//
-var upload = new Upload({ apiKey: "..." });
-var uploadMyFile = upload.createFileInputHandler({
-  onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded! ${fileUrl}`);
-  }
-});
-```
-
 ## ⚙️ Prerequisites
 
-1.  You must have an [Upload.js account](https://upload.io).
+1.  Create an [Upload.js account](https://upload.io) (there's a free trial).
 
-2.  You also need to install Upload.js:
+2.  Install Upload.js:
 
     ```bash
     npm install upload-js
@@ -72,11 +58,25 @@ You can use them together to:
 
 ## 👀 Examples
 
+#### 📖 **Uploading Files (Plain HTML & JS)**
+
+```javascript
+//
+// HTML: <input type="file" onchange="uploadFile(event)" />
+//
+var upload = new Upload({ apiKey: "..." });
+var uploadFile = upload.createFileInputHandler({
+  onUploaded: ({ fileUrl, fileId }) => {
+    alert(`File uploaded! ${fileUrl}`);
+  }
+});
+```
+
 #### 📖 **Uploading Files (React)**
 
 ```javascript
 //
-// <MyUploadButton />
+// JSX: <MyUploadButton />
 //
 var { Upload } = require("upload-js");
 var upload = new Upload({ apiKey: "..." });
@@ -96,7 +96,7 @@ var MyUploadButton = () => {
 
 ```javascript
 //
-// <input type="file" on-change="uploadFile" />
+// HTML: <input type="file" on-change="uploadFile" />
 //
 var upload = new Upload({ apiKey: "..." });
 angular
@@ -119,7 +119,7 @@ angular
 
 ```javascript
 //
-// <input id="example" type="file" @change="uploadFile" />
+// HTML: <input id="example" type="file" @change="uploadFile" />
 //
 var upload = new Upload({ apiKey: "..." });
 var uploadFile = upload.createFileInputHandler({
@@ -133,25 +133,11 @@ var vueApp = new Vue({
 });
 ```
 
-#### 📖 **Uploading Files (Plain HTML & JS)**
-
-```javascript
-//
-// <input type="file" onchange="uploadFile(event)" />
-//
-var upload = new Upload({ apiKey: "..." });
-var uploadFile = upload.createFileInputHandler({
-  onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded! ${fileUrl}`);
-  }
-});
-```
-
 ## Contribute
 
 If you would like to contribute to Upload.js:
 
-1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling nice!).
+1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling generous!).
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 
