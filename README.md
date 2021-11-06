@@ -45,20 +45,20 @@
 
 ## 🎯 Features
 
-Upload.js is a small file upload library (7KB) powered by a powerful file processing platform ([upload.io](https://upload.io/)).
+Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/)).
 
 You can use them together to:
 
 - Upload files with [7 lines of code](#-examples). (Files are uploaded to the Upload CDN.)
 - Download files with minimal latency. (Our CDN covers 200+ locations worldwide.)
-- Limit file access. (Upload.js can integrate with your app's auth layer to decide who can download files.)
-- Custom file transformations. (Build custom transformation plugins for the Upload CDN using JavaScript.)
+- Secure your files. (Upload.js can integrate with your app's auth layer to decide who can download files.)
+- Transform files. (Upload.js uses a plugin-based architecture: you can build your own transformations.)
 - Resize images, crop images & convert images.
 - And much more, [explore Upload.js](https://upload.io/docs/upload-js).
 
 ## 👀 Examples
 
-#### 📖 **Uploading Files (Plain HTML & JS)**
+#### 📖 **Uploading Files (Plain JS)**
 
 ```javascript
 //
