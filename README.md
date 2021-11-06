@@ -53,7 +53,7 @@ You can use them together to:
 - Download files with minimal latency. (Our CDN covers 200+ locations worldwide.)
 - Secure your files. (Upload.js can integrate with your app's auth layer to decide who can download files.)
 - Transform files. (Upload.js uses a plugin-based architecture: you can build your own transformations.)
-- Resize images, crop images & convert images.
+- Resize images, crop images & convert images. (Upload.js offers many transformations out-the-box.)
 - And much more, [explore Upload.js](https://upload.io/docs/upload-js).
 
 ## 👀 Examples
@@ -139,7 +139,7 @@ var vueApp = new Vue({
 
 If you would like to contribute to Upload.js:
 
-1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (only if you're having a good day!).
+1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (only if you're having a great day!).
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 
