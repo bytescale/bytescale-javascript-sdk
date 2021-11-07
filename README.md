@@ -29,7 +29,7 @@
 
 ## ⚙️ Prerequisites
 
-1.  Create an [Upload.js account](https://upload.io) (there's a free trial).
+1.  Create an [Upload.js account](https://upload.io) (free trial available).
 
 2.  Install Upload.js:
 
