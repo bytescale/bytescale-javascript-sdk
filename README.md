@@ -19,7 +19,7 @@
     <img src="https://img.shields.io/badge/build-passing-75C46B" />
   </a>
 
-  <a href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20Upload.js%20lets%20you%20resize%2C%20crop%20and%20convert%20uploaded%20images%20%E2%80%94%20they%20take%20care%20of%20the%20file%20hosting%20%E2%80%94%20only%20needs%207%20lines%20of%20code%20to%20install%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
+  <a href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20Upload.js%20lets%20you%20resize%20and%20convert%20your%20uploaded%20images%20%E2%80%94%20they%20take%20care%20of%20the%20file%20hosting%20%E2%80%94%20installs%20with%20just%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
     <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js%2F" />
   </a>
 
