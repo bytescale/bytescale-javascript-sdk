@@ -8,17 +8,17 @@ import {
   ErrorResponse,
   request,
   FileTag
-} from "upload-api-client-upload-js";
+} from "@upload-io/upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
-import { BeginUploadRequest } from "upload-api-client-upload-js/src/models/BeginUploadRequest";
+import { BeginUploadRequest } from "@upload-io/upload-api-client-upload-js/src/models/BeginUploadRequest";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
-import { FileSummary } from "upload-api-client-upload-js/src/models/FileSummary";
+import { FileSummary } from "@upload-io/upload-api-client-upload-js/src/models/FileSummary";
 import { SetAccessTokenResponseDto } from "upload-js/dtos/SetAccessTokenResponseDto";
 import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDto";
 import { AuthSession } from "upload-js/AuthSession";
-import { ApiRequestOptions } from "upload-api-client-upload-js/src/core/ApiRequestOptions";
-import { ApiResult } from "upload-api-client-upload-js/src/core/ApiResult";
+import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/core/ApiRequestOptions";
+import { ApiResult } from "@upload-io/upload-api-client-upload-js/src/core/ApiResult";
 import { Mutex } from "upload-js/Mutex";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;

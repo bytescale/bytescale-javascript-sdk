@@ -1,4 +1,4 @@
-import { FileTag } from "upload-api-client-upload-js/src/models/FileTag";
+import { FileTag } from "@upload-io/upload-api-client-upload-js/src/models/FileTag";
 
 export interface UploadedFile {
   accountId: string;
