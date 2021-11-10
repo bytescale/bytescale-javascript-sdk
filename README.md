@@ -4,7 +4,7 @@
   </a>
 </h1>
 
-<p align="center"><b>The easy way to upload & transform files.</b></p>
+<p align="center"><b>The fastest way to upload & transform files.</b></p>
 <br/>
 <p align="center">
   <a href="https://github.com/upload-js/upload-js/">
