@@ -1,6 +1,6 @@
 <h1 align="center">
   <a href="https://upload.io/">
-    <img alt="Upload.js" width="280" height="50" src="https://raw.githubusercontent.com/upload-io/assets/master/logo.svg">
+    <img alt="Upload.js" width="280" height="78" src="https://raw.githubusercontent.com/upload-io/assets/master/logo.svg">
   </a>
 </h1>
 
