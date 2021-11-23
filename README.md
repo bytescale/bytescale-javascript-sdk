@@ -65,7 +65,12 @@ You can use them together to:
   <head>
     <script src="https://js.upload.io/upload-js/v1"></script>
     <script>
-      const upload = new Upload({ apiKey: "..." });
+      const upload = new Upload({
+
+        // Replace with your API key. (Get from: https://upload.io/)
+        apiKey: "..."
+
+      });
       const uploadFile = upload.createFileInputHandler({
         onUploaded: ({ fileUrl, fileId }) => {
           alert(`File uploaded! ${fileUrl}`);
