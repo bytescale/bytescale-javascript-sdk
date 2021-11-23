@@ -73,7 +73,7 @@ You can use them together to:
       });
       const uploadFile = upload.createFileInputHandler({
         onUploaded: ({ fileUrl, fileId }) => {
-          alert(`File uploaded! ${fileUrl}`);
+          alert(`File uploaded!\n${fileUrl}`);
         }
       });
     </script>
@@ -96,7 +96,7 @@ const upload = new Upload({ apiKey: "..." });
 const MyUploadButton = () => {
   const uploadFile = upload.createFileInputHandler({
     onUploaded: ({ fileUrl, fileId }) => {
-      alert(`File uploaded! ${fileUrl}`);
+      alert(`File uploaded!\n${fileUrl}`);
     }
   });
 
@@ -117,7 +117,7 @@ angular
   .controller("exampleController", $scope => {
     $scope.uploadFile = upload.createFileInputHandler({
       onUploaded: ({ fileUrl, fileId }) => {
-        alert(`File uploaded! ${fileUrl}`);
+        alert(`File uploaded!\n${fileUrl}`);
       }
     });
   })
@@ -138,7 +138,7 @@ const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "..." });
 const uploadFile = upload.createFileInputHandler({
   onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded! ${fileUrl}`);
+    alert(`File uploaded!\n${fileUrl}`);
   }
 });
 const vueApp = new Vue({
