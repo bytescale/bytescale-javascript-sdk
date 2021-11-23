@@ -20,6 +20,7 @@ import { AuthSession } from "upload-js/AuthSession";
 import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/core/ApiRequestOptions";
 import { ApiResult } from "@upload-io/upload-api-client-upload-js/src/core/ApiResult";
 import { Mutex } from "upload-js/Mutex";
+import { FileLike } from "upload-js/FileLike";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -172,7 +173,7 @@ export class Upload {
     };
   }
 
-  async uploadFile(params: UploadParams & { file: File }): Promise<UploadedFile> {
+  async uploadFile(params: UploadParams & { file: FileLike }): Promise<UploadedFile> {
     // Initial progress, raised immediately and synchronously.
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -197,7 +198,7 @@ export class Upload {
   }
 
   private async beginFileUpload(
-    file: File,
+    file: FileLike,
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
   ): Promise<UploadedFile> {
@@ -295,7 +296,7 @@ export class Upload {
       mime: uploadMetadata.file.mime
     };
 
-    this.debug(`File upload completed. File = ${JSON.stringify(uploadedFile)}`);
+    this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
 
     return uploadedFile;
   }
@@ -400,18 +401,18 @@ export class Upload {
             const etag = xhr.getResponseHeader("etag");
 
             if (etag === null || etag === undefined) {
-              reject(new Error(`File upload error: no etag header in upload response.`));
+              reject(new Error(`FileLike upload error: no etag header in upload response.`));
             } else {
               resolve({ etag });
             }
           } else {
-            reject(new Error(`File upload error: status code ${xhr.status}`));
+            reject(new Error(`FileLike upload error: status code ${xhr.status}`));
           }
         });
 
-        xhr.onabort = () => reject(new Cancellation("File upload cancelled."));
-        xhr.onerror = () => reject(new Error("File upload error."));
-        xhr.ontimeout = () => reject(new Error("File upload timeout."));
+        xhr.onabort = () => reject(new Cancellation("FileLike upload cancelled."));
+        xhr.onerror = () => reject(new Error("FileLike upload error."));
+        xhr.ontimeout = () => reject(new Error("FileLike upload timeout."));
 
         xhr.open("PUT", url);
 
@@ -436,7 +437,7 @@ export class Upload {
   }
 
   private async uploadPart(
-    file: File,
+    file: FileLike,
     summary: FileSummary,
     isMultipart: boolean,
     part: UploadPart,
