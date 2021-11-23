@@ -153,19 +153,17 @@ const vueApp = new Vue({
 
 To resize an image:
 
-<p align="center"><a href="https://github.com/upload-js/upload-js/"><img alt="Image Resize Example" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-image-resize-demo.gif"></a></p>
 
-Login to the [Upload Dashboard](https://upload.io/dashboard) and follow these steps:
-
-1. Click 'Transformations' in the side navigation.
-2. Click 'Create a transformation' -> 'Transform an image'
-3. Complete the transformation wizard.
-4. Copy the resulting transformation URL, e.g.:
+1. Login to the [Upload Dashboard](https://upload.io/dashboard).
+2. Click 'Transformations' in the side navigation.
+3. Click 'Create a transformation' -> 'Transform an image'
+4. Complete the transformation wizard.
+5. Copy the resulting transformation URL, e.g.:
    ```
    https://files.upload.io/<file_id>/jpg;w=400
    ```
-5. Substitute `<file_id>` with a real file ID (for an image).
-6. The returned file will be the resized image.
+6. Substitute `<file_id>` with a real file ID (for an image).
+7. The returned file will be the resized image.
 
 ### Cropping Images
 
