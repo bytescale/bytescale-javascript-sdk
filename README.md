@@ -169,7 +169,7 @@ To resize an image:
 
 This example assumes you'll be collecting crop geometry from the user (i.e. through a UI component you've built).
 
-This code works by uploading the original image to Upload.io, and then uploading the crop dimensions as a secondary metadata file. When the metadata file is downloaded via an image transformation (created on Upload.io) the output will be the cropped image.
+This code works by uploading the original image to Upload.io, and then uploading the crop dimensions as a secondary metadata file. When the metadata file is downloaded via an image transformation (see above) the output will be the cropped image.
 
 See below:
 
