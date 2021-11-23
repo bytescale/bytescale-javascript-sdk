@@ -257,7 +257,7 @@ Note: with this approach you can reuse the same original image with multiple dif
 
 ---
 
-**Note: in future we'll provide a UI component that performs this entire flow out-the-box.**
+**Note: in future we'll provide a UI component that performs this flow out of the box.**
 
 ## Contribute
 
