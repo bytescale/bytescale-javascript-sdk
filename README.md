@@ -147,6 +147,120 @@ const vueApp = new Vue({
 });
 ```
 
+## Transforming Files
+
+### Resizing Images
+
+To resize an image:
+
+<p align="center"><a href="https://github.com/upload-js/upload-js/"><img alt="Image Resize Example" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-image-resize-demo.gif"></a></p>
+
+Login to the [Upload Dashboard](https://upload.io/dashboard) and follow these steps:
+
+1. Click 'Transformations' in the side navigation.
+2. Click 'Create a transformation' -> 'Transform an image'
+3. Complete the transformation wizard.
+4. Copy the resulting transformation URL, e.g.:
+   ```
+   https://files.upload.io/<file_id>/jpg;w=400
+   ```
+5. Substitute `<file_id>` with a real file ID (for an image).
+6. The returned file will be the resized image.
+
+### Cropping Images
+
+This example assumes you'll be collecting the crop geometry  using a client-side UI component that you have built.
+
+This code works by uploading the original image to Upload.io, and then uploading the crop dimensions as a secondary metadata file. When the metadata file is downloaded via an image transformation (created on Upload.io) the output will be the cropped image.
+
+See below:
+
+```html
+<html>
+  <head>
+    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script>
+      const upload = new Upload({
+        // Replace with your API key. (Get from: https://upload.io/)
+        apiKey: "..."
+      });
+
+      // Step 1: Wait for the original file to upload...
+      const onOriginalImageUploaded = ({ fileId, fileUrl: originalImageUrl }) => {
+
+        // Step 2: Create your crop metadata.
+        const crop = {
+          // Full type definition:
+          // https://github.com/upload-js/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
+          input: fileId,
+          pipeline: {
+            steps: [
+              {
+                geometry: {
+                  // Prompt your user for this...
+                  offset: {
+                    x: 20,
+                    y: 40
+                  },
+                  size: {
+                    width: 200,
+                    height: 100,
+                    type: "widthxheight!"
+                  }
+                },
+                type: "crop"
+              }
+            ]
+          }
+        }
+
+        // Step 3: Turn crop metadata into a BLOB.
+        const blob = new Blob([JSON.stringify(crop)], {type: "application/json"});
+
+        // Step 4: Upload the crop metadata.
+        upload
+          .uploadFile({
+            file: {
+              name: `${fileId}_cropped.json`, // Can be anything.
+              type: blob.type,
+              size: blob.size,
+              slice: (start, end) => blob.slice(start, end)
+            }
+          })
+          .then(
+            // Step 5: Wait for the crop metadata to upload...
+            ({ fileUrl: croppedImageUrl }) => {
+              // Step 6: Get the cropped image by appending an image transformation slug (e.g. '/jpg') to the crop metadata file's URL.
+              //         Note: '/jpg' is only illustrative -- you must use a transformation slug you've configured in the Upload Dashboard.
+              alert(`Original image:\n${originalImageUrl}\n\nCropped image:\n${croppedImageUrl}/jpg`)
+            },
+            e => console.error(e)
+          );
+      };
+
+      const uploadFile = upload.createFileInputHandler({
+        onUploaded: onOriginalImageUploaded
+      });
+    </script>
+  </head>
+  <body>
+    <input type="file" onchange="uploadFile(event)" />
+  </body>
+</html>
+```
+
+Produces the following result:
+
+![image](https://user-images.githubusercontent.com/3638917/143025588-a26d1bfa-18c7-4073-bd08-0779abf83331.png)
+
+(The latter URL is a 200x100 crop of the former URL.)
+
+Note: with this approach you can reuse the same original image with multiple different crops (say if the user later changes their mind on the cropping dimensions), so you don't need to keep re-uploading the same original image.
+
+---
+
+**Note: in future we'll provide a UI component that performs this entire flow out-the-box.**
+
 ## Contribute
 
 If you would like to contribute to Upload.js:
