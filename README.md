@@ -58,18 +58,25 @@ You can use them together to:
 
 ## 👀 Examples
 
-#### 📖 **Uploading Files (Plain JS)**
+#### 📖 **Uploading Files (Plain HTML & JS)**
 
-```javascript
-//
-// HTML: <input type="file" onchange="uploadFile(event)" />
-//
-var upload = new Upload({ apiKey: "..." });
-var uploadFile = upload.createFileInputHandler({
-  onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded! ${fileUrl}`);
-  }
-});
+```html
+<html>
+  <head>
+    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script>
+      const upload = new Upload({ apiKey: "..." });
+      const uploadFile = upload.createFileInputHandler({
+        onUploaded: ({ fileUrl, fileId }) => {
+          alert(`File uploaded! ${fileUrl}`);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <input type="file" onchange="uploadFile(event)" />
+  </body>
+</html>
 ```
 
 #### 📖 **Uploading Files (React)**
@@ -78,11 +85,11 @@ var uploadFile = upload.createFileInputHandler({
 //
 // JSX: <MyUploadButton />
 //
-var { Upload } = require("upload-js");
-var upload = new Upload({ apiKey: "..." });
+const { Upload } = require("upload-js");
+const upload = new Upload({ apiKey: "..." });
 
-var MyUploadButton = () => {
-  var uploadFile = upload.createFileInputHandler({
+const MyUploadButton = () => {
+  const uploadFile = upload.createFileInputHandler({
     onUploaded: ({ fileUrl, fileId }) => {
       alert(`File uploaded! ${fileUrl}`);
     }
@@ -98,8 +105,8 @@ var MyUploadButton = () => {
 //
 // HTML: <input type="file" on-change="uploadFile" />
 //
-var { Upload } = require("upload-js");
-var upload = new Upload({ apiKey: "..." });
+const { Upload } = require("upload-js");
+const upload = new Upload({ apiKey: "..." });
 angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
@@ -122,14 +129,14 @@ angular
 //
 // HTML: <input id="example" type="file" @change="uploadFile" />
 //
-var { Upload } = require("upload-js");
-var upload = new Upload({ apiKey: "..." });
-var uploadFile = upload.createFileInputHandler({
+const { Upload } = require("upload-js");
+const upload = new Upload({ apiKey: "..." });
+const uploadFile = upload.createFileInputHandler({
   onUploaded: ({ fileUrl, fileId }) => {
     alert(`File uploaded! ${fileUrl}`);
   }
 });
-var vueApp = new Vue({
+const vueApp = new Vue({
   el: "#example",
   methods: { uploadFile }
 });
