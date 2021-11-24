@@ -247,12 +247,6 @@ See below:
 </html>
 ```
 
-Produces the following result:
-
-![image](https://user-images.githubusercontent.com/3638917/143025588-a26d1bfa-18c7-4073-bd08-0779abf83331.png)
-
-(The latter URL is a 200x100 crop of the former URL.)
-
 Note: with this approach you can reuse the same original image with multiple different crops (say if the user later changes their mind on the cropping dimensions), so you don't need to keep re-uploading the same original image.
 
 ---
