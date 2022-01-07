@@ -6,7 +6,7 @@
   "license": "MIT",
   "main": "dist/main.js",
   "types": "dist/index.d.ts",
-  "homepage": "https://github.com/upload-js/upload-js",
+  "homepage": "https://upload.io/upload-js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/upload-js/upload-js.git"
