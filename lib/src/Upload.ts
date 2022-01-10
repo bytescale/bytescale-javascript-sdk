@@ -193,8 +193,9 @@ export class Upload {
     }
   }
 
-  url(fileId: string): string {
-    return `${this.cdnUrl}/${fileId}`;
+  url(fileId: string, transformationSlug?: string): string {
+    const fileUrl = `${this.cdnUrl}/${fileId}`;
+    return transformationSlug === undefined ? fileUrl : `${fileUrl}/${transformationSlug}`;
   }
 
   private async beginFileUpload(
