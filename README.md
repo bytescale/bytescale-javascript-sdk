@@ -25,7 +25,7 @@
 
 </p>
 <br/>
-<p align="center"><a href="https://github.com/upload-js/upload-js/"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
+<p align="center"><a href="https://upload.io/upload-js/get-started"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
 ## ⚙️ Prerequisites
 
