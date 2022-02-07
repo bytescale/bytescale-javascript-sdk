@@ -1,5 +1,5 @@
 <h1 align="center">
-  <a href="https://upload.io/upload-js/get-started">
+  <a href="https://upload.io/upload-js">
     <img alt="Upload.js" width="280" height="78" src="https://raw.githubusercontent.com/upload-io/assets/master/logo.svg">
   </a>
 </h1>
@@ -25,7 +25,7 @@
 
 </p>
 <br/>
-<p align="center"><a href="https://upload.io/upload-js/get-started"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
+<p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
 ## ⚙️ Prerequisites
 
@@ -45,7 +45,7 @@
 
 ## 🎯 Features
 
-Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js/get-started)).
+Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
 
 You can use them together to:
 
