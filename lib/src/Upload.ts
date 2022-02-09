@@ -60,7 +60,7 @@ export class Upload {
       // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
       // everywhere in perpetuity (since removing the trimming would be a breaking change).
       throw new Error(
-        "[upload-js] Invalid API key. Whitespace detected: please remove whitespace from the API key and try again."
+        "[upload-js] Please enter a valid API key: whitespace was detected in your API key, please remove it and try again."
       );
     }
 
@@ -70,14 +70,14 @@ export class Upload {
       this.accountId = config.internal.accountId;
     } else {
       if (!config.apiKey.startsWith(this.apiKeyPrefix)) {
-        throw new Error(`[upload-js] Invalid API key. API keys must start with '${this.apiKeyPrefix}'`);
+        throw new Error(`[upload-js] Please enter a valid API key: it must begin with "${this.apiKeyPrefix}".`);
       }
 
       this.accountId = config.apiKey.substr(this.apiKeyPrefix.length, this.accountIdLength);
 
       if (this.accountId.length !== this.accountIdLength) {
         throw new Error(
-          `[upload-js] Invalid API key. API keys must be at least ${
+          `[upload-js] Please enter a valid API key: it must be at least ${
             this.apiKeyPrefix.length + this.accountIdLength
           } characters long, but the API key you provided is ${this.apiKeyPrefix.length + this.accountId.length}.`
         );
