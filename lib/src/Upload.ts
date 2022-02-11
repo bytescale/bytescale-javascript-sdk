@@ -61,7 +61,7 @@ export class Upload {
     this.debugMode = config.debug === true;
 
     if ((config.apiKey ?? undefined) === undefined) {
-      throw new Error("[upload-js] Please enter a valid API key.");
+      throw new Error("[upload-js] Please provide an API key via the 'apiKey' config parameter.");
     }
 
     if (config.apiKey.trim() !== config.apiKey) {
