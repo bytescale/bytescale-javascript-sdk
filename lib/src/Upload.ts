@@ -47,6 +47,10 @@ export class Upload {
   private lastAuthSession: AuthSession | undefined = undefined;
 
   constructor(private readonly config: UploadConfig) {
+    if ((config ?? undefined) === undefined) {
+      throw new Error("[upload-js] Please provide a configuration object to the constructor.");
+    }
+
     if (config.debug === true) {
       console.log(`[upload-js] Initialized with API key '${config.apiKey}'`);
     }
@@ -55,6 +59,10 @@ export class Upload {
     this.authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
     this.headers = config.internal?.headers;
     this.debugMode = config.debug === true;
+
+    if ((config.apiKey ?? undefined) === undefined) {
+      throw new Error("[upload-js] Please enter a valid API key.");
+    }
 
     if (config.apiKey.trim() !== config.apiKey) {
       // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
