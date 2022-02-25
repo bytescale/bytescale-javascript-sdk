@@ -74,14 +74,11 @@ Or via `<script>` tag:
 <script src="https://js.upload.io/upload-js/v1"></script>
 ```
 
-## Using Upload.js with Popular Frameworks
+## Use with Popular Frameworks
 
 ### Uploading Files with React — [**Try on CodePen**](https://codepen.io/upload-js/pen/jOavBPb?editors=1010)
 
 ```javascript
-//
-// JSX: <MyUploadButton />
-//
 const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "free" });
 
@@ -105,9 +102,6 @@ const MyUploadButton = () => {
 ### Uploading Files with Angular
 
 ```javascript
-//
-// HTML: <input type="file" on-change="uploadFile" />
-//
 const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "free" });
 angular
@@ -135,9 +129,6 @@ angular
 ### Uploading Files with Vue.js
 
 ```javascript
-//
-// HTML: <input id="example" type="file" @change="uploadFile" />
-//
 const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "free" });
 const uploadFile = upload.createFileInputHandler({
