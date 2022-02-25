@@ -177,7 +177,7 @@ Autocrop it with:
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 ```
 
-**Tip:** you can create more transformations [with a full account](https://upload.io/pricing).
+**Tip:** create more transformations [with a full account](https://upload.io/pricing).
 
 ### Cropping Images — [**Try on CodePen**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
@@ -268,20 +268,25 @@ They work together to provide:
 - Simple File Storage & File Hosting. (Zero config: all you need is an Upload API Key.)
 - Fast CDN. (Files are served from 300+ locations worldwide.)
 - Low-Latency File Transformations. (Resize images, crop images & convert images.)
-- Create an [Upload account](https://upload.io/pricing) to further benefit from:
-  - Permanent File Storage. (The `"free"` API key provides temporary storage only.)
-  - Upload & Download Authentication. (Via your web app using JWTs.)
-  - File and Folder Management.
-  - Expiring Links.
-  - Rate Limiting Controls.
-  - Traffic Limiting Controls.
-  - Max File Size Controls.
-  - IP & File Blacklisting.
-  - Usage Monitoring & Dashboards.
-  - Custom File Transformations.
-  - Custom CNAME.
 
-**[See Upload.js Homepage »](https://upload.io/upload-js)**
+Create an [Upload account](https://upload.io/pricing) to benefit from:
+
+- Permanent File Storage. (The `"free"` API key provides temporary storage only.)
+- Upload & Download Authentication. (Via your web app using JWTs.)
+- Upload & Download Monitoring.
+- File & Folder Management.
+- Custom CNAME.
+- Expiring Links.
+- Advanced Features:
+  - Rate Limiting.
+  - Traffic Limiting.
+  - File Size Limiting.
+  - IP Blacklisting.
+  - File Type Blacklisting.
+  - And More...
+
+
+**[See all Features »](https://upload.io/features)**
 
 ## Contribute
 
