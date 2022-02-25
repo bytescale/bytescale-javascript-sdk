@@ -31,8 +31,6 @@
 
 To create a working file upload button, copy-and-paste this:
 
-[**Try on CodePen »**](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
-
 ```html
 <html>
   <head>
@@ -62,6 +60,8 @@ To create a working file upload button, copy-and-paste this:
 </html>
 ```
 
+[**Try on CodePen »**](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+
 ### Integrates with Popular Frameworks
 
 Install via NPM:
@@ -76,9 +76,7 @@ Or via `<script>` tag:
 <script src="https://js.upload.io/upload-js/v1"></script>
 ```
 
-#### Uploading Files with React
-
-[**Try on CodePen »**](https://codepen.io/upload-js/pen/jOavBPb?editors=1010)
+#### Uploading Files with React — [**Try on CodePen »**](https://codepen.io/upload-js/pen/jOavBPb?editors=1010)
 
 ```javascript
 //
@@ -183,11 +181,9 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 **Tip:** you can create more transformations [with a full account](https://upload.io/pricing).
 
-### Cropping Images
+### Cropping Images — [**Try on CodePen »**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
 Cropping images with manual geometry requires a few extra steps:
-
-[**Try on CodePen »**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
 ```html
 <html>
