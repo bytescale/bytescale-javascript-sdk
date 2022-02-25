@@ -29,7 +29,7 @@
 
 ## 🚀 Get Started — Copy, Paste & Run!
 
-To create a working file upload button, simply copy-and-paste this:
+To create a working file upload button, copy-and-paste this:
 
 ```html
 <html>
@@ -60,15 +60,15 @@ To create a working file upload button, simply copy-and-paste this:
 </html>
 ```
 
-### 🔧 Integrates with Popular Frameworks
+### Integrates with Popular Frameworks
 
-#### 📖 **Install with NPM**
+#### **Install with NPM**
 
 ```shell
 npm install upload-js
 ```
 
-#### 📖 **Upload Files with React**
+#### **Uploading Files with React**
 
 ```javascript
 //
@@ -94,7 +94,7 @@ const MyUploadButton = () => {
 };
 ```
 
-#### 📖 **Upload Files with Angular**
+#### **Uploading Files with Angular**
 
 ```javascript
 //
@@ -124,7 +124,7 @@ angular
   }));
 ```
 
-#### 📖 **Upload Files with Vue.js**
+#### **Uploading Files with Vue.js**
 
 ```javascript
 //
@@ -149,11 +149,7 @@ const vueApp = new Vue({
 });
 ```
 
-## Documentation
-
-Read the full **[Upload.js Documentation](https://upload.io/docs/upload-js)**.
-
-## Transforming Files
+## ⚡ Transforming Files
 
 ### Resizing Images
 
@@ -252,6 +248,10 @@ To crop images using manual crop geometry:
   </body>
 </html>
 ```
+
+## 📖 Full Documentation
+
+Read the full **[Upload.js Documentation](https://upload.io/docs/upload-js)**.
 
 ## 🎯 All Features
 
