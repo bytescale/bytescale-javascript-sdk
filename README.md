@@ -260,7 +260,7 @@ They work together to provide:
 - Fast CDN. (Files are served from 300+ locations worldwide.)
 - Low-Latency File Transformations. (Resize images, crop images & convert images.)
 
-Create an [Upload account](https://upload.io/pricing) to benefit from:
+Create an account to benefit from:
 
 - Permanent File Storage. (The `"free"` API key provides temporary storage only.)
 - Upload & Download Authentication. (Via your web app using JWTs.)
