@@ -165,19 +165,19 @@ Given the `fileUrl`:
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
 ```
 
-Resize it with:
+Resize with:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
 ```
 
-Autocrop it with:
+Autocrop with:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 ```
 
-**Tip:** create more transformations [with a full account](https://upload.io/pricing).
+**Note:** please [create an account](https://upload.io/pricing) to configure more transformations.
 
 ### Cropping Images — [**Try on CodePen**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
