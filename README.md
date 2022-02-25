@@ -31,6 +31,10 @@
 
 To create a working file upload button, copy-and-paste this:
 
+<a target="_blank" href="https://codepen.io/upload-js/pen/abVapaJ?editors=1010">
+  <b>Try on CodePen »</b>
+</a>
+
 ```html
 <html>
   <head>
@@ -74,7 +78,11 @@ Or via `<script>` tag:
 <script src="https://js.upload.io/upload-js/v1"></script>
 ```
 
-#### **Uploading Files with React**
+#### Uploading Files with React
+
+<a target="_blank" href="https://codepen.io/upload-js/pen/jOavBPb?editors=1010">
+  <b>Try on CodePen »</b>
+</a>
 
 ```javascript
 //
@@ -100,7 +108,7 @@ const MyUploadButton = () => {
 };
 ```
 
-#### **Uploading Files with Angular**
+#### Uploading Files with Angular
 
 ```javascript
 //
@@ -130,7 +138,7 @@ angular
   }));
 ```
 
-#### **Uploading Files with Vue.js**
+#### Uploading Files with Vue.js
 
 ```javascript
 //
@@ -181,7 +189,11 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 ### Cropping Images
 
-To crop images using manually-provided crop geometry:
+Cropping images with manual geometry requires a few extra steps:
+
+<a target="_blank" href="https://codepen.io/upload-js/pen/JjOaWpB?editors=1010">
+  <b>Try on CodePen »</b>
+</a>
 
 ```html
 <html>
