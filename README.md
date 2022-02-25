@@ -66,10 +66,8 @@ You can use them together to:
     <script src="https://js.upload.io/upload-js/v1"></script>
     <script>
       const upload = new Upload({
-
-        // Replace with your API key. (Get from: https://upload.io/)
-        apiKey: "..."
-
+        // Get production API keys from Upload.io
+        apiKey: "free"
       });
       const uploadFile = upload.createFileInputHandler({
         onUploaded: ({ fileUrl, fileId }) => {
@@ -91,7 +89,7 @@ You can use them together to:
 // JSX: <MyUploadButton />
 //
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "..." });
+const upload = new Upload({ apiKey: "free" });
 
 const MyUploadButton = () => {
   const uploadFile = upload.createFileInputHandler({
@@ -111,7 +109,7 @@ const MyUploadButton = () => {
 // HTML: <input type="file" on-change="uploadFile" />
 //
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "..." });
+const upload = new Upload({ apiKey: "free" });
 angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
@@ -135,7 +133,7 @@ angular
 // HTML: <input id="example" type="file" @change="uploadFile" />
 //
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "..." });
+const upload = new Upload({ apiKey: "free" });
 const uploadFile = upload.createFileInputHandler({
   onUploaded: ({ fileUrl, fileId }) => {
     alert(`File uploaded!\n${fileUrl}`);
@@ -179,8 +177,8 @@ See below:
     <script src="https://js.upload.io/upload-js/v1"></script>
     <script>
       const upload = new Upload({
-        // Replace with your API key. (Get from: https://upload.io/)
-        apiKey: "..."
+        // Get production API keys from Upload.io
+        apiKey: "free"
       });
 
       // Step 1: Wait for the original file to upload...
