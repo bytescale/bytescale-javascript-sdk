@@ -157,9 +157,7 @@ const vueApp = new Vue({
 });
 ```
 
-# ⚡ Transforming Files
-
-## Resizing Images
+### Resizing Images
 
 Given the `fileUrl`:
 
@@ -181,7 +179,7 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 **Tip:** you can create more transformations [with a full account](https://upload.io/pricing).
 
-## Cropping Images — [**Try on CodePen**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
+### Cropping Images — [**Try on CodePen**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
 Cropping images with manual geometry requires a few extra steps:
 
@@ -257,11 +255,11 @@ Cropping images with manual geometry requires a few extra steps:
 </html>
 ```
 
-# 📖 Full Documentation
+## 📖 Full Documentation
 
 **[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
 
-# 🎯 All Features
+## 🎯 All Features
 
 Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
 
@@ -285,7 +283,7 @@ They work together to provide:
 
 **[See Upload.js Homepage »](https://upload.io/upload-js)**
 
-# Contribute
+## Contribute
 
 If you would like to contribute to Upload.js:
 
@@ -293,6 +291,6 @@ If you would like to contribute to Upload.js:
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 
-# License
+## License
 
 [MIT](LICENSE)
