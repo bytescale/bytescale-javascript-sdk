@@ -27,38 +27,9 @@
 <br/>
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-## ⚙️ Prerequisites
+## 🚀 Get Started — Copy, Paste & Run!
 
-1.  [Create an Upload account](https://upload.io/) (it only takes a few seconds).
-
-2.  Install Upload.js:
-
-    ```bash
-    npm install upload-js
-    ```
-
-    Or:
-
-    ```html
-    <script src="https://js.upload.io/upload-js/v1"></script>
-    ```
-
-## 🎯 Features
-
-Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
-
-You can use them together to:
-
-- Upload files with [7 lines of code](#-examples). (Files are uploaded to the Upload CDN.)
-- Download files with minimal latency. (Our CDN covers 200+ locations worldwide.)
-- Secure your files. (Upload.js can integrate with your app's auth layer to decide who can download files.)
-- Transform files. (Upload.js uses a plugin-based architecture: you can build your own transformations.)
-- Resize images, crop images & convert images. (Upload.js offers many transformations out-the-box.)
-- And much more, [explore Upload.js](https://upload.io/docs/upload-js).
-
-## 👀 Examples
-
-#### 📖 **Uploading Files (Plain HTML & JS)**
+To create a working file upload button, simply copy-and-paste this:
 
 ```html
 <html>
@@ -69,9 +40,16 @@ You can use them together to:
         // Get production API keys from Upload.io
         apiKey: "free"
       });
+
       const uploadFile = upload.createFileInputHandler({
+        onProgress: ({ bytesSent, bytesTotal }) => {
+          console.log(`${bytesSent / bytesTotal}% complete`)
+        },
         onUploaded: ({ fileUrl, fileId }) => {
           alert(`File uploaded!\n${fileUrl}`);
+        },
+        onError: (error) => {
+          alert(`Error!\n${error.message}`);
         }
       });
     </script>
@@ -82,7 +60,15 @@ You can use them together to:
 </html>
 ```
 
-#### 📖 **Uploading Files (React)**
+### 🔧 Integrates with Popular Frameworks
+
+#### 📖 **Install with NPM**
+
+```shell
+npm install upload-js
+```
+
+#### 📖 **Upload Files with React**
 
 ```javascript
 //
@@ -93,8 +79,14 @@ const upload = new Upload({ apiKey: "free" });
 
 const MyUploadButton = () => {
   const uploadFile = upload.createFileInputHandler({
+    onProgress: ({ bytesSent, bytesTotal }) => {
+      console.log(`${bytesSent / bytesTotal}% complete`)
+    },
     onUploaded: ({ fileUrl, fileId }) => {
       alert(`File uploaded!\n${fileUrl}`);
+    },
+    onError: (error) => {
+      alert(`Error!\n${error.message}`);
     }
   });
 
@@ -102,7 +94,7 @@ const MyUploadButton = () => {
 };
 ```
 
-#### 📖 **Uploading Files (Angular)**
+#### 📖 **Upload Files with Angular**
 
 ```javascript
 //
@@ -114,8 +106,14 @@ angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
     $scope.uploadFile = upload.createFileInputHandler({
+      onProgress: ({ bytesSent, bytesTotal }) => {
+        console.log(`${bytesSent / bytesTotal}% complete`)
+      },
       onUploaded: ({ fileUrl, fileId }) => {
         alert(`File uploaded!\n${fileUrl}`);
+      },
+      onError: (error) => {
+        alert(`Error!\n${error.message}`);
       }
     });
   })
@@ -126,7 +124,7 @@ angular
   }));
 ```
 
-#### 📖 **Uploading Files (Vue.js)**
+#### 📖 **Upload Files with Vue.js**
 
 ```javascript
 //
@@ -135,8 +133,14 @@ angular
 const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "free" });
 const uploadFile = upload.createFileInputHandler({
+  onProgress: ({ bytesSent, bytesTotal }) => {
+    console.log(`${bytesSent / bytesTotal}% complete`)
+  },
   onUploaded: ({ fileUrl, fileId }) => {
     alert(`File uploaded!\n${fileUrl}`);
+  },
+  onError: (error) => {
+    alert(`Error!\n${error.message}`);
   }
 });
 const vueApp = new Vue({
@@ -145,31 +149,37 @@ const vueApp = new Vue({
 });
 ```
 
+## Documentation
+
+Read the full **[Upload.js Documentation](https://upload.io/docs/upload-js)**.
+
 ## Transforming Files
 
 ### Resizing Images
 
-To resize an image:
+Given the `fileUrl`:
 
+```
+https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
+```
 
-1. Login to the [Upload Dashboard](https://upload.io/dashboard).
-2. Click 'Transformations' in the side navigation.
-3. Click 'Create a transformation' -> 'Transform an image'
-4. Complete the transformation wizard.
-5. Copy the resulting transformation URL, e.g.:
-   ```
-   https://files.upload.io/<file_id>/jpg;w=400
-   ```
-6. Substitute `<file_id>` with a real file ID (for an image).
-7. The returned file will be the resized image.
+Resize with:
+
+```
+https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
+```
+
+Autocrop with:
+
+```
+https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
+```
+
+**Tip:** create more transformations by [creating an account](https://upload.io/pricing).
 
 ### Cropping Images
 
-This example assumes you'll be collecting crop geometry from the user (i.e. through a UI component you've built).
-
-This code works by uploading the original image to Upload.io, and then uploading the crop dimensions as a secondary metadata file. When the metadata file is downloaded via an image transformation (see above) the output will be the cropped image.
-
-See below:
+To crop images using manual crop geometry:
 
 ```html
 <html>
@@ -181,24 +191,24 @@ See below:
         apiKey: "free"
       });
 
-      // Step 1: Wait for the original file to upload...
+      // Step 1: Upload the original file.
       const onOriginalImageUploaded = ({ fileId, fileUrl: originalImageUrl }) => {
 
-        // Step 2: Create your crop metadata.
+        // Step 2: Configure crop geometry.
         const crop = {
-          // Full type definition:
-          // https://github.com/upload-js/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
+          // Type Def: https://github.com/upload-js/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
           input: fileId,
           pipeline: {
             steps: [
               {
                 geometry: {
-                  // Prompt your user for this...
+                  // Prompt your user for these dimensions...
                   offset: {
                     x: 20,
                     y: 40
                   },
                   size: {
+                    // ...and these too...
                     width: 200,
                     height: 100,
                     type: "widthxheight!"
@@ -210,10 +220,8 @@ See below:
           }
         }
 
-        // Step 3: Turn crop metadata into a BLOB.
+        // Step 3: Upload the crop geometry.
         const blob = new Blob([JSON.stringify(crop)], {type: "application/json"});
-
-        // Step 4: Upload the crop metadata.
         upload
           .uploadFile({
             file: {
@@ -224,11 +232,11 @@ See below:
             }
           })
           .then(
-            // Step 5: Wait for the crop metadata to upload...
-            ({ fileUrl: croppedImageUrl }) => {
-              // Step 6: Get the cropped image by appending an image transformation slug (e.g. '/jpg') to the crop metadata file's URL.
-              //         Note: '/jpg' is only illustrative -- you must use a transformation slug you've configured in the Upload Dashboard.
-              alert(`Original image:\n${originalImageUrl}\n\nCropped image:\n${croppedImageUrl}/jpg`)
+            ({ fileUrl: cropGeometryUrl }) => {
+
+              // Step 4: Done! Here's the cropped image's URL:
+              alert(`Cropped image:\n${cropGeometryUrl}/thumbnail`)
+
             },
             e => console.error(e)
           );
@@ -245,17 +253,35 @@ See below:
 </html>
 ```
 
-Note: with this approach you can reuse the same original image with multiple different crops (say if the user later changes their mind on the cropping dimensions), so you don't need to keep re-uploading the same original image.
+## 🎯 All Features
 
----
+Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
 
-**Note: in future we'll provide a UI component that performs this flow out of the box.**
+Together they provide:
+
+- Simple File Storage & File Hosting. (Zero config: all you need is an Upload API Key.)
+- Fast CDN. (Files are served from 300+ locations worldwide.)
+- Low-Latency File Transformations. (Resize images, crop images & convert images.)
+- Create an [Upload account](https://upload.io/pricing) to further benefit from:
+  - Permanent File Storage. (The `"free"` API key provides temporary storage only.)
+  - Upload & Download Authentication. (Via your web app using JWTs.)
+  - File and Folder Management.
+  - Expiring Links.
+  - Rate Limiting Controls.
+  - Traffic Limiting Controls.
+  - Max File Size Controls.
+  - IP & File Blacklisting.
+  - Usage Monitoring & Dashboards.
+  - Custom File Transformations.
+  - Custom CNAME.
+
+**[Visit the Upload.js Homepage »](https://upload.io/upload-js)**
 
 ## Contribute
 
 If you would like to contribute to Upload.js:
 
-1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (only if you're feeling generous!).
+1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling generous!).
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 
