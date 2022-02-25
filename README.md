@@ -27,7 +27,7 @@
 <br/>
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-# 🚀 Get Started — Copy-and-Paste — [**Try on CodePen**](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+# 🚀 Get Started — [**Try on CodePen**](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
 
 To create a working file upload button, copy this example:
 
@@ -60,7 +60,7 @@ To create a working file upload button, copy this example:
 </html>
 ```
 
-## Installing Upload.js
+## Installation
 
 Install via NPM:
 
