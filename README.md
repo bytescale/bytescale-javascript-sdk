@@ -68,7 +68,7 @@ Install via NPM:
 npm install upload-js
 ```
 
-Or use a `<script>` tag:
+Or via `<script>` tag:
 
 ```shell
 <script src="https://js.upload.io/upload-js/v1"></script>
@@ -165,23 +165,23 @@ Given the `fileUrl`:
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
 ```
 
-Resize with:
+Resize it with:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
 ```
 
-Autocrop with:
+Autocrop it with:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 ```
 
-**Tip:** create more transformations by [creating an account](https://upload.io/pricing).
+**Tip:** you can create more transformations [with a full account](https://upload.io/pricing).
 
 ### Cropping Images
 
-To crop images using manual crop geometry:
+To crop images using manually-provided crop geometry:
 
 ```html
 <html>
@@ -257,13 +257,13 @@ To crop images using manual crop geometry:
 
 ## 📖 Full Documentation
 
-Read the full **[Upload.js Documentation](https://upload.io/docs/upload-js)**.
+See the **[Upload.js Documentation](https://upload.io/docs/upload-js)**.
 
 ## 🎯 All Features
 
 Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
 
-Together they provide:
+They work together to provide:
 
 - Simple File Storage & File Hosting. (Zero config: all you need is an Upload API Key.)
 - Fast CDN. (Files are served from 300+ locations worldwide.)
