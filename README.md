@@ -62,10 +62,16 @@ To create a working file upload button, copy-and-paste this:
 
 ### Integrates with Popular Frameworks
 
-#### **Install with NPM**
+Install via NPM:
 
 ```shell
 npm install upload-js
+```
+
+Or use a `<script>` tag:
+
+```shell
+<script src="https://js.upload.io/upload-js/v1"></script>
 ```
 
 #### **Uploading Files with React**
