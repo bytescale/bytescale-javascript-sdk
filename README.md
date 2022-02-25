@@ -172,7 +172,7 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 ### Cropping Images — [**Try on CodePen**](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
-Cropping images with manual geometry requires a few extra steps:
+To crop images using manual geometry:
 
 ```html
 <html>
