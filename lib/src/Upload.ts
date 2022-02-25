@@ -32,6 +32,8 @@ type AddCancellationHandler = (cancellationHandler: () => void) => void;
 export class Upload {
   private readonly accountId: AccountId;
   private readonly accountIdLength = 7; // Sync with: upload/shared/**/AccountIdUtils
+  private readonly specialApiKeyAccountId = "W142hJk";
+  private readonly specialApiKeys = ["free", "demo"];
   private readonly apiKeyPrefix = "public_";
   private readonly apiUrl: string;
   private readonly authenticateWithApiKey: boolean;
@@ -77,18 +79,22 @@ export class Upload {
     if (config.internal?.authenticateWithApiKey === false) {
       this.accountId = config.internal.accountId;
     } else {
-      if (!config.apiKey.startsWith(this.apiKeyPrefix)) {
-        throw new Error(`[upload-js] Please enter a valid API key: it must begin with "${this.apiKeyPrefix}".`);
-      }
+      if (this.specialApiKeys.includes(config.apiKey)) {
+        this.accountId = this.specialApiKeyAccountId;
+      } else {
+        if (!config.apiKey.startsWith(this.apiKeyPrefix)) {
+          throw new Error(`[upload-js] Please enter a valid API key: it must begin with "${this.apiKeyPrefix}".`);
+        }
 
-      this.accountId = config.apiKey.substr(this.apiKeyPrefix.length, this.accountIdLength);
+        this.accountId = config.apiKey.substr(this.apiKeyPrefix.length, this.accountIdLength);
 
-      if (this.accountId.length !== this.accountIdLength) {
-        throw new Error(
-          `[upload-js] Please enter a valid API key: it must be at least ${
-            this.apiKeyPrefix.length + this.accountIdLength
-          } characters long, but the API key you provided is ${this.apiKeyPrefix.length + this.accountId.length}.`
-        );
+        if (this.accountId.length !== this.accountIdLength) {
+          throw new Error(
+            `[upload-js] Please enter a valid API key: it must be at least ${
+              this.apiKeyPrefix.length + this.accountIdLength
+            } characters long, but the API key you provided is ${this.apiKeyPrefix.length + this.accountId.length}.`
+          );
+        }
       }
     }
   }
