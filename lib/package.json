@@ -26,9 +26,7 @@
     "files",
     "file management",
     "file input",
-    "multipart",
-    "images",
-    "image processing"
+    "multipart"
   ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
