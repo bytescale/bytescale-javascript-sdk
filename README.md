@@ -25,11 +25,11 @@
   <br/>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/badge/TypeScript-included-blue" />
+    <img src="https://img.shields.io/badge/TypeScript-included-203750" />
   </a>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=blue" />
+    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=203750" />
   </a>
 
   <a target="_blank" href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20I%20just%20found%20Upload.js%20%E2%80%94%20it's%20a%20library%20and%20a%20SaaS%20%E2%80%94%20makes%20it%20super%20easy%20to%20add%20file%20uploads%20%26%20transformations%20into%20web%20apps%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
