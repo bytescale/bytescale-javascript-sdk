@@ -254,11 +254,11 @@ To crop images using manual geometry:
 
 Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
 
-They work together to provide:
+Together they provide:
 
 - Simple File Storage & File Hosting. (Zero config: all you need is an Upload API Key.)
-- Fast CDN. (Files are served from 300+ locations worldwide.)
-- Low-Latency File Transformations. (Resize images, crop images & convert images.)
+- Global CDN. (Files are served from 300+ locations worldwide.)
+- Fast Image Transformations. (Resize images, crop images & convert images.)
 
 Additional features for [registered users](https://upload.io/pricing):
 
