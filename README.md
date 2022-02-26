@@ -4,7 +4,7 @@
   </a>
 </h1>
 
-<p align="center"><b>The fastest way to upload & transform files.</b></p>
+<p align="center"><b>The quickest way to upload files.</b></p>
 <br/>
 <p align="center">
   <a href="https://github.com/upload-js/upload-js/">
@@ -32,7 +32,7 @@
     <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=4ba0f6" />
   </a>
 
-  <a target="_blank" href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20I%20just%20found%20Upload.js%20%E2%80%94%20it's%20a%20library%20and%20a%20SaaS%20%E2%80%94%20makes%20it%20super%20easy%20to%20add%20file%20uploads%20%26%20transformations%20into%20web%20apps%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
+  <a target="_blank" href="https://twitter.com/intent/tweet?text=I%20just%20found%20Upload.js%20%26%20Upload.io%20%E2%80%94%20they%20make%20it%20super%20easy%20to%20upload%20files%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers&via=UploadJS">
     <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js%2F" />
   </a>
 
@@ -181,7 +181,7 @@ Autocrop with:
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 ```
 
-**Note:** please [create an account](https://upload.io/pricing) to configure more transformations.
+**Tip:** to create more transformations, please [register an account](https://upload.io/pricing).
 
 ### Crop Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
@@ -265,18 +265,18 @@ To crop images using manual geometry:
 
 ## 🎯 Features
 
-Upload.js is a small file upload library (7KB) for a powerful file processing platform ([upload.io](https://upload.io/upload-js)).
+Upload.js is a lightweight file upload library for [Upload.io](https://upload.io/upload-js) — the file upload service for developers.
 
 **Core features (available without an account):**
 
-- File Storage. (Note: files are stored for 4 hours when using `"free"` as your API key.)
+- File Storage. (Files are stored for 4 hours when using `"free"` as your API key.)
 - File Hosting via CDN. (Files are served from 100 locations worldwide.)
 - Fast Image Transformations. (Resize images, crop images & convert images.)
 
-**Premium features (available with an account):**
+**All features (available with an account):**
 
-- Permanent Storage. (Our `"free"` API key provides temporary storage only.)
-- Unlimited Daily Uploads. (Our `"free"` API key allows 100 uploads per day per IP.)
+- Permanent Storage. (The `"free"` API key provides temporary storage only.)
+- Unlimited Daily Uploads. (The `"free"` API key allows 100 uploads per day per IP.)
 - Extended CDN Coverage. (Files are served from 300+ locations worldwide.)
 - More File Transformations. (Custom image resizing, cropping, converting, etc.)
 - Upload & Download Authentication. (Supports federated auth via your own JWT authorizer.)
