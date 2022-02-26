@@ -8,28 +8,28 @@
 <br/>
 <p align="center">
   <a href="https://github.com/upload-js/upload-js/">
-    <img src="https://img.shields.io/badge/gzipped-7%20kb-4294e7" />
+    <img src="https://img.shields.io/badge/gzipped-7%20kb-4ba0f6" />
   </a>
 
   <a href="https://www.npmjs.com/package/upload-js">
-    <img src="https://img.shields.io/badge/upload--js-npm-4294e7" />
+    <img src="https://img.shields.io/badge/upload--js-npm-4ba0f6" />
   </a>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/badge/build-passing-4294e7" />
+    <img src="https://img.shields.io/badge/build-passing-4ba0f6" />
   </a>
 
   <a href="https://www.npmjs.com/package/upload-js">
-    <img src="https://img.shields.io/npm/dt/upload-js?color=%234294e7" />
+    <img src="https://img.shields.io/npm/dt/upload-js?color=%234ba0f6" />
   </a>
   <br/>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/badge/TypeScript-included-4294e7" />
+    <img src="https://img.shields.io/badge/TypeScript-included-4ba0f6" />
   </a>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=4294ef" />
+    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=4ba0f6" />
   </a>
 
   <a target="_blank" href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20I%20just%20found%20Upload.js%20%E2%80%94%20it's%20a%20library%20and%20a%20SaaS%20%E2%80%94%20makes%20it%20super%20easy%20to%20add%20file%20uploads%20%26%20transformations%20into%20web%20apps%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
@@ -279,11 +279,11 @@ Upload.js is a small file upload library (7KB) for a powerful file processing pl
 - Unlimited Daily Uploads. (Our `"free"` API key allows 100 uploads per day per IP.)
 - Extended CDN Coverage. (Files are served from 300+ locations worldwide.)
 - More File Transformations. (Custom image resizing, cropping, converting, etc.)
-- Upload & Download Authentication. (Supports federated auth using your own JWT authorizers.)
+- Upload & Download Authentication. (Supports federated auth via your own JWT authorizer.)
 - File & Folder Management.
 - Expiring Links.
 - Custom CNAME.
-- Advanced Features:
+- Advanced Rules Engine:
   - Rate Limiting.
   - Traffic Limiting.
   - File Size Limiting.
@@ -292,7 +292,7 @@ Upload.js is a small file upload library (7KB) for a powerful file processing pl
   - And More...
 
 
-**[Create an account »](https://upload.io/pricing)**
+**[Create your account »](https://upload.io/pricing)**
 
 ## Contribute
 
