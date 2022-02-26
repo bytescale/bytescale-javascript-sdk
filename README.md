@@ -161,9 +161,23 @@ const vueApp = new Vue({
 });
 ```
 
+### Force File Downloads
+
+By default, uploaded files will be rendered by the browser:
+
+```
+https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
+```
+
+To force a file to download, add `?download=true` to the file's URL:
+
+```
+https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
+```
+
 ### Resize Images
 
-Given the `fileUrl`:
+Given an uploaded image URL:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
@@ -275,9 +289,9 @@ Upload.js is the lightweight client library for [Upload.io](https://upload.io/up
 
 **All features (available with an account):**
 
-- Permanent Storage. (The `"free"` API key provides temporary storage only.)
-- Unlimited Daily Uploads. (The `"free"` API key allows 100 uploads per day per IP.)
-- Extended CDN Coverage. (Files are served from 300+ locations worldwide.)
+- Permanent Storage. (`"free"` API key provides temporary storage only.)
+- Unlimited Daily Uploads. (`"free"` API key allows 100 uploads per day per IP.)
+- Extended CDN Coverage. (Files served from 300+ locations worldwide.)
 - More File Transformations. (Custom image resizing, cropping, converting, etc.)
 - Upload & Download Authentication. (Supports federated auth via your own JWT authorizer.)
 - File & Folder Management.
