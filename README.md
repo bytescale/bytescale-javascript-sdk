@@ -265,15 +265,15 @@ To crop images using manual geometry:
 
 ## 🎯 Features
 
-Upload.js is a lightweight file upload library for [Upload.io](https://upload.io/upload-js) — the file upload service for developers.
+Upload.js is the lightweight client library for [Upload.io](https://upload.io/upload-js): the file upload service for developers.
 
-**Core features (available without an account):**
+**Core features** (available without an account)
 
-- File Storage. (Files are stored for 4 hours when using `"free"` as your API key.)
-- File Hosting via CDN. (Files are served from 100 locations worldwide.)
+- File Storage. (Files stored for 4 hours when using `"free"` as your API key.)
+- File Hosting via CDN. (Files served from 100 locations worldwide.)
 - Fast Image Transformations. (Resize images, crop images & convert images.)
 
-**All features (available with an account):**
+**All features** (available with an account)
 
 - Permanent Storage. (The `"free"` API key provides temporary storage only.)
 - Unlimited Daily Uploads. (The `"free"` API key allows 100 uploads per day per IP.)
