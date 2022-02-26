@@ -19,6 +19,19 @@
     <img src="https://img.shields.io/badge/build-passing-75C46B" />
   </a>
 
+  <a href="https://www.npmjs.com/package/upload-js">
+    <img src="https://img.shields.io/npm/dt/upload-js?color=%2375C46B" />
+  </a>
+  <br/>
+
+  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/badge/TypeScript-included-blue" />
+  </a>
+
+  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=blue" />
+  </a>
+
   <a target="_blank" href="https://twitter.com/intent/tweet?text=A%20new%20way%20to%20upload%20files%3F%20I%20just%20found%20Upload.js%20%E2%80%94%20it's%20a%20library%20and%20a%20SaaS%20%E2%80%94%20makes%20it%20super%20easy%20to%20add%20file%20uploads%20%26%20transformations%20into%20web%20apps%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers">
     <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js%2F" />
   </a>
@@ -99,7 +112,7 @@ const MyUploadButton = () => {
 };
 ```
 
-### Upload Files with Angular
+### Upload Files with Angular — [Try on CodePen](https://codepen.io/upload-js/pen/qBVMYPK?editors=1010)
 
 ```javascript
 const { Upload } = require("upload-js");
@@ -260,12 +273,12 @@ Together they provide:
 - Global CDN. (Files are served from 300+ locations worldwide.)
 - Fast Image Transformations. (Resize images, crop images & convert images.)
 
-Additional features for [registered users](https://upload.io/pricing):
+Additional features for registered users include:
 
 - Permanent File Storage. (The `"free"` API key provides temporary storage only.)
-- No Daily Limit. (The `"free"` API key allows 100 uploads per day per IP.)
-- Upload & Download Authentication. (Via your web app using JWTs.)
-- Upload & Download Monitoring.
+- No Daily Upload Limit. (The `"free"` API key allows 100 uploads per day per IP.)
+- More File Transformations. (Custom image resizing, cropping, converting, etc.)
+- Upload & Download Authentication. (Supports federated auth using your own JWT authorizers.)
 - File & Folder Management.
 - Expiring Links.
 - Custom CNAME.
@@ -278,7 +291,7 @@ Additional features for [registered users](https://upload.io/pricing):
   - And More...
 
 
-**[See all Features »](https://upload.io/features)**
+**[Create an account »](https://upload.io/pricing)**
 
 ## Contribute
 
