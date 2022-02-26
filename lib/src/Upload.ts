@@ -188,7 +188,7 @@ export class Upload {
   }
 
   async uploadFile(params: UploadParams & { file: FileLike }): Promise<UploadedFile> {
-    // Initial progress, raised immediately and synchronously.
+    // Initial progress (raised immediately and synchronously).
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
       cancellationHandlers.push(ca);
