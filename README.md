@@ -139,7 +139,7 @@ angular
   }));
 ```
 
-### Upload Files with Vue.js
+### Upload Files with Vue.js — [Try on CodePen](https://codepen.io/upload-js/pen/BamOvma?editors=1010)
 
 ```javascript
 const { Upload } = require("upload-js");
