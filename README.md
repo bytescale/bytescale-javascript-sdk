@@ -259,7 +259,7 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 ### Crop Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
-To crop images using manual geometry:
+To crop images using manually-provided geometry:
 
 ```html
 <html>
@@ -366,7 +366,7 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
   - And More...
 
 
-**[Create your account »](https://upload.io/pricing)**
+**[Create an Upload.io account »](https://upload.io/pricing)**
 
 ## Contribute
 
