@@ -24,7 +24,7 @@
   </a>
   <br/>
 
-  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+  <a href="https://www.npmjs.com/package/upload-js">
     <img src="https://img.shields.io/badge/TypeScript-included-4ba0f6" />
   </a>
 
@@ -161,9 +161,23 @@ const vueApp = new Vue({
 });
 ```
 
+### Upload Multiple Files with jQuery — [Try on CodePen](https://codepen.io/upload-js/pen/JjOawge?editors=1010)
+
+Please refer to the CodePen example (link in header).
+
+Overview of the code:
+
+1. Instantiate `Upload` once in your app (at the start).
+2. Call `createFileInputHandler` once for each file `<input>` element.
+3. Use `onProgress` to display the upload progress for each input element.
+4. When `onUploaded` fires, record the `fileUrl` from the callback's argument to a local variable.
+5. When `onUploaded` has fired for all files, the form is ready to be submitted.
+
+Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
+
 ### Force File Downloads
 
-By default, uploaded files will be rendered by the browser:
+By default, the browser will attempt to render uploaded files:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
@@ -273,7 +287,7 @@ To crop images using manual geometry:
 </html>
 ```
 
-## 📖 Full Documentation
+## 📖 Documentation
 
 **[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
 
