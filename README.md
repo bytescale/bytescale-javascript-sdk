@@ -161,9 +161,55 @@ const vueApp = new Vue({
 });
 ```
 
+### Upload Files with jQuery — [Try on CodePen](https://codepen.io/upload-js/pen/BamOMPd?editors=1010)
+
+```html
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script>
+      const upload = new Upload({
+        // Get production API keys from Upload.io
+        apiKey: "free"
+      });
+
+      $(() => {
+        $("#file-input").change(
+          upload.createFileInputHandler({
+            onBegin: () => {
+              $("#file-input").hide()
+            },
+            onProgress: ({ bytesSent, bytesTotal }) => {
+              const progress = Math.round(bytesSent / bytesTotal * 100)
+              $("#title").html(`File uploading... ${progress}%`)
+            },
+            onError: (error) => {
+              $("#title").html(`Error:<br/><br/>${error.message}`)
+            },
+            onUploaded: ({ fileUrl, fileId }) => {
+              $("#title").html(`
+                File uploaded:
+                <br/>
+                <br/>
+                <a href="${fileUrl}" target="_blank">${fileUrl}</a>`
+              )
+            }
+          })
+        )
+      })
+    </script>
+  </head>
+  <body>
+    <h1 id="title">Please select a file...</h1>
+    <input type="file" id="file-input" />
+  </body>
+</html>
+```
+
 ### Upload Multiple Files with jQuery — [Try on CodePen](https://codepen.io/upload-js/pen/JjOawge?editors=1010)
 
-Please refer to the CodePen example (link in header).
+Please refer to the CodePen example (link above).
 
 Overview of the code:
 
@@ -293,7 +339,7 @@ To crop images using manual geometry:
 
 ## 🎯 Features
 
-Upload.js is the lightweight client library for [Upload.io](https://upload.io/upload-js): the file upload service for developers.
+Upload.js is a lightweight client library for [Upload.io](https://upload.io/upload-js): the file upload service for developers.
 
 **Core features (available without an account):**
 
@@ -303,8 +349,8 @@ Upload.js is the lightweight client library for [Upload.io](https://upload.io/up
 
 **All features (available with an account):**
 
-- Permanent Storage. (`"free"` API key provides temporary storage only.)
-- Unlimited Daily Uploads. (`"free"` API key allows 100 uploads per day per IP.)
+- Permanent Storage. (The `"free"` API key provides temporary storage only.)
+- Unlimited Daily Uploads. (The `"free"` API key allows 100 uploads per day per IP.)
 - Extended CDN Coverage. (Files served from 300+ locations worldwide.)
 - More File Transformations. (Custom image resizing, cropping, converting, etc.)
 - Upload & Download Authentication. (Supports federated auth via your own JWT authorizer.)
