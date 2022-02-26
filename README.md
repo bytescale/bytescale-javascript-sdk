@@ -81,7 +81,7 @@ Install via NPM:
 npm install upload-js
 ```
 
-Or via `<script>` tag:
+Or via a `<script>` tag:
 
 ```html
 <script src="https://js.upload.io/upload-js/v1"></script>
