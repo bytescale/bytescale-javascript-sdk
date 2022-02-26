@@ -259,7 +259,7 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 
 ### Crop Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
-To crop images using manual geometry:
+To crop images using manually-provided geometry:
 
 ```html
 <html>
