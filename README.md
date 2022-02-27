@@ -29,7 +29,7 @@
   </a>
 
   <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/npms-io/quality-score/upload-js?color=4ba0f6" />
+    <img src="https://img.shields.io/npms-io/maintenance-score/upload-js?color=4ba0f6" />
   </a>
 
   <a target="_blank" href="https://twitter.com/intent/tweet?text=I%20just%20found%20Upload.js%20%26%20Upload.io%20%E2%80%94%20they%20make%20it%20super%20easy%20to%20upload%20files%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-js%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers&via=UploadJS">
