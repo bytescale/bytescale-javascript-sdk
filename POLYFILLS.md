@@ -18,6 +18,7 @@ Depending on the browsers you wish to support, your application may require some
   - core-js/modules/es.array.map
   - core-js/modules/es.array.reduce
   - core-js/modules/es.array.slice
+  - core-js/modules/es.date.now
   - core-js/modules/es.date.to-string
   - core-js/modules/es.function.bind
   - core-js/modules/es.function.name
