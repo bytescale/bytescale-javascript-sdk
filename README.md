@@ -365,7 +365,6 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
   - File Type Blacklisting.
   - And More...
 
-
 **[Create an Upload.io account »](https://upload.io/pricing)**
 
 ## Contribute
