@@ -41,7 +41,8 @@
     "test": "(cd ../e2e_test && npm run test)"
   },
   "dependencies": {
-    "@upload-io/upload-api-client-upload-js": "1.12.0"
+    "@upload-io/upload-api-client-upload-js": "1.12.0",
+    "progress-smoother": "1.3.0"
   },
   "devDependencies": {
     "@babel/cli": "7.17.6",

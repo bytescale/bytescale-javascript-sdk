@@ -21,6 +21,7 @@ import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/co
 import { ApiResult } from "@upload-io/upload-api-client-upload-js/src/core/ApiResult";
 import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
+import { ProgressSmoother } from "progress-smoother";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -42,6 +43,7 @@ export class Upload {
   private readonly headers: (() => Promise<Record<string, string>>) | undefined;
   private readonly maxUploadConcurrency = 5;
   private readonly refreshBeforeExpirySeconds = 20;
+  private readonly onProgressInterval = 100;
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly accessTokenPathBase = "/api/v1/access_tokens/";
   private readonly authMutex = new Mutex();
@@ -212,108 +214,153 @@ export class Upload {
     return transformationSlug === undefined ? fileUrl : `${fileUrl}/${transformationSlug}`;
   }
 
+  private async withProgressReporting<T>(
+    tickInterval: number,
+    tick: (stopTicking: () => void) => void,
+    scope: () => Promise<T>
+  ): Promise<T> {
+    let whileReportingResolved: () => void;
+    const whileReporting = new Promise<void>(resolve => {
+      whileReportingResolved = resolve;
+    });
+    let isReporting = true;
+    const stopReporting = (): void => {
+      if (isReporting) {
+        whileReportingResolved();
+        clearInterval(intervalHandle);
+        isReporting = false;
+      }
+    };
+    const intervalHandle: number = setInterval(() => tick(stopReporting), tickInterval) as any;
+    try {
+      const result = await scope();
+      await whileReporting;
+      return result;
+    } finally {
+      stopReporting();
+    }
+  }
+
   private async beginFileUpload(
     file: FileLike,
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
   ): Promise<UploadedFile> {
-    if (params.onProgress !== undefined) {
-      params.onProgress({ bytesSent: 0, bytesTotal: file.size });
-    }
+    const progressSmoother = ProgressSmoother({
+      maxValue: file.size,
+      teardownTime: 1000, // Accounts for the 'finalizeUpload' request to the Upload API.
+      minDelayUntilFirstValue: 2000, // Accounts for the 'beginUpload' request to the Upload API.
+      valueIncreaseDelta: 200 * 1024, // An estimated 200KB per XHR progress callback.
+      valueIncreaseRatePerSecond: 50 * 1024, // 50kB/sec worse-case connection (anything beyond we'll consider an outlier).
+      averageTimeBetweenValues: 1000 // When running, XHR should (hopefully) report at least every second, regardless of connection speed.
+    });
 
-    const uploadRequest: BeginUploadRequest = {
-      accountId: this.accountId,
-      fileSize: file.size,
-      fileName: file.name,
-      mime: this.normalizeMimeType(file.type),
-      tags: (params.tags ?? []).map((x): FileTag => (typeof x === "string" ? { name: x, searchable: true } : x))
+    const reportProgress = (stopReportingProgress: () => void): void => {
+      if (params.onProgress === undefined) {
+        stopReportingProgress(); // Important to call this, as outer function awaits this call when the download ends.
+      } else {
+        const bytesSent = progressSmoother.smoothedValue();
+        const bytesTotal = file.size;
+        if (bytesSent === bytesTotal) {
+          stopReportingProgress();
+        }
+        params.onProgress({ bytesSent, bytesTotal });
+      }
     };
 
-    this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
+    return await this.withProgressReporting(this.onProgressInterval, reportProgress, async () => {
+      const uploadRequest: BeginUploadRequest = {
+        accountId: this.accountId,
+        fileSize: file.size,
+        fileName: file.name,
+        mime: this.normalizeMimeType(file.type),
+        tags: (params.tags ?? []).map((x): FileTag => (typeof x === "string" ? { name: x, searchable: true } : x))
+      };
 
-    this.preflight();
-    const uploadMetadata = await FilesService.beginUpload(uploadRequest);
-    const isMultipart = uploadMetadata.uploadParts.count > 1;
+      this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
-    this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
+      this.preflight();
+      const uploadMetadata = await FilesService.beginUpload(uploadRequest);
+      const isMultipart = uploadMetadata.uploadParts.count > 1;
 
-    const incUploadIndex: () => number | undefined = (() => {
-      let lastUploadIndex: number = 0;
-      return () => {
-        if (lastUploadIndex === uploadMetadata.uploadParts.count - 1) {
+      this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
+
+      const incUploadIndex: () => number | undefined = (() => {
+        let lastUploadIndex: number = 0;
+        return () => {
+          if (lastUploadIndex === uploadMetadata.uploadParts.count - 1) {
+            return undefined;
+          }
+          return ++lastUploadIndex;
+        };
+      })();
+
+      const nextPartQueue = [uploadMetadata.uploadParts.first];
+      const getNextPart: (workerIndex: number) => Promise<UploadPart | undefined> = async workerIndex => {
+        const nextPart = nextPartQueue.pop();
+        if (nextPart !== undefined) {
+          this.debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
+          return nextPart;
+        }
+        const uploadPartIndex = incUploadIndex();
+        if (uploadPartIndex === undefined) {
+          this.debug("No parts remaining.", workerIndex);
           return undefined;
         }
-        return ++lastUploadIndex;
+        this.preflight();
+        this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
+        return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
       };
-    })();
 
-    const nextPartQueue = [uploadMetadata.uploadParts.first];
-    const getNextPart: (workerIndex: number) => Promise<UploadPart | undefined> = async workerIndex => {
-      const nextPart = nextPartQueue.pop();
-      if (nextPart !== undefined) {
-        this.debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
-        return nextPart;
-      }
-      const uploadPartIndex = incUploadIndex();
-      if (uploadPartIndex === undefined) {
-        this.debug("No parts remaining.", workerIndex);
-        return undefined;
-      }
-      this.preflight();
-      this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
-      return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
-    };
+      const bytesSentByEachWorker: number[] = [];
+      const uploadNextPart: (workerIndex: number) => Promise<void> = async workerIndex => {
+        const nextPart = await getNextPart(workerIndex);
+        if (nextPart !== undefined) {
+          let lastBytesSent = 0;
+          const progress: (status: { bytesSent: number; bytesTotal: number }) => void = ({ bytesSent }) => {
+            if (bytesSentByEachWorker[workerIndex] === undefined) {
+              bytesSentByEachWorker[workerIndex] = bytesSent;
+            } else {
+              bytesSentByEachWorker[workerIndex] -= lastBytesSent;
+              bytesSentByEachWorker[workerIndex] += bytesSent;
+            }
 
-    const bytesSentByEachWorker: number[] = [];
-    const uploadNextPart: (workerIndex: number) => Promise<void> = async workerIndex => {
-      const nextPart = await getNextPart(workerIndex);
-      if (nextPart !== undefined) {
-        let lastBytesSent = 0;
-        const progress: (status: { bytesSent: number; bytesTotal: number }) => void = ({ bytesSent }) => {
-          if (bytesSentByEachWorker[workerIndex] === undefined) {
-            bytesSentByEachWorker[workerIndex] = bytesSent;
-          } else {
-            bytesSentByEachWorker[workerIndex] -= lastBytesSent;
-            bytesSentByEachWorker[workerIndex] += bytesSent;
-          }
+            lastBytesSent = bytesSent;
 
-          lastBytesSent = bytesSent;
-
-          if (params.onProgress !== undefined) {
             const totalBytesSent = bytesSentByEachWorker.reduce((a, b) => a + b);
-            params.onProgress({ bytesSent: totalBytesSent, bytesTotal: file.size });
-          }
-        };
-        await this.uploadPart(
-          file,
-          uploadMetadata.file,
-          isMultipart,
-          nextPart,
-          progress,
-          addCancellationHandler,
-          workerIndex
-        );
-        await uploadNextPart(workerIndex);
-      }
-    };
+            progressSmoother.setValue(totalBytesSent);
+          };
+          await this.uploadPart(
+            file,
+            uploadMetadata.file,
+            isMultipart,
+            nextPart,
+            progress,
+            addCancellationHandler,
+            workerIndex
+          );
+          await uploadNextPart(workerIndex);
+        }
+      };
 
-    await Promise.all(
-      [...Array(this.maxUploadConcurrency).keys()].map(async workerIndex => await uploadNextPart(workerIndex))
-    );
+      await Promise.all(
+        [...Array(this.maxUploadConcurrency).keys()].map(async workerIndex => await uploadNextPart(workerIndex))
+      );
 
-    const uploadedFile: UploadedFile = {
-      accountId: uploadRequest.accountId,
-      file,
-      fileId: uploadMetadata.file.fileId,
-      fileSize: uploadMetadata.file.size,
-      fileUrl: this.url(uploadMetadata.file.fileId),
-      tags: uploadMetadata.file.tags,
-      mime: uploadMetadata.file.mime
-    };
+      const uploadedFile: UploadedFile = {
+        accountId: uploadRequest.accountId,
+        file,
+        fileId: uploadMetadata.file.fileId,
+        fileSize: uploadMetadata.file.size,
+        fileUrl: this.url(uploadMetadata.file.fileId),
+        tags: uploadMetadata.file.tags,
+        mime: uploadMetadata.file.mime
+      };
 
-    this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
+      this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
 
-    return uploadedFile;
+      return uploadedFile;
+    });
   }
 
   private debug(message: string, workerIndex?: number): void {
