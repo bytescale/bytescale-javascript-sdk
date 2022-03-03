@@ -249,7 +249,7 @@ Resize with:
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
 ```
 
-Autocrop with:
+Auto-crop with:
 
 ```
 https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
