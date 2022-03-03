@@ -46,7 +46,7 @@
 
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-<p align="center">The JavaScript library that turns DOM <code>File</code> objects 📦 into public URLs 🔗<br />(a.k.a. the JavaScript Client Library for <a href="https://upload.io/">Upload.io</a>)<br/><br/></p>
+<p align="center">Files are hosted on <a href="https://upload.io/">Upload.io</a>: the file upload service for developers.<br/><br/></p>
 
 ## Installation
 
