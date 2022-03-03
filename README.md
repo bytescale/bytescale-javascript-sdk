@@ -4,7 +4,7 @@
   </a>
 </h1>
 
-<p align="center"><b>The quickest way to upload files.</b></p>
+<p align="center"><b>JavaScript File Upload Library</b><br/> (With Integrated Cloud Storage)</p>
 <br/>
 <p align="center">
   <a href="https://github.com/upload-js/upload-js/">
@@ -37,10 +37,34 @@
   </a>
 
 </p>
-<br/>
+<h1 align="center">
+  Get Started —
+  <a href="https://codepen.io/upload-js/pen/abVapaJ?editors=1010">
+    Try on CodePen
+  </a>
+</h1>
+
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-# 🚀 Get Started — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+<p align="center">Files are hosted on <a href="https://upload.io/">Upload.io</a>: the file upload service for developers.<br/><br/></p>
+
+## Installation
+
+Install via NPM:
+
+```shell
+npm install upload-js
+```
+
+Or via a `<script>` tag:
+
+```html
+<script src="https://js.upload.io/upload-js/v1"></script>
+```
+
+## Usage
+
+### Option 1: Use an `<input>` element  — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
 
 To create a working file upload button, copy this example:
 
@@ -73,21 +97,33 @@ To create a working file upload button, copy this example:
 </html>
 ```
 
-**Tip:** **[Uploader](https://upload.io/uploader)** is a full-featured file uploader powered by Upload.js — give it a try!
+### Option 2: Use a `File` object — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-## Installation
+If you have a `File` object already, use the `upload.uploadFile(...)` method:
 
-Install via NPM:
+```javascript
+const { Upload } = require("upload-js");
+const upload = new Upload({ apiKey: "free" });
 
-```shell
-npm install upload-js
+const onFileInputChange = async event => {
+  const fileObject = event.target.files[0];
+
+  const { fileUrl, fileId } = await upload.uploadFile({
+    file: fileObject,
+    onProgress: ({ bytesSent, bytesTotal }) => {
+      console.log(`${bytesSent / bytesTotal}% complete`)
+    }
+  });
+
+  alert(`File uploaded to: ${fileUrl}`);
+}
 ```
 
-Or via a `<script>` tag:
+### Option 3: Use our UI widget — [Try on CodePen](https://codepen.io/upload-js/pen/QWOZWZR?editors=1010)
 
-```html
-<script src="https://js.upload.io/upload-js/v1"></script>
-```
+**[Uploader](https://upload.io/uploader)** is our file & image upload widget, powered by Upload.js.
+
+Uploader has a larger payload size (29kB) compared to Upload.js (7kB), but if you're writing a file upload UI component, it could save you time: Uploader provides things like progress bars and cancellation out-the-box.
 
 ## Use with Popular Frameworks
 
