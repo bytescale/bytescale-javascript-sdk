@@ -123,7 +123,7 @@ const onFileInputChange = async event => {
 
 **[Uploader](https://upload.io/uploader)** is our file & image upload widget, powered by Upload.js.
 
-Uploader has a larger payload size (29kB) compared to Upload.js (7kB), but if you're writing a file upload widget for your web app, it could save you some time.
+Uploader has a larger payload size (29kB) compared to Upload.js (7kB), but if you're writing a file upload UI component, it could save you time: Uploader provides things like progress bars and cancellation out-the-box.
 
 ## Use with Popular Frameworks
 
