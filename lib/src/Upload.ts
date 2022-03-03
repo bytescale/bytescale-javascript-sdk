@@ -7,7 +7,8 @@ import {
   AccountId,
   ErrorResponse,
   request,
-  FileTag
+  FileTag,
+  ApiError
 } from "@upload-io/upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
 import { BeginUploadRequest } from "@upload-io/upload-api-client-upload-js/src/models/BeginUploadRequest";
@@ -22,6 +23,7 @@ import { ApiResult } from "@upload-io/upload-api-client-upload-js/src/core/ApiRe
 import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
+import { UploadError } from "upload-js/UploadError";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -205,6 +207,12 @@ export class Upload {
       return await this.beginFileUpload(params.file, params, addCancellationHandler);
     } catch (e) {
       cancel();
+      if (e instanceof ApiError) {
+        const errorResponseMaybe = e.body as Partial<ErrorResponse> | undefined;
+        if (typeof errorResponseMaybe?.error?.code === "string") {
+          throw new UploadError(errorResponseMaybe as ErrorResponse);
+        }
+      }
       throw e;
     }
   }
