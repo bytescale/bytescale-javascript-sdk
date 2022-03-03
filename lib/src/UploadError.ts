@@ -2,7 +2,7 @@ import { ErrorResponse } from "@upload-io/upload-api-client-upload-js";
 
 export class UploadError extends Error {
   public readonly errorCode: string;
-  public readonly details: object | undefined;
+  public readonly details: any | undefined;
 
   constructor(response: ErrorResponse) {
     super(response.error.message);
