@@ -99,14 +99,13 @@ To create a working file upload button, copy this example:
 
 ### Option 2: Use a `File` object — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-If you have a `File` object already, use `upload.uploadFile(...)` instead:
+If you have a `File` object already, use the `upload.uploadFile(...)` method:
 
 ```javascript
 const { Upload } = require("upload-js");
 const upload = new Upload({ apiKey: "free" });
 
-// Example: <input type="file" onchange="fileInputOnChange(event)" />
-const fileInputOnChange = async event => {
+const onFileInputChange = async event => {
   const fileObject = event.target.files[0];
 
   const { fileUrl, fileId } = await upload.uploadFile({
@@ -120,9 +119,9 @@ const fileInputOnChange = async event => {
 }
 ```
 
-### Option 3: Use our file upload widget — [Try on CodePen](https://codepen.io/upload-js/pen/QWOZWZR?editors=1010)
+### Option 3: Use our UI widget — [Try on CodePen](https://codepen.io/upload-js/pen/QWOZWZR?editors=1010)
 
-**[Uploader](https://upload.io/uploader)** is a file & image uploader powered by Upload.js.
+**[Uploader](https://upload.io/uploader)** is our file & image upload widget, powered by Upload.js.
 
 Uploader has a larger payload size (29kB) compared to Upload.js (7kB), but if you're writing a file upload widget for your web app, it could save you some time.
 
