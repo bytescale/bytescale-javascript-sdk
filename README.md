@@ -395,7 +395,7 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
 - File & Folder Management.
 - Expiring Links.
 - Custom CNAME.
-- Advanced Rules Engine:
+- Advanced Upload Control:
   - Rate Limiting.
   - Traffic Limiting.
   - File Size Limiting.
