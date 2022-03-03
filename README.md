@@ -73,6 +73,8 @@ To create a working file upload button, copy this example:
 </html>
 ```
 
+**Tip:** **[Uploader](https://upload.io/uploader)** is a full-featured file uploader powered by Upload.js — give it a try!
+
 ## Installation
 
 Install via NPM:
