@@ -56,6 +56,12 @@ Install via NPM:
 npm install upload-js
 ```
 
+Or via NPM:
+
+```shell
+yarn add upload-js
+```
+
 Or via a `<script>` tag:
 
 ```html
