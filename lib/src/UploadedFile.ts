@@ -1,5 +1,6 @@
 import { FileTag } from "@upload-io/upload-api-client-upload-js/src/models/FileTag";
 import { FileLike } from "upload-js/FileLike";
+import { SuggestedOptimization } from "upload-js/SuggestedOptimization";
 
 export interface UploadedFile {
   accountId: string;
@@ -8,5 +9,6 @@ export interface UploadedFile {
   fileSize: number;
   fileUrl: string;
   mime: string;
+  suggestedOptimization: SuggestedOptimization | undefined;
   tags: FileTag[];
 }

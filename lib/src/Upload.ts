@@ -288,7 +288,7 @@ export class Upload {
       this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
       this.preflight();
-      const uploadMetadata = await FilesService.beginUpload(uploadRequest);
+      const uploadMetadata = await FilesService.beginMultipartUpload(uploadRequest);
       const isMultipart = uploadMetadata.uploadParts.count > 1;
 
       this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
@@ -362,7 +362,14 @@ export class Upload {
         fileSize: uploadMetadata.file.size,
         fileUrl: this.url(uploadMetadata.file.fileId),
         tags: uploadMetadata.file.tags,
-        mime: uploadMetadata.file.mime
+        mime: uploadMetadata.file.mime,
+        suggestedOptimization:
+          uploadMetadata.suggestedOptimizationUrlSlug === undefined
+            ? undefined
+            : {
+                transformationSlug: uploadMetadata.suggestedOptimizationUrlSlug,
+                transformationUrl: this.url(uploadMetadata.file.fileId, uploadMetadata.suggestedOptimizationUrlSlug)
+              }
       };
 
       this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
