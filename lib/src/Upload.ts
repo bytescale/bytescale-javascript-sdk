@@ -61,7 +61,7 @@ export class Upload {
       console.log(`[upload-js] Initialized with API key '${config.apiKey}'`);
     }
     this.apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
-    this.cdnUrl = config.internal?.cdnUrl ?? "https://files.upload.io";
+    this.cdnUrl = config.internal?.cdnUrl ?? "https://upcdn.io";
     this.authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
     this.headers = config.internal?.headers;
     this.debugMode = config.debug === true;
