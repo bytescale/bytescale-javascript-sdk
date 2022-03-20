@@ -270,13 +270,13 @@ Note: file uploads will safely run in parallel, despite using the same `Upload` 
 By default, the browser will attempt to render uploaded files:
 
 ```
-https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ
 ```
 
 To force a file to download, add `?download=true` to the file's URL:
 
 ```
-https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
 ```
 
 ### Resize Images
@@ -284,19 +284,19 @@ https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
 Given an uploaded image URL:
 
 ```
-https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ
 ```
 
 Resize with:
 
 ```
-https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
 ```
 
 Auto-crop with:
 
 ```
-https://files.upload.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
 ```
 
 **Tip:** to create more transformations, please [register an account](https://upload.io/pricing).
