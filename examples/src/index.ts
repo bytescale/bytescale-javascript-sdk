@@ -19,9 +19,9 @@ button.onchange = upload.createFileInputHandler({
   },
   onError: error => {
     if (error instanceof UploadError) {
-      alert(error.errorCode);
+      console.error(`Error: ${error.errorCode}`);
     } else {
-      alert(error);
+      console.error(error);
     }
   }
 }) as any;
