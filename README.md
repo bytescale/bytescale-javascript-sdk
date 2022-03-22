@@ -411,6 +411,10 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
 
 **[Create an Upload.io account »](https://upload.io/pricing)**
 
+## Building From Source
+
+Please read: [`BUILD.md`](BUILD.md)
+
 ## Contribute
 
 If you would like to contribute to Upload.js:

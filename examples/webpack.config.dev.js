@@ -2,7 +2,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
-const port = 3001;
+const port = 3020;
 
 module.exports = {
   output: {
