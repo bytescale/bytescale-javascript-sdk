@@ -1,5 +1,5 @@
 export interface UploadConfig {
-  apiKey: string;
+  apiKey: "free" | string;
   debug?: boolean;
   internal?: UploadInternalConfig;
 }
