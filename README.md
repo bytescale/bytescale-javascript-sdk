@@ -7,7 +7,7 @@
 <p align="center"><b>JavaScript File Upload Library</b><br/> (With Integrated Cloud Storage)</p>
 <br/>
 <p align="center">
-  <a href="https://github.com/upload-js/upload-js/">
+  <a href="https://github.com/upload-io/upload-js/">
     <img src="https://img.shields.io/badge/gzipped-7%20kb-4ba0f6" />
   </a>
 
@@ -15,7 +15,7 @@
     <img src="https://img.shields.io/badge/upload--js-npm-4ba0f6" />
   </a>
 
-  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/upload-io/upload-js/actions/workflows/ci.yml">
     <img src="https://img.shields.io/badge/build-passing-4ba0f6" />
   </a>
 
@@ -28,7 +28,7 @@
     <img src="https://img.shields.io/badge/TypeScript-included-4ba0f6" />
   </a>
 
-  <a href="https://github.com/upload-js/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/upload-io/upload-js/actions/workflows/ci.yml">
     <img src="https://img.shields.io/npms-io/maintenance-score/upload-js?color=4ba0f6" />
   </a>
 
@@ -320,7 +320,7 @@ To crop images using manually-provided geometry:
 
         // Step 2: Configure crop geometry.
         const crop = {
-          // Type Def: https://github.com/upload-js/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
+          // Type Def: https://github.com/upload-io/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
           input: fileId,
           pipeline: {
             steps: [
@@ -419,7 +419,7 @@ Please read: [`BUILD.md`](BUILD.md)
 
 If you would like to contribute to Upload.js:
 
-1. Add a [GitHub Star](https://github.com/upload-js/upload-js/stargazers) to the project (if you're feeling generous!).
+1. Add a [GitHub Star](https://github.com/upload-io/upload-js/stargazers) to the project (if you're feeling generous!).
 2. Determine whether you're raising a bug, feature request or question.
 3. Raise your issue or PR. 🚀
 

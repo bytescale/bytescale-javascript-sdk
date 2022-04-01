@@ -10,10 +10,10 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upload-js/upload-js.git"
+    "url": "git+https://github.com/upload-io/upload-js.git"
   },
   "bugs": {
-    "url": "https://github.com/upload-js/upload-js/issues"
+    "url": "https://github.com/upload-io/upload-js/issues"
   },
   "files": [
     "*"
