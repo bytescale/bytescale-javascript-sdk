@@ -275,7 +275,7 @@ export class Upload {
         if (bytesSent === bytesTotal) {
           stopReportingProgress();
         }
-        params.onProgress({ bytesSent, bytesTotal });
+        params.onProgress({ bytesSent, bytesTotal, progress: Math.round((bytesSent / bytesTotal) * 100) });
       }
     };
 
