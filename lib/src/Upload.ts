@@ -24,6 +24,7 @@ import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
 import { UploadError } from "upload-js/UploadError";
+import { UploadParamsWithFile } from "upload-js/UploadParamsWithFile";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -191,13 +192,15 @@ export class Upload {
     };
   }
 
-  async uploadFile(params: UploadParams & { file: FileLike }): Promise<UploadedFile> {
+  async uploadFile(paramsOrFile: UploadParamsWithFile | FileLike): Promise<UploadedFile> {
     // Initial progress (raised immediately and synchronously).
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
       cancellationHandlers.push(ca);
     };
     const cancel = (): void => cancellationHandlers.forEach(x => x());
+
+    const params: UploadParamsWithFile = FileLike.is(paramsOrFile) ? { file: paramsOrFile } : paramsOrFile;
 
     if (params.onBegin !== undefined) {
       params.onBegin({ cancel });
