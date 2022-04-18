@@ -19,19 +19,15 @@
     "*"
   ],
   "keywords": [
-    "file-upload",
-    "front-end",
-    "upload.js",
-    "upload-js",
-    "upload js",
-    "file-uploader",
-    "file",
-    "image",
     "upload",
-    "files",
-    "multi",
-    "input",
-    "multipart"
+    "file-upload",
+    "file-uploader",
+    "uploader",
+    "front-end",
+    "file",
+    "multipart",
+    "xhr",
+    "ajax"
   ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
