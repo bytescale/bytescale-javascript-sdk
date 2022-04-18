@@ -1,6 +1,6 @@
 {
   "name": "upload-js",
-  "version": "1.48.6",
+  "version": "1.48.7",
   "author": "Upload <hello@upload.io> (https://upload.io)",
   "description": "File Upload Library — Upload.js gives developers fast multipart file uploading via XHR 🚀 Comes with Integrated Cloud Storage 🌐",
   "license": "MIT",
