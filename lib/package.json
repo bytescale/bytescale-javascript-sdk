@@ -21,7 +21,8 @@
   "keywords": [
     "upload",
     "file-upload",
-    "front-end"
+    "front-end",
+    "file-uploader"
   ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
