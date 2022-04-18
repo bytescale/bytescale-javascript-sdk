@@ -3,11 +3,8 @@
     <img alt="Upload.js" width="280" height="78" src="https://raw.githubusercontent.com/upload-io/assets/master/logo.svg">
   </a>
 </h1>
-
 <p align="center"><b>JavaScript File Upload Library</b><br/> (With Integrated Cloud Storage)</p>
-
 <br/>
-
 <p align="center">
   <a href="https://github.com/upload-io/upload-js/">
     <img src="https://img.shields.io/badge/gzipped-7%20kb-4ba0f6" />
