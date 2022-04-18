@@ -21,13 +21,10 @@
   "keywords": [
     "upload",
     "file-upload",
-    "file-uploader",
+    "file",
     "uploader",
     "front-end",
-    "file",
-    "multipart",
-    "xhr",
-    "ajax"
+    "multipart"
   ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
