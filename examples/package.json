@@ -8,7 +8,7 @@
     "start:dev": "webpack serve --config webpack.config.dev.js",
     "start:dist": "webpack serve",
     "preinstall": "npm cache clean --force && (cd ../lib && npm pack)",
-    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js) && webdriver-manager update"
+    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js)"
   },
   "dependencies": {
     "upload-js": "../lib/upload-js.tgz"
