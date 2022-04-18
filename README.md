@@ -1,6 +1,6 @@
 <h1 align="center">
   <a href="https://upload.io/upload-js">
-    <img alt="Upload.js" width="315" height="95" src="https://raw.githubusercontent.com/upload-io/upload-js/main/.github/assets/logo.svg">
+    <img alt="Upload.js" width="315" height="93" src="https://raw.githubusercontent.com/upload-io/upload-js/main/.github/assets/logo.svg">
   </a>
 </h1>
 <p align="center"><b>JavaScript File Upload Library</b><br/> (With Integrated Cloud Storage)</p>
