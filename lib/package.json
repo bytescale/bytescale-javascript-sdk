@@ -2,7 +2,7 @@
   "name": "upload-js",
   "version": "1.48.6",
   "author": "Upload <hello@upload.io> (https://upload.io)",
-  "description": "Upload.js | File Upload Library with Integrated Cloud Storage 🚀 Fast AJAX Multipart File Uploading. Uses XHR. No Other Dependencies.",
+  "description": "File Upload Library — Upload.js gives developers fast multipart file uploading via XHR 🚀 Comes with Integrated Cloud Storage 🌐",
   "license": "MIT",
   "main": "dist/main.js",
   "types": "dist/index.d.ts",
@@ -19,10 +19,10 @@
     "*"
   ],
   "keywords": [
-    "file-upload",
-    "upload",
     "front-end",
-    "file-uploader"
+    "file",
+    "upload",
+    "uploader"
   ],
   "scripts": {
     "clean": "rm -rf dist && rm -f upload-js.tgz",
