@@ -45,7 +45,7 @@
 
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-<p align="center">Files are hosted on <a href="https://upload.io/">Upload.io</a>: the file upload service for developers.<br/><br/></p>
+<p align="center">Files Hosted on <a href="https://upload.io/">Upload.io</a>: The File Upload Service for Developers.<br/><br/></p>
 
 ## Installation
 
