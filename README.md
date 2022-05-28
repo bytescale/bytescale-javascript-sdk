@@ -97,7 +97,7 @@ To implement a `<input type="file" onchange=... />` handler:
 ```javascript
 import { Upload } from "upload-js";
 
-const upload = new Upload({ apiKey: "free" });  // Get from Upload.io
+const upload = new Upload({ apiKey: "free" }); // Get from Upload.io
 
 // <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = upload.createFileInputHandler({
