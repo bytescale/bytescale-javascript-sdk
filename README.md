@@ -135,8 +135,8 @@ const onFileSelected = upload.createFileInputHandler({
       });
 
       const uploadFile = upload.createFileInputHandler({
-        onProgress: ({ bytesSent, bytesTotal }) => {
-          console.log(`${bytesSent / bytesTotal}% complete`)
+        onProgress: ({ progress }) => {
+          console.log(`${progress}% complete`)
         },
         onUploaded: ({ fileUrl, fileId }) => {
           alert(`File uploaded!\n${fileUrl}`);
