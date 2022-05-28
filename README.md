@@ -69,9 +69,63 @@ Or via a `<script>` tag:
 
 ## Usage
 
-### Option 1: Use an `<input>` element  — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+### Option 1: `uploadFile`  — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-To create a working file upload button, copy this example:
+To upload a `file` DOM object:
+
+```JavaScript
+import { Upload } from "upload-js";
+
+// Get production API keys from Upload.io
+const upload = new Upload({ apiKey: "free" });
+
+// <input type="file" onchange="onFileSelected(event)" />
+async function onFileSelected(event) {
+  const [ file ]    = event.target.files;
+  const onProgress  = ({ progress }) => console.log(`${progress}% complete`)
+  const { fileUrl } = await upload.uploadFile({ file, onProgress });
+  console.log(`File uploaded: ${fileUrl}`);
+}
+```
+
+### Option 2: `createFileInputHandler` — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+
+To implement a `<input type="file" onchange=... />` handler:
+
+```javascript
+import { Upload } from "upload-js";
+
+// Get production API keys from Upload.io
+const upload = new Upload({ apiKey: "free" });
+
+// <input type="file" onchange="onFileSelected(event)" />
+const onFileSelected = upload.createFileInputHandler({
+  onBegin: ({ cancel }) => {
+    console.log("File upload started!");
+  },
+
+  onProgress: ({ progress }) => {
+    console.log(`File uploading... ${progress}%`);
+  },
+
+  onUploaded: ({ fileUrl, fileId }) => {
+    console.log(`File uploaded: ${fileUrl}`);
+  },
+
+  onError: (error) => {
+    console.error(`Error uploading file.`, error);
+  }
+});
+```
+
+
+## Full Working Example (Copy & Paste!)
+
+**[Try on CodePen »](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)**
+
+... Or ...
+
+**Copy and paste & open in browser:**
 
 ```html
 <html>
@@ -102,35 +156,8 @@ To create a working file upload button, copy this example:
 </html>
 ```
 
-### Option 2: Use a `File` object — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-If you have a `File` object already, use the `upload.uploadFile(...)` method:
-
-```javascript
-const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "free" });
-
-const onFileInputChange = async event => {
-  const fileObject = event.target.files[0];
-
-  const { fileUrl, fileId } = await upload.uploadFile({
-    file: fileObject,
-    onProgress: ({ bytesSent, bytesTotal }) => {
-      console.log(`${bytesSent / bytesTotal}% complete`)
-    }
-  });
-
-  alert(`File uploaded to: ${fileUrl}`);
-}
-```
-
-### Option 3: Use our UI widget — [Try on CodePen](https://codepen.io/upload-js/pen/QWOZWZR?editors=1010)
-
-**[Uploader](https://upload.io/uploader)** is our file & image upload widget, powered by Upload.js.
-
-Uploader has a larger payload size (29kB) compared to Upload.js (7kB), but if you're writing a file upload UI component, it could save you time: Uploader provides things like progress bars and cancellation out-the-box.
-
-## Use with Popular Frameworks
+## Examples with Popular Frameworks
 
 ### Upload Files with React — [Try on CodePen](https://codepen.io/upload-js/pen/jOavBPb?editors=1010)
 
@@ -409,6 +436,10 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
   - And More...
 
 **[Create an Upload.io account »](https://upload.io/pricing)**
+
+## Need a File Upload Widget?
+
+Check out [`uploader`](https://upload.io/uploader): a lightweight file upload widget, powered by `upload-js`.
 
 ## Building From Source
 
