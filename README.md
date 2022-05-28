@@ -121,11 +121,7 @@ const onFileSelected = upload.createFileInputHandler({
 
 ## Full Working Example (Copy & Paste!)
 
-**[Try on CodePen »](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)**
-
-... Or ...
-
-**Copy and paste & open in browser:**
+**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Run In Browser:**
 
 ```html
 <html>
@@ -439,7 +435,11 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upl
 
 ## Need a File Upload Widget?
 
-Check out [`uploader`](https://upload.io/uploader): a lightweight file upload widget, powered by `upload-js`.
+**[See Uploader »](https://upload.io/uploader)**
+
+Uploader is a lightweight file upload widget, powered by Upload.js:
+
+<p align="center"><a href="https://upload.io/uploader"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/jquery-uploader/main/.github/assets/demo.webp"></a></p>
 
 ## Building From Source
 
