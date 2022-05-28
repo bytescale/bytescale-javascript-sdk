@@ -76,8 +76,7 @@ To upload a `file` DOM object:
 ```JavaScript
 import { Upload } from "upload-js";
 
-// Get production API keys from Upload.io
-const upload = new Upload({ apiKey: "free" });
+const upload = new Upload({ apiKey: "free" }); // Get API keys from Upload.io
 
 // <input type="file" onchange="onFileSelected(event)" />
 async function onFileSelected(event) {
@@ -95,8 +94,7 @@ To implement a `<input type="file" onchange=... />` handler:
 ```javascript
 import { Upload } from "upload-js";
 
-// Get production API keys from Upload.io
-const upload = new Upload({ apiKey: "free" });
+const upload = new Upload({ apiKey: "free" }); // Get API keys from Upload.io
 
 // <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = upload.createFileInputHandler({
