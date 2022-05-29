@@ -69,35 +69,15 @@ Or via a `<script>` tag:
 
 ## Usage
 
-### Option 1: `uploadFile`  — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
-
-To upload a `file` DOM object:
-
-```JavaScript
-import { Upload } from "upload-js";
-
-const upload = new Upload({ apiKey: "free" }); // Get from Upload.io
-
-// <input type="file" onchange="onFileSelected(event)" />
-const onFileSelected = async (event) => {
-  const [ file ]    = event.target.files;
-  const { fileUrl } = await upload.uploadFile({ file, onProgress });
-  console.log(`File uploaded: ${fileUrl}`);
-}
-
-const onProgress = ({ progress }) => {
-  console.log(`File uploading: ${progress}% complete.`)
-}
-```
-
-### Option 2: `createFileInputHandler` — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+### Option 1: `createFileInputHandler` — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
 
 To implement a `<input type="file" onchange=... />` handler:
 
 ```javascript
 import { Upload } from "upload-js";
 
-const upload = new Upload({ apiKey: "free" }); // Get from Upload.io
+// Get production API keys from Upload.io
+const upload = new Upload({ apiKey: "free" });
 
 // <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = upload.createFileInputHandler({
@@ -117,6 +97,28 @@ const onFileSelected = upload.createFileInputHandler({
     console.error(`Error uploading file.`, error);
   }
 });
+```
+
+### Option 2: `uploadFile`  — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
+
+To upload a `file` DOM object:
+
+```JavaScript
+import { Upload } from "upload-js";
+
+// Get production API keys from Upload.io
+const upload = new Upload({ apiKey: "free" });
+
+// <input type="file" onchange="onFileSelected(event)" />
+const onFileSelected = async (event) => {
+  const [ file ]    = event.target.files;
+  const { fileUrl } = await upload.uploadFile({ file, onProgress });
+  console.log(`File uploaded: ${fileUrl}`);
+}
+
+const onProgress = ({ progress }) => {
+  console.log(`File uploading: ${progress}% complete.`)
+}
 ```
 
 
