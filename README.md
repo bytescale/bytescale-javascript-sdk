@@ -49,7 +49,7 @@
 
 <hr/>
 
-<p align="center"><a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a>
+<p align="center"><a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a>
   <br/>
   <b>Supports:</b> Rate Limiting, Volume Limiting, File Size &amp; Type Limiting, JWT Auth, and more...
   <br />
@@ -84,6 +84,10 @@ Or via a `<script>` tag:
 To upload a `file` object from the DOM:
 
 ```JavaScript
+//
+// <input type="file" onchange="onFileSelected(event)" />
+//
+
 import { Upload } from "upload-js";
 
 // Get production API keys from Upload.io
@@ -98,14 +102,10 @@ const onFileSelected = async (event) => {
 const onProgress = ({ progress }) => {
   console.log(`File uploading: ${progress}% complete.`)
 }
-
-//
-// <input type="file" onchange="onFileSelected(event)" />
-//
 ```
 
 
-## Full Working Example (Copy & Paste!)
+## Full Working Example (Copy & Paste)
 
 **[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Copy to IDE & Run:**
 
