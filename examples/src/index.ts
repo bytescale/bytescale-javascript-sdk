@@ -31,8 +31,8 @@ button.onchange = e => {
       }
     })
     .then(
-      ({ url }) => {
-        console.log(`File uploaded: ${url}`);
+      ({ fileUrl }) => {
+        console.log(`File uploaded: ${fileUrl}`);
       },
       error => {
         console.error(error);

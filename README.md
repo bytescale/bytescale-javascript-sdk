@@ -94,9 +94,9 @@ import { Upload } from "upload-js";
 const upload = Upload({ apiKey: "free" });
 
 const onFileSelected = async (event) => {
-  const [ file ] = event.target.files;
-  const { url }  = await upload.uploadFile(file, { onProgress });
-  console.log(`File uploaded: ${url}`);
+  const [ file ]    = event.target.files;
+  const { fileUrl } = await upload.uploadFile(file, { onProgress });
+  console.log(`File uploaded: ${fileUrl}`);
 }
 
 const onProgress = ({ progress }) => {
@@ -121,11 +121,11 @@ const onProgress = ({ progress }) => {
 
       const onFileSelected = async (event) => {
         try {
-          const { url } = await upload.uploadFile(
+          const { fileUrl } = await upload.uploadFile(
             event.target.files[0],
             { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
           );
-          alert(`File uploaded!\n${url}`);
+          alert(`File uploaded!\n${fileUrl}`);
         } catch (e) {
           alert(`Error!\n${e.message}`);
         }
@@ -149,11 +149,11 @@ const upload = Upload({ apiKey: "free" });
 const MyUploadButton = () => {
   const onFileSelected = async (event) => {
     try {
-      const { url } = await upload.uploadFile(
+      const { fileUrl } = await upload.uploadFile(
         event.target.files[0],
         { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
       );
-      alert(`File uploaded!\n${url}`);
+      alert(`File uploaded!\n${fileUrl}`);
     } catch (e) {
       alert(`Error!\n${e.message}`);
     }
@@ -173,11 +173,11 @@ angular
   .controller("exampleController", $scope => {
     $scope.uploadFile = async (event) => {
       try {
-        const { url } = await upload.uploadFile(
+        const { fileUrl } = await upload.uploadFile(
           event.target.files[0],
           { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
         );
-        alert(`File uploaded!\n${url}`);
+        alert(`File uploaded!\n${fileUrl}`);
       } catch (e) {
         alert(`Error!\n${e.message}`);
       }
@@ -197,11 +197,11 @@ const { Upload } = require("upload-js");
 const upload = Upload({ apiKey: "free" });
 const uploadFile = async (event) => {
   try {
-    const { url } = await upload.uploadFile(
+    const { fileUrl } = await upload.uploadFile(
       event.target.files[0],
       { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
     );
-    alert(`File uploaded!\n${url}`);
+    alert(`File uploaded!\n${fileUrl}`);
   } catch (e) {
     alert(`Error!\n${e.message}`);
   }
@@ -230,7 +230,7 @@ const vueApp = new Vue({
           $("#file-input").hide()
 
           try {
-            const { url } = await upload.uploadFile(
+            const { fileUrl } = await upload.uploadFile(
               event.target.files[0], {
               onProgress: ({ progress }) => $("#title").html(`File uploading... ${progress}%`)
             });
@@ -239,7 +239,7 @@ const vueApp = new Vue({
               File uploaded:
               <br/>
               <br/>
-              <a href="${url}" target="_blank">${url}</a>`
+              <a href="${fileUrl}" target="_blank">${fileUrl}</a>`
             )
           } catch (e) {
             $("#title").html(`Error:<br/><br/>${e.message}`)
@@ -265,7 +265,7 @@ Overview of the code:
 1. Call `Upload` once at the start of your app.
 2. Call `uploadFile` from your `<input onchange="...">` handlers.
 3. Use `onProgress` to display the upload progress for each input element.
-4. When `onUploaded` fires, record the `url` from the callback's argument to a local variable.
+4. When `onUploaded` fires, record the `fileUrl` from the callback's argument to a local variable.
 5. When `onUploaded` has fired for all files, the form is ready to be submitted.
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
@@ -367,7 +367,7 @@ To crop images using manually-provided geometry:
         const originalImage = await upload.uploadFile(file);
         const croppedImage  = await onOriginalImageUploaded(originalImage)
 
-        alert(`Cropped image:\n${croppedImage.url.replace("/raw/", "/thumbnail/")}`)
+        alert(`Cropped image:\n${croppedImage.fileUrl.replace("/raw/", "/thumbnail/")}`)
       }
     </script>
   </head>
