@@ -1,6 +1,7 @@
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileLike } from "upload-js/FileLike";
 import { UploadParams } from "upload-js/UploadParams";
+import { UrlParams } from "upload-js/UrlParams";
 
 export interface UploadInterface {
   /**
@@ -31,5 +32,6 @@ export interface UploadInterface {
 
   uploadFile: (file: FileLike, params?: UploadParams) => Promise<UploadedFile>;
 
-  url: (filePath: string, transformationSlug?: string) => string;
+  url: ((filePath: string, transformationSlug?: string) => string) &
+    ((filePath: string, urlParams?: UrlParams) => string);
 }
