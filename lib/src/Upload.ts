@@ -426,7 +426,7 @@ export class Upload {
           ...(accessToken === undefined
             ? {}
             : {
-                "authorization-user": accessToken
+                "authorization-token": accessToken
               })
         };
       };
