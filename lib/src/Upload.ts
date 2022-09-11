@@ -599,7 +599,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   const normalizeMimeType = (mime: string): string | undefined => {
     const normal = mime.toLowerCase();
-    const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
+    const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+(?:;[^=]+=[^;]+)*$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
     return regex.test(normal) ? normal : undefined;
   };
 
