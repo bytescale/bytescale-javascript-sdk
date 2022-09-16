@@ -1,25 +1,25 @@
 import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
-import {
-  FilesService,
-  UploadPart,
-  OpenAPI,
-  AccountId,
-  ErrorResponse,
-  request,
-  FileTag,
-  ApiError
-} from "@upload-io/upload-api-client-upload-js";
 import { UploadParams } from "upload-js/UploadParams";
-import { BeginUploadRequest } from "@upload-io/upload-api-client-upload-js/src/models/BeginUploadRequest";
+import {
+  OpenAPI,
+  ApiResult,
+  request,
+  AccountId,
+  UploadPartV2,
+  ErrorResponse,
+  BeginUploadRequestV2,
+  FileDetails,
+  beginMultipartUpload,
+  getUploadPart,
+  completeUploadPart
+} from "@upload-io/upload-api-client-upload-js";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
-import { FileSummary } from "@upload-io/upload-api-client-upload-js/src/models/FileSummary";
 import { SetAccessTokenResponseDto } from "upload-js/dtos/SetAccessTokenResponseDto";
 import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDto";
 import { AuthSession } from "upload-js/AuthSession";
 import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/core/ApiRequestOptions";
-import { ApiResult } from "@upload-io/upload-api-client-upload-js/src/core/ApiResult";
 import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
@@ -210,12 +210,6 @@ export class Upload {
       return await this.beginFileUpload(params.file, params, addCancellationHandler);
     } catch (e) {
       cancel();
-      if (e instanceof ApiError) {
-        const errorResponseMaybe = e.body as Partial<ErrorResponse> | undefined;
-        if (typeof errorResponseMaybe?.error?.code === "string") {
-          throw new UploadError(errorResponseMaybe as ErrorResponse);
-        }
-      }
       throw e;
     }
   }
@@ -280,18 +274,19 @@ export class Upload {
     };
 
     return await this.withProgressReporting(this.onProgressInterval, reportProgress, async () => {
-      const uploadRequest: BeginUploadRequest = {
-        accountId: this.accountId,
-        fileSize: file.size,
-        fileName: file.name,
+      const uploadRequest: BeginUploadRequestV2 = {
+        filePath: params.filePath,
+        metadata: params.metadata,
         mime: this.normalizeMimeType(file.type),
-        tags: (params.tags ?? []).map((x): FileTag => (typeof x === "string" ? { name: x, searchable: true } : x))
+        originalFileName: file.name,
+        size: file.size,
+        tags: params.tags
       };
 
       this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
       this.preflight();
-      const uploadMetadata = await FilesService.beginMultipartUpload(uploadRequest);
+      const uploadMetadata = this.handleApiResult(await beginMultipartUpload(this.accountId, uploadRequest));
       const isMultipart = uploadMetadata.uploadParts.count > 1;
 
       this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
@@ -307,7 +302,7 @@ export class Upload {
       })();
 
       const nextPartQueue = [uploadMetadata.uploadParts.first];
-      const getNextPart: (workerIndex: number) => Promise<UploadPart | undefined> = async workerIndex => {
+      const getNextPart: (workerIndex: number) => Promise<UploadPartV2 | undefined> = async workerIndex => {
         const nextPart = nextPartQueue.pop();
         if (nextPart !== undefined) {
           this.debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
@@ -320,7 +315,7 @@ export class Upload {
         }
         this.preflight();
         this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
-        return await FilesService.getUploadPart(uploadMetadata.file.fileId, uploadPartIndex);
+        return this.handleApiResult(await getUploadPart(this.accountId, uploadMetadata.uploadId, uploadPartIndex));
       };
 
       const bytesSentByEachWorker: number[] = [];
@@ -359,20 +354,9 @@ export class Upload {
       );
 
       const uploadedFile: UploadedFile = {
-        accountId: uploadRequest.accountId,
+        accountId: this.accountId,
         file,
-        fileId: uploadMetadata.file.fileId,
-        fileSize: uploadMetadata.file.size,
-        fileUrl: this.url(uploadMetadata.file.fileId),
-        tags: uploadMetadata.file.tags,
-        mime: uploadMetadata.file.mime,
-        suggestedOptimization:
-          uploadMetadata.suggestedOptimizationUrlSlug === undefined
-            ? undefined
-            : {
-                transformationSlug: uploadMetadata.suggestedOptimizationUrlSlug,
-                transformationUrl: this.url(uploadMetadata.file.fileId, uploadMetadata.suggestedOptimizationUrlSlug)
-              }
+        ...uploadMetadata.file
       };
 
       this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
@@ -448,7 +432,7 @@ export class Upload {
 
   private async putUploadPart(
     url: string,
-    summary: FileSummary,
+    summary: FileDetails,
     isMultipart: boolean,
     content: Blob,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
@@ -498,13 +482,15 @@ export class Upload {
 
         // Headers are set by the BE for multipart uploads.
         if (!isMultipart) {
-          xhr.setRequestHeader("content-type", summary.mime);
-          if (summary.name !== null) {
+          if (summary.mime !== null) {
+            xhr.setRequestHeader("content-type", summary.mime);
+          }
+          if (summary.originalFileName !== null) {
             xhr.setRequestHeader(
               "content-disposition",
-              `inline; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
-                summary.name
-              )}`
+              `inline; filename="${encodeURIComponent(
+                summary.originalFileName
+              )}"; filename*=UTF-8''${encodeURIComponent(summary.originalFileName)}`
             );
           }
         }
@@ -518,9 +504,9 @@ export class Upload {
 
   private async uploadPart(
     file: FileLike,
-    summary: FileSummary,
+    summary: FileDetails,
     isMultipart: boolean,
-    part: UploadPart,
+    part: UploadPartV2,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler,
     workerIndex: number
@@ -540,9 +526,11 @@ export class Upload {
     );
 
     this.preflight();
-    await FilesService.completeUploadPart(part.fileId, part.uploadPartIndex, {
-      etag
-    });
+    this.handleApiResult(
+      await completeUploadPart(this.accountId, part.uploadId, part.uploadPartIndex, {
+        etag
+      })
+    );
 
     this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
   }
@@ -608,7 +596,7 @@ export class Upload {
     requestBody: TPost,
     withCredentials: boolean
   ): Promise<TGet> {
-    return (
+    return await this.handleApiResult(
       await this.nonUploadApiRequest(
         {
           method: "PUT",
@@ -618,11 +606,11 @@ export class Upload {
         },
         withCredentials
       )
-    ).body;
+    );
   }
 
   private async getText(url: string, headers: Record<string, string>): Promise<string> {
-    return (
+    return await this.handleApiResult(
       await this.nonUploadApiRequest(
         {
           method: "GET",
@@ -631,7 +619,7 @@ export class Upload {
         },
         false
       )
-    ).body;
+    );
   }
 
   private async deleteNoResponse(
@@ -639,14 +627,29 @@ export class Upload {
     headers: Record<string, string>,
     withCredentials: boolean
   ): Promise<void> {
-    await this.nonUploadApiRequest(
-      {
-        method: "DELETE",
-        path: url,
-        headers
-      },
-      withCredentials
+    this.handleApiResult(
+      await this.nonUploadApiRequest(
+        {
+          method: "DELETE",
+          path: url,
+          headers
+        },
+        withCredentials
+      )
     );
+  }
+
+  private handleApiResult<T>(result: ApiResult<T>): T {
+    if (result.ok) {
+      return result.body;
+    }
+
+    const errorResponseMaybe = result.body;
+    if (typeof errorResponseMaybe?.error?.code === "string") {
+      throw new UploadError(errorResponseMaybe as ErrorResponse);
+    }
+
+    throw new Error("Unexpected API error.");
   }
 
   private handleApiError<T>(result: T | ErrorResponse): T {
@@ -658,11 +661,11 @@ export class Upload {
     return result as T;
   }
 
-  private async nonUploadApiRequest(options: ApiRequestOptions, withCredentials: boolean): Promise<ApiResult> {
+  private async nonUploadApiRequest<T>(options: ApiRequestOptions, withCredentials: boolean): Promise<ApiResult<T>> {
     this.preflightExternalApi(options.path, withCredentials);
-    return await request({
+    return await request<T>({
       ...options,
-      path: ""
+      path: "" // We set to "" because we're setting "OpenAPI.BASE = path" above (to reset what's being used for the other calls).
     });
   }
 }
