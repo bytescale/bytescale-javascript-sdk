@@ -36,7 +36,6 @@ Depending on the browsers you wish to support, your application may require some
   - core-js/modules/es.reflect.construct
   - core-js/modules/es.regexp.exec
   - core-js/modules/es.regexp.to-string
-  - core-js/modules/es.string.includes
   - core-js/modules/es.string.iterator
   - core-js/modules/es.string.replace
   - core-js/modules/es.string.starts-with
