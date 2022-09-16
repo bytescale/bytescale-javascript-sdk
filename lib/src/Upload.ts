@@ -2,7 +2,6 @@ import { Cancellation } from "upload-js/Errors";
 import { UploadConfig } from "upload-js/UploadConfig";
 import { UploadParams } from "upload-js/UploadParams";
 import {
-  OpenAPI,
   ApiResult,
   request,
   AccountId,
@@ -12,7 +11,8 @@ import {
   FileDetails,
   beginMultipartUpload,
   getUploadPart,
-  completeUploadPart
+  completeUploadPart,
+  Config
 } from "@upload-io/upload-api-client-upload-js";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
@@ -285,8 +285,9 @@ export class Upload {
 
       this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
-      this.preflight();
-      const uploadMetadata = this.handleApiResult(await beginMultipartUpload(this.accountId, uploadRequest));
+      const uploadMetadata = this.handleApiResult(
+        await beginMultipartUpload(this.getConfig(), this.accountId, uploadRequest)
+      );
       const isMultipart = uploadMetadata.uploadParts.count > 1;
 
       this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
@@ -313,9 +314,10 @@ export class Upload {
           this.debug("No parts remaining.", workerIndex);
           return undefined;
         }
-        this.preflight();
         this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
-        return this.handleApiResult(await getUploadPart(this.accountId, uploadMetadata.uploadId, uploadPartIndex));
+        return this.handleApiResult(
+          await getUploadPart(this.getConfig(), this.accountId, uploadMetadata.uploadId, uploadPartIndex)
+        );
       };
 
       const bytesSentByEachWorker: number[] = [];
@@ -381,28 +383,22 @@ export class Upload {
     return regex.test(normal) ? normal : undefined;
   }
 
-  /**
-   * Call before every Upload API request. Since the connector is configured through global config, other code may have
-   * changed these since we last set them. (I.e. consider two instances of this class, configured with different API
-   * keys, and an upload is initiated on each of them at the same time...).
-   */
-  private preflight(): void {
-    OpenAPI.BASE = this.apiUrl;
+  private getConfig(): Config {
+    const config: Config = {
+      BASE: this.apiUrl,
+      WITH_CREDENTIALS: true
+    };
+
     if (this.authenticateWithApiKey) {
-      OpenAPI.WITH_CREDENTIALS = true;
-      OpenAPI.USERNAME = "apikey";
-      OpenAPI.PASSWORD = this.config.apiKey;
-    } else {
-      OpenAPI.WITH_CREDENTIALS = false;
-      delete OpenAPI.USERNAME;
-      delete OpenAPI.PASSWORD;
+      config.USERNAME = "apikey";
+      config.PASSWORD = this.config.apiKey;
     }
 
     const headers = this.headers;
     const accessToken = this.lastAuthSession?.accessToken;
 
     if (headers !== undefined || accessToken !== undefined) {
-      OpenAPI.HEADERS = async (): Promise<Record<string, string>> => {
+      config.HEADERS = async (): Promise<Record<string, string>> => {
         const headersFromConfig = headers === undefined ? {} : await headers();
         const accessToken = this.lastAuthSession?.accessToken; // Re-fetch as there's been an async boundary so state may have changed.
         return {
@@ -414,20 +410,9 @@ export class Upload {
               })
         };
       };
-    } else {
-      delete OpenAPI.HEADERS;
     }
-  }
 
-  /**
-   * Call before every non-Upload API request.
-   */
-  private preflightExternalApi(url: string, withCredentials: boolean): void {
-    OpenAPI.BASE = url;
-    OpenAPI.WITH_CREDENTIALS = withCredentials;
-    delete OpenAPI.USERNAME;
-    delete OpenAPI.PASSWORD;
-    delete OpenAPI.HEADERS;
+    return config;
   }
 
   private async putUploadPart(
@@ -525,9 +510,8 @@ export class Upload {
       addCancellationHandler
     );
 
-    this.preflight();
     this.handleApiResult(
-      await completeUploadPart(this.accountId, part.uploadId, part.uploadPartIndex, {
+      await completeUploadPart(this.getConfig(), this.accountId, part.uploadId, part.uploadPartIndex, {
         etag
       })
     );
@@ -662,10 +646,15 @@ export class Upload {
   }
 
   private async nonUploadApiRequest<T>(options: ApiRequestOptions, withCredentials: boolean): Promise<ApiResult<T>> {
-    this.preflightExternalApi(options.path, withCredentials);
-    return await request<T>({
-      ...options,
-      path: "" // We set to "" because we're setting "OpenAPI.BASE = path" above (to reset what's being used for the other calls).
-    });
+    return await request<T>(
+      {
+        BASE: options.path,
+        WITH_CREDENTIALS: withCredentials
+      },
+      {
+        ...options,
+        path: "" // We set to "" because we're using "BASE" above instead.
+      }
+    );
   }
 }

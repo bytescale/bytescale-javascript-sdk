@@ -39,7 +39,7 @@
     "test": "npx wdio run tests/wdio.conf.ts --autoCompileOpts.tsNodeOpts.project=tests/tsconfig.json"
   },
   "dependencies": {
-    "@upload-io/upload-api-client-upload-js": "^2.3.0",
+    "@upload-io/upload-api-client-upload-js": "^2.6.0",
     "progress-smoother": "^1.3.0"
   },
   "devDependencies": {
