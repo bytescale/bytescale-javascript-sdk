@@ -1,4 +1,4 @@
-import { Cancellation } from "upload-js/Errors";
+import { CancellationError } from "upload-js/CancellationError";
 import { UploadConfig } from "upload-js/UploadConfig";
 import { UploadParams } from "upload-js/UploadParams";
 import {
@@ -361,7 +361,7 @@ export class Upload {
         ...uploadMetadata.file
       };
 
-      this.debug(`FileLike upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
+      this.debug(`File upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
 
       return uploadedFile;
     });
@@ -450,18 +450,18 @@ export class Upload {
             const etag = xhr.getResponseHeader("etag");
 
             if (etag === null || etag === undefined) {
-              reject(new Error(`FileLike upload error: no etag header in upload response.`));
+              reject(new Error(`File upload error: no etag header in upload response.`));
             } else {
               resolve({ etag });
             }
           } else {
-            reject(new Error(`FileLike upload error: status code ${xhr.status}`));
+            reject(new Error(`File upload error: status code ${xhr.status}`));
           }
         });
 
-        xhr.onabort = () => reject(new Cancellation("FileLike upload cancelled."));
-        xhr.onerror = () => reject(new Error("FileLike upload error."));
-        xhr.ontimeout = () => reject(new Error("FileLike upload timeout."));
+        xhr.onabort = () => reject(new CancellationError("File upload cancelled."));
+        xhr.onerror = () => reject(new Error("File upload error."));
+        xhr.ontimeout = () => reject(new Error("File upload timeout."));
 
         xhr.open("PUT", url);
 
