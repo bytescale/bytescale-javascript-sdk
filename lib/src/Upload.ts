@@ -1,4 +1,3 @@
-import { CancellationError } from "upload-js/CancellationError";
 import { UploadConfig } from "upload-js/UploadConfig";
 import { UploadParams } from "upload-js/UploadParams";
 import {
@@ -15,7 +14,6 @@ import {
   Config
 } from "@upload-io/upload-api-client-upload-js";
 import { UploadedFile } from "upload-js/UploadedFile";
-import { FileInputChangeEvent } from "upload-js/FileInputChangeEvent";
 import { SetAccessTokenResponseDto } from "upload-js/dtos/SetAccessTokenResponseDto";
 import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDto";
 import { AuthSession } from "upload-js/AuthSession";
@@ -24,103 +22,100 @@ import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
 import { UploadError } from "upload-js/UploadError";
-import { UploadParamsWithFile } from "upload-js/UploadParamsWithFile";
+import { UploadInterface } from "upload-js/UploadInterface";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
+const accountIdLength = 7; // Sync with: upload/shared/**/AccountIdUtils
+const specialApiKeyAccountId = "W142hJk";
+const specialApiKeys = ["free", "demo"];
+const apiKeyPrefix = "public_";
+const maxUploadConcurrency = 5;
+const refreshBeforeExpirySeconds = 20;
+const onProgressInterval = 100;
+const retryAuthAfterErrorSeconds = 5;
+const accessTokenPathBase = "/api/v1/access_tokens/";
+const logPrefix = "[upload-js] ";
+
 /**
- * You must only instantiate one instance of this class in your web app.
+ * You should only instantiate one instance of this class in your web app.
  *
- * This is particularly important when using the 'beginAuthSession' and 'endAuthSession' methods.
+ * This is particularly important when using the 'beginAuthSession' and
+ * 'endAuthSession' methods, as you don't want multiple running instances of the
+ * auth process in your web application.
  */
-export class Upload {
-  private readonly accountId: AccountId;
-  private readonly accountIdLength = 7; // Sync with: upload/shared/**/AccountIdUtils
-  private readonly specialApiKeyAccountId = "W142hJk";
-  private readonly specialApiKeys = ["free", "demo"];
-  private readonly apiKeyPrefix = "public_";
-  private readonly apiUrl: string;
-  private readonly authenticateWithApiKey: boolean;
-  private readonly cdnUrl: string;
-  private readonly debugMode: boolean;
-  private readonly headers: (() => Promise<Record<string, string>>) | undefined;
-  private readonly maxUploadConcurrency = 5;
-  private readonly refreshBeforeExpirySeconds = 20;
-  private readonly onProgressInterval = 100;
-  private readonly retryAuthAfterErrorSeconds = 5;
-  private readonly accessTokenPathBase = "/api/v1/access_tokens/";
-  private readonly authMutex = new Mutex();
+export function Upload(config: UploadConfig): UploadInterface {
+  // ----------------
+  // READONLY MEMBERS
+  // ----------------
 
-  private lastAuthSession: AuthSession | undefined = undefined;
+  let accountId: AccountId;
+  const authMutex = Mutex();
+  const apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
+  const cdnUrl = config.internal?.cdnUrl ?? "https://upcdn.io";
+  const authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
+  const headers = config.internal?.headers;
+  const debugMode = config.debug === true;
 
-  constructor(private readonly config: UploadConfig) {
-    if ((config ?? undefined) === undefined) {
-      throw new Error("[upload-js] Please provide a configuration object to the constructor.");
-    }
+  // ------------------
+  // READ/WRITE MEMBERS
+  // ------------------
 
-    if (config.debug === true) {
-      console.log(`[upload-js] Initialized with API key '${config.apiKey}'`);
-    }
-    this.apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
-    this.cdnUrl = config.internal?.cdnUrl ?? "https://upcdn.io";
-    this.authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
-    this.headers = config.internal?.headers;
-    this.debugMode = config.debug === true;
+  let lastAuthSession: AuthSession | undefined;
 
-    if ((config.apiKey ?? undefined) === undefined) {
-      throw new Error("[upload-js] Please provide an API key via the 'apiKey' config parameter.");
-    }
+  // ----------------
+  // CONSTRUCTOR
+  // ----------------
 
-    if (config.apiKey.trim() !== config.apiKey) {
-      // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
-      // everywhere in perpetuity (since removing the trimming would be a breaking change).
-      throw new Error(
-        "[upload-js] Please enter a valid API key: whitespace was detected in your API key, please remove it and try again."
-      );
-    }
+  if ((config ?? undefined) === undefined) {
+    throw new Error(`${logPrefix}Config parameter required.`);
+  }
 
-    // Non-api-key authentication is required by Upload Dashboard, which uses bearer tokens instead of API keys because
-    // the user may not have any active API keys, but might still want to upload files via the Upload Dashboard.
-    if (config.internal?.authenticateWithApiKey === false) {
-      this.accountId = config.internal.accountId;
+  if (config.debug === true) {
+    console.log(`${logPrefix}Initialized with API key '${config.apiKey}'`);
+  }
+
+  if ((config.apiKey ?? undefined) === undefined) {
+    throw new Error(`${logPrefix}Please provide an API key via the 'apiKey' config parameter.`);
+  }
+
+  if (config.apiKey.trim() !== config.apiKey) {
+    // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
+    // everywhere in perpetuity (since removing the trimming would be a breaking change).
+    throw new Error(`${logPrefix}API key needs trimming (whitespace detected).`);
+  }
+
+  // Non-api-key authentication is required by Upload Dashboard, which uses bearer tokens instead of API keys because
+  // the user may not have any active API keys, but might still want to upload files via the Upload Dashboard.
+  if (config.internal?.authenticateWithApiKey === false) {
+    accountId = config.internal.accountId;
+  } else {
+    if (specialApiKeys.includes(config.apiKey)) {
+      accountId = specialApiKeyAccountId;
     } else {
-      if (this.specialApiKeys.includes(config.apiKey)) {
-        this.accountId = this.specialApiKeyAccountId;
-      } else {
-        if (!config.apiKey.startsWith(this.apiKeyPrefix)) {
-          throw new Error(`[upload-js] Please enter a valid API key: it must begin with "${this.apiKeyPrefix}".`);
-        }
+      if (!config.apiKey.startsWith(apiKeyPrefix)) {
+        throw new Error(`${logPrefix}API key must begin with "${apiKeyPrefix}".`);
+      }
 
-        this.accountId = config.apiKey.substr(this.apiKeyPrefix.length, this.accountIdLength);
+      accountId = config.apiKey.substr(apiKeyPrefix.length, accountIdLength);
 
-        if (this.accountId.length !== this.accountIdLength) {
-          throw new Error(
-            `[upload-js] Please enter a valid API key: it must be at least ${
-              this.apiKeyPrefix.length + this.accountIdLength
-            } characters long, but the API key you provided is ${this.apiKeyPrefix.length + this.accountId.length}.`
-          );
-        }
+      if (accountId.length !== accountIdLength) {
+        throw new Error(`${logPrefix}API key is too short!`);
       }
     }
   }
 
-  /**
-   * Call after a user has signed-in to your web app.
-   *
-   * Allows the user to perform authenticated uploads and/or downloads to the Upload CDN.
-   *
-   * You must await the promise before attempting to perform any uploads or downloads that require authentication.
-   *
-   * Method safety:
-   * - IS idempotent: you may call this method multiple times, contiguously. (The previous auth session will be ended.)
-   * - IS reentrant: can be called before another *AuthSession method has finished executing.
-   *
-   * @param authUrl The fully-qualified URL for your backend API's auth endpoint.
-   * @param authHeaders Headers to send to your backend API.
-   *                    IMPORTANT: do not call '*AuthSession' inside this callback, as this will cause a deadlock.
-   */
-  async beginAuthSession(authUrl: string, authHeaders: () => Promise<Record<string, string>>): Promise<void> {
-    await this.endAuthSession();
+  const accessTokenPath = `${cdnUrl}${accessTokenPathBase}${accountId}`;
+
+  // ----------------
+  // PUBLIC METHODS
+  // ----------------
+
+  const beginAuthSession = async (
+    authUrl: string,
+    authHeaders: () => Promise<Record<string, string>>
+  ): Promise<void> => {
+    await endAuthSession();
 
     const authSession: AuthSession = {
       accessToken: undefined,
@@ -131,26 +126,19 @@ export class Upload {
     // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
     // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
     // can interject and b) nothing has interjected since the lock was relinquished).
-    this.lastAuthSession = authSession;
+    lastAuthSession = authSession;
 
-    await this.refreshAccessToken(authUrl, authHeaders, authSession);
-  }
+    await refreshAccessToken(authUrl, authHeaders, authSession);
+  };
 
-  /**
-   * Call after the user signs-out of your web app.
-   *
-   * Method safety:
-   * - IS idempotent: you may call this method multiple times, contiguously.
-   * - IS reentrant: can be called before another *AuthSession method has finished executing
-   */
-  async endAuthSession(): Promise<void> {
-    await this.authMutex.safe(async () => {
-      if (this.lastAuthSession === undefined) {
+  const endAuthSession = async (): Promise<void> => {
+    await authMutex.safe(async () => {
+      if (lastAuthSession === undefined) {
         return;
       }
 
-      const authSession = this.lastAuthSession;
-      this.lastAuthSession = undefined;
+      const authSession = lastAuthSession;
+      lastAuthSession = undefined;
 
       if (authSession.accessTokenRefreshHandle !== undefined) {
         clearTimeout(authSession.accessTokenRefreshHandle);
@@ -158,41 +146,11 @@ export class Upload {
 
       authSession.isActive = false;
 
-      await this.deleteAccessToken();
+      await deleteAccessToken();
     });
-  }
+  };
 
-  createFileInputHandler(
-    params: UploadParams & {
-      onError?: (reason: any) => void;
-      onUploaded: (result: UploadedFile) => void;
-    }
-  ): (file: FileInputChangeEvent) => void {
-    return (event: FileInputChangeEvent) => {
-      const input = event.target;
-      if (input.files === undefined || input.files === null) {
-        throw new Error(
-          "No property 'files' on input element: ensure 'createFileInputHandler' is set to the 'onchange' attribute on an input of type 'file'."
-        );
-      }
-      if (input.files[0] === undefined) {
-        throw new Error("No file selected.");
-      }
-
-      this.uploadFile({ ...params, file: input.files[0] }).then(params.onUploaded, error => {
-        if (params.onError !== undefined) {
-          params.onError(error);
-        } else {
-          console.error(
-            "Cannot upload file. To remove this console message, handle the error explicitly by providing an 'onError' parameter: upload.createFileInputHandler({onUploaded, onError})",
-            error
-          );
-        }
-      });
-    };
-  }
-
-  async uploadFile(paramsOrFile: UploadParamsWithFile | FileLike): Promise<UploadedFile> {
+  const uploadFile = async (file: FileLike, params: UploadParams = {}): Promise<UploadedFile> => {
     // Initial progress (raised immediately and synchronously).
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -200,57 +158,27 @@ export class Upload {
     };
     const cancel = (): void => cancellationHandlers.forEach(x => x());
 
-    const params: UploadParamsWithFile = FileLike.is(paramsOrFile) ? { file: paramsOrFile } : paramsOrFile;
-
     if (params.onBegin !== undefined) {
       params.onBegin({ cancel });
     }
 
     try {
-      return await this.beginFileUpload(params.file, params, addCancellationHandler);
+      return await beginFileUpload(file, params, addCancellationHandler);
     } catch (e) {
       cancel();
       throw e;
     }
-  }
+  };
 
-  url(fileId: string, transformationSlug?: string): string {
-    const fileUrl = `${this.cdnUrl}/${fileId}`;
-    return transformationSlug === undefined ? fileUrl : `${fileUrl}/${transformationSlug}`;
-  }
+  // ----------------
+  // PRIVATE METHODS
+  // ----------------
 
-  private async withProgressReporting<T>(
-    tickInterval: number,
-    tick: (stopTicking: () => void) => void,
-    scope: () => Promise<T>
-  ): Promise<T> {
-    let whileReportingResolved: () => void;
-    const whileReporting = new Promise<void>(resolve => {
-      whileReportingResolved = resolve;
-    });
-    let isReporting = true;
-    const stopReporting = (): void => {
-      if (isReporting) {
-        whileReportingResolved();
-        clearInterval(intervalHandle);
-        isReporting = false;
-      }
-    };
-    const intervalHandle: number = setInterval(() => tick(stopReporting), tickInterval) as any;
-    try {
-      const result = await scope();
-      await whileReporting;
-      return result;
-    } finally {
-      stopReporting();
-    }
-  }
-
-  private async beginFileUpload(
+  const beginFileUpload = async (
     file: FileLike,
     params: UploadParams,
     addCancellationHandler: AddCancellationHandler
-  ): Promise<UploadedFile> {
+  ): Promise<UploadedFile> => {
     const progressSmoother = ProgressSmoother({
       maxValue: file.size,
       teardownTime: 1000, // Accounts for the 'finalizeUpload' request to the Upload API.
@@ -273,24 +201,22 @@ export class Upload {
       }
     };
 
-    return await this.withProgressReporting(this.onProgressInterval, reportProgress, async () => {
+    return await withProgressReporting(onProgressInterval, reportProgress, async () => {
       const uploadRequest: BeginUploadRequestV2 = {
         filePath: params.filePath,
         metadata: params.metadata,
-        mime: this.normalizeMimeType(file.type),
+        mime: normalizeMimeType(file.type),
         originalFileName: file.name,
         size: file.size,
         tags: params.tags
       };
 
-      this.debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
+      debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
-      const uploadMetadata = this.handleApiResult(
-        await beginMultipartUpload(this.getConfig(), this.accountId, uploadRequest)
-      );
+      const uploadMetadata = handleApiResult(await beginMultipartUpload(getConfig(), accountId, uploadRequest));
       const isMultipart = uploadMetadata.uploadParts.count > 1;
 
-      this.debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
+      debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
 
       const incUploadIndex: () => number | undefined = (() => {
         let lastUploadIndex: number = 0;
@@ -306,18 +232,16 @@ export class Upload {
       const getNextPart: (workerIndex: number) => Promise<UploadPartV2 | undefined> = async workerIndex => {
         const nextPart = nextPartQueue.pop();
         if (nextPart !== undefined) {
-          this.debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
+          debug(`Dequeued part ${nextPart.uploadPartIndex}.`, workerIndex);
           return nextPart;
         }
         const uploadPartIndex = incUploadIndex();
         if (uploadPartIndex === undefined) {
-          this.debug("No parts remaining.", workerIndex);
+          debug("No parts remaining.", workerIndex);
           return undefined;
         }
-        this.debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
-        return this.handleApiResult(
-          await getUploadPart(this.getConfig(), this.accountId, uploadMetadata.uploadId, uploadPartIndex)
-        );
+        debug(`Fetching metadata for part ${uploadPartIndex}.`, workerIndex);
+        return handleApiResult(await getUploadPart(getConfig(), accountId, uploadMetadata.uploadId, uploadPartIndex));
       };
 
       const bytesSentByEachWorker: number[] = [];
@@ -338,7 +262,7 @@ export class Upload {
             const totalBytesSent = bytesSentByEachWorker.reduce((a, b) => a + b);
             progressSmoother.setValue(totalBytesSent);
           };
-          await this.uploadPart(
+          await uploadPart(
             file,
             uploadMetadata.file,
             isMultipart,
@@ -352,77 +276,29 @@ export class Upload {
       };
 
       await Promise.all(
-        [...Array(this.maxUploadConcurrency).keys()].map(async workerIndex => await uploadNextPart(workerIndex))
+        [...Array(maxUploadConcurrency).keys()].map(async workerIndex => await uploadNextPart(workerIndex))
       );
 
       const uploadedFile: UploadedFile = {
-        accountId: this.accountId,
+        accountId,
         file,
         ...uploadMetadata.file
       };
 
-      this.debug(`File upload completed. FileLike = ${JSON.stringify(uploadedFile)}`);
+      debug("File upload completed.");
 
       return uploadedFile;
     });
-  }
+  };
 
-  private debug(message: string, workerIndex?: number): void {
-    if (this.debugMode) {
-      console.log(`[upload-js] ${message}${workerIndex !== undefined ? ` (Worker ${workerIndex})` : ""}`);
-    }
-  }
-
-  private error(message: string): void {
-    console.error(`[upload-js] ${message}`);
-  }
-
-  private normalizeMimeType(mime: string): string | undefined {
-    const normal = mime.toLowerCase();
-    const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
-    return regex.test(normal) ? normal : undefined;
-  }
-
-  private getConfig(): Config {
-    const config: Config = {
-      BASE: this.apiUrl,
-      WITH_CREDENTIALS: true
-    };
-
-    if (this.authenticateWithApiKey) {
-      config.USERNAME = "apikey";
-      config.PASSWORD = this.config.apiKey;
-    }
-
-    const headers = this.headers;
-    const accessToken = this.lastAuthSession?.accessToken;
-
-    if (headers !== undefined || accessToken !== undefined) {
-      config.HEADERS = async (): Promise<Record<string, string>> => {
-        const headersFromConfig = headers === undefined ? {} : await headers();
-        const accessToken = this.lastAuthSession?.accessToken; // Re-fetch as there's been an async boundary so state may have changed.
-        return {
-          ...headersFromConfig,
-          ...(accessToken === undefined
-            ? {}
-            : {
-                "authorization-token": accessToken
-              })
-        };
-      };
-    }
-
-    return config;
-  }
-
-  private async putUploadPart(
+  const putUploadPart = async (
     url: string,
     summary: FileDetails,
     isMultipart: boolean,
     content: Blob,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
-  ): Promise<{ etag: string }> {
+  ): Promise<{ etag: string }> => {
     const xhr = new XMLHttpRequest();
     let pending = true;
     addCancellationHandler(() => {
@@ -459,7 +335,7 @@ export class Upload {
           }
         });
 
-        xhr.onabort = () => reject(new CancellationError("File upload cancelled."));
+        xhr.onabort = () => reject(new Error("File upload cancelled."));
         xhr.onerror = () => reject(new Error("File upload error."));
         xhr.ontimeout = () => reject(new Error("File upload timeout."));
 
@@ -485,9 +361,9 @@ export class Upload {
     } finally {
       pending = false;
     }
-  }
+  };
 
-  private async uploadPart(
+  const uploadPart = async (
     file: FileLike,
     summary: FileDetails,
     isMultipart: boolean,
@@ -495,13 +371,13 @@ export class Upload {
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler,
     workerIndex: number
-  ): Promise<void> {
+  ): Promise<void> => {
     const content: Blob =
       part.range.inclusiveEnd === -1 ? new Blob() : file.slice(part.range.inclusiveStart, part.range.inclusiveEnd + 1);
 
-    this.debug(`Uploading part ${part.uploadPartIndex}.`, workerIndex);
+    debug(`Uploading part ${part.uploadPartIndex}.`, workerIndex);
 
-    const { etag } = await this.putUploadPart(
+    const { etag } = await putUploadPart(
       part.uploadUrl,
       summary,
       isMultipart,
@@ -510,43 +386,66 @@ export class Upload {
       addCancellationHandler
     );
 
-    this.handleApiResult(
-      await completeUploadPart(this.getConfig(), this.accountId, part.uploadId, part.uploadPartIndex, {
+    handleApiResult(
+      await completeUploadPart(getConfig(), accountId, part.uploadId, part.uploadPartIndex, {
         etag
       })
     );
 
-    this.debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
-  }
+    debug(`Uploaded part ${part.uploadPartIndex}.`, workerIndex);
+  };
 
-  private accessTokenPath(): string {
-    return `${this.cdnUrl}${this.accessTokenPathBase}${this.accountId}`;
-  }
+  const withProgressReporting = async <T>(
+    tickInterval: number,
+    tick: (stopTicking: () => void) => void,
+    scope: () => Promise<T>
+  ): Promise<T> => {
+    let whileReportingResolved: () => void;
+    const whileReporting = new Promise<void>(resolve => {
+      whileReportingResolved = resolve;
+    });
+    let isReporting = true;
+    const stopReporting = (): void => {
+      if (isReporting) {
+        whileReportingResolved();
+        clearInterval(intervalHandle);
+        isReporting = false;
+      }
+    };
+    const intervalHandle: number = setInterval(() => tick(stopReporting), tickInterval) as any;
+    try {
+      const result = await scope();
+      await whileReporting;
+      return result;
+    } finally {
+      stopReporting();
+    }
+  };
 
-  private async deleteAccessToken(): Promise<void> {
-    await this.deleteNoResponse(
-      this.accessTokenPath(),
+  const deleteAccessToken = async (): Promise<void> => {
+    await deleteNoResponse(
+      accessTokenPath,
       {},
       true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
     );
-  }
+  };
 
-  private async refreshAccessToken(
+  const refreshAccessToken = async (
     authUrl: string,
     authHeaders: () => Promise<Record<string, string>>,
     authSession: AuthSession
-  ): Promise<void> {
+  ): Promise<void> => {
     try {
-      await this.authMutex.safe(async () => {
+      await authMutex.safe(async () => {
         // Session may have been ended while timer was waiting.
         if (!authSession.isActive) {
           return;
         }
 
-        const token = await this.getText(authUrl, await authHeaders());
-        const setTokenResult = this.handleApiError(
-          await this.putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
-            this.accessTokenPath(),
+        const token = await getText(authUrl, await authHeaders());
+        const setTokenResult = handleApiError(
+          await putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
+            accessTokenPath,
             {},
             {
               accessToken: token
@@ -557,31 +456,31 @@ export class Upload {
 
         authSession.accessToken = setTokenResult.accessToken;
         authSession.accessTokenRefreshHandle = window.setTimeout(() => {
-          this.refreshAccessToken(authUrl, authHeaders, authSession).then(
+          refreshAccessToken(authUrl, authHeaders, authSession).then(
             () => {},
-            e => this.error(`Permanent error when refreshing access token: ${e as string}`)
+            e => error(`Permanent error when refreshing access token: ${e as string}`)
           );
-        }, Math.max(0, (setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds) * 1000));
+        }, Math.max(0, (setTokenResult.ttlSeconds - refreshBeforeExpirySeconds) * 1000));
       });
     } catch (e) {
       // Perform attempts as part of same promise, rather than via a 'setTimeout' so that the 'beginAuthSession' only
       // returns once an auth session has been successfully established.
-      this.debug(`Error when refreshing access token: ${e as string}`);
-      await new Promise(resolve => setTimeout(resolve, this.retryAuthAfterErrorSeconds * 1000));
+      debug(`Error when refreshing access token: ${e as string}`);
+      await new Promise(resolve => setTimeout(resolve, retryAuthAfterErrorSeconds * 1000));
 
       // Todo: is this stack safe?
-      await this.refreshAccessToken(authUrl, authHeaders, authSession);
+      await refreshAccessToken(authUrl, authHeaders, authSession);
     }
-  }
+  };
 
-  private async putJsonGetJson<TGet, TPost>(
+  const putJsonGetJson = async <TGet, TPost>(
     url: string,
     headers: Record<string, string>,
     requestBody: TPost,
     withCredentials: boolean
-  ): Promise<TGet> {
-    return await this.handleApiResult(
-      await this.nonUploadApiRequest(
+  ): Promise<TGet> => {
+    return await handleApiResult(
+      await nonUploadApiRequest(
         {
           method: "PUT",
           path: url,
@@ -591,11 +490,11 @@ export class Upload {
         withCredentials
       )
     );
-  }
+  };
 
-  private async getText(url: string, headers: Record<string, string>): Promise<string> {
-    return await this.handleApiResult(
-      await this.nonUploadApiRequest(
+  const getText = async (url: string, headers: Record<string, string>): Promise<string> => {
+    return await handleApiResult(
+      await nonUploadApiRequest(
         {
           method: "GET",
           path: url,
@@ -604,15 +503,15 @@ export class Upload {
         false
       )
     );
-  }
+  };
 
-  private async deleteNoResponse(
+  const deleteNoResponse = async (
     url: string,
     headers: Record<string, string>,
     withCredentials: boolean
-  ): Promise<void> {
-    this.handleApiResult(
-      await this.nonUploadApiRequest(
+  ): Promise<void> => {
+    handleApiResult(
+      await nonUploadApiRequest(
         {
           method: "DELETE",
           path: url,
@@ -621,9 +520,9 @@ export class Upload {
         withCredentials
       )
     );
-  }
+  };
 
-  private handleApiResult<T>(result: ApiResult<T>): T {
+  const handleApiResult = <T>(result: ApiResult<T>): T => {
     if (result.ok) {
       return result.body;
     }
@@ -634,18 +533,21 @@ export class Upload {
     }
 
     throw new Error("Unexpected API error.");
-  }
+  };
 
-  private handleApiError<T>(result: T | ErrorResponse): T {
+  const handleApiError = <T>(result: T | ErrorResponse): T => {
     const errorMaybe: Partial<ErrorResponse> = result;
     if (errorMaybe.error !== undefined) {
-      throw new Error(`[upload-js] ${errorMaybe.error.message}. (Code: ${errorMaybe.error.code})`);
+      throw new Error(`${logPrefix}${errorMaybe.error.message}. (Code: ${errorMaybe.error.code})`);
     }
 
     return result as T;
-  }
+  };
 
-  private async nonUploadApiRequest<T>(options: ApiRequestOptions, withCredentials: boolean): Promise<ApiResult<T>> {
+  const nonUploadApiRequest = async <T>(
+    options: ApiRequestOptions,
+    withCredentials: boolean
+  ): Promise<ApiResult<T>> => {
     return await request<T>(
       {
         BASE: options.path,
@@ -656,5 +558,58 @@ export class Upload {
         path: "" // We set to "" because we're using "BASE" above instead.
       }
     );
-  }
+  };
+
+  const getConfig = (): Config => {
+    const apiConfig: Config = {
+      BASE: apiUrl,
+      WITH_CREDENTIALS: true
+    };
+
+    if (authenticateWithApiKey) {
+      apiConfig.USERNAME = "apikey";
+      apiConfig.PASSWORD = config.apiKey;
+    }
+
+    const accessToken = lastAuthSession?.accessToken;
+
+    if (headers !== undefined || accessToken !== undefined) {
+      apiConfig.HEADERS = async (): Promise<Record<string, string>> => {
+        const headersFromConfig = headers === undefined ? {} : await headers();
+        const accessToken = lastAuthSession?.accessToken; // Re-fetch as there's been an async boundary so state may have changed.
+        return {
+          ...headersFromConfig,
+          ...(accessToken === undefined
+            ? {}
+            : {
+                "authorization-token": accessToken
+              })
+        };
+      };
+    }
+
+    return apiConfig;
+  };
+
+  const normalizeMimeType = (mime: string): string | undefined => {
+    const normal = mime.toLowerCase();
+    const regex = /^[a-z0-9]+\/[a-z0-9+\-._]+$/; // Sync with 'MimeTypeUnboxed' in 'upload/api'.
+    return regex.test(normal) ? normal : undefined;
+  };
+
+  const debug = (message: string, workerIndex?: number): void => {
+    if (debugMode) {
+      console.log(`${logPrefix}${message}${workerIndex !== undefined ? ` (Worker ${workerIndex})` : ""}`);
+    }
+  };
+
+  const error = (message: string): void => {
+    console.error(`${logPrefix}${message}`);
+  };
+
+  return {
+    beginAuthSession,
+    endAuthSession,
+    uploadFile
+  };
 }
