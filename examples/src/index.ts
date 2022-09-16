@@ -19,14 +19,25 @@ button.onchange = e => {
     return;
   }
 
-  upload.uploadFile(file).then(
-    ({ url }) => {
-      console.log(`File uploaded: ${url}`);
-    },
-    error => {
-      console.error(error);
-    }
-  );
+  upload
+    .uploadFile(file, {
+      filePath: {
+        fileName: "example-{UNIQUE_TOKEN_2}{ORIGINAL_FILE_NAME_EXT}"
+      },
+      tags: ["foo"],
+      metadata: {
+        hello: "world",
+        magic: 42
+      }
+    })
+    .then(
+      ({ url }) => {
+        console.log(`File uploaded: ${url}`);
+      },
+      error => {
+        console.error(error);
+      }
+    );
 };
 
 document.body.appendChild(button);
