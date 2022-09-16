@@ -1,4 +1,4 @@
-import { FileInputChangeEvent, Upload, UploadError } from "upload-js";
+import { FileInputChangeEvent, Upload } from "upload-js";
 
 // For local development of Upload.js only: this is not an example of how you should set the API key in your app.
 const apiKey: string | undefined = (window as any).UPLOAD_JS_API_KEY;
@@ -24,11 +24,7 @@ button.onchange = e => {
       console.log(`File uploaded: ${url}`);
     },
     error => {
-      if (error instanceof UploadError) {
-        console.error(`Error: ${error.errorCode}`);
-      } else {
-        console.error(error);
-      }
+      console.error(error);
     }
   );
 };

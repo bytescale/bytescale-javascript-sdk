@@ -21,7 +21,7 @@ import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/co
 import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
-import { UploadError } from "upload-js/UploadError";
+import { UploadApiError } from "upload-js/UploadApiError";
 import { UploadInterface } from "upload-js/UploadInterface";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
@@ -443,15 +443,13 @@ export function Upload(config: UploadConfig): UploadInterface {
         }
 
         const token = await getText(authUrl, await authHeaders());
-        const setTokenResult = handleApiError(
-          await putJsonGetJson<SetAccessTokenResponseDto | ErrorResponse, SetAccessTokenRequestDto>(
-            accessTokenPath,
-            {},
-            {
-              accessToken: token
-            },
-            true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
-          )
+        const setTokenResult = await putJsonGetJson<SetAccessTokenResponseDto, SetAccessTokenRequestDto>(
+          accessTokenPath,
+          {},
+          {
+            accessToken: token
+          },
+          true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
         );
 
         authSession.accessToken = setTokenResult.accessToken;
@@ -529,19 +527,10 @@ export function Upload(config: UploadConfig): UploadInterface {
 
     const errorResponseMaybe = result.body;
     if (typeof errorResponseMaybe?.error?.code === "string") {
-      throw new UploadError(errorResponseMaybe as ErrorResponse);
+      throw new UploadApiError(errorResponseMaybe as ErrorResponse);
     }
 
     throw new Error("Unexpected API error.");
-  };
-
-  const handleApiError = <T>(result: T | ErrorResponse): T => {
-    const errorMaybe: Partial<ErrorResponse> = result;
-    if (errorMaybe.error !== undefined) {
-      throw new Error(`${logPrefix}${errorMaybe.error.message}. (Code: ${errorMaybe.error.code})`);
-    }
-
-    return result as T;
   };
 
   const nonUploadApiRequest = async <T>(
