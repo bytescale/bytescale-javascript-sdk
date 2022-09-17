@@ -7,7 +7,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/upload-io/upload-js/">
-    <img src="https://img.shields.io/badge/gzipped-7%20kb-4ba0f6" />
+    <img src="https://img.shields.io/badge/gzipped-6%20kb-4ba0f6" />
   </a>
 
   <a href="https://www.npmjs.com/package/upload-js">
@@ -64,7 +64,7 @@ yarn add upload-js
 Or via a `<script>` tag:
 
 ```html
-<script src="https://js.upload.io/upload-js/v1"></script>
+<script src="https://js.upload.io/upload-js/v2"></script>
 ```
 
 ## Usage
@@ -129,7 +129,7 @@ const onProgress = ({ progress }) => {
 ```html
 <html>
   <head>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
       const upload = new Upload({
         // Get production API keys from Upload.io
@@ -236,7 +236,7 @@ const vueApp = new Vue({
 <html>
   <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
       const upload = new Upload({
         // Get production API keys from Upload.io
@@ -333,7 +333,7 @@ To crop images using manually-provided geometry:
 ```html
 <html>
   <head>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
       const upload = new Upload({
         // Get production API keys from Upload.io
