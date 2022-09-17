@@ -69,7 +69,7 @@ Or via a `<script>` tag:
 
 ## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-To upload a `file` DOM object:
+To upload a `file` object from the DOM:
 
 ```JavaScript
 import { Upload } from "upload-js";
