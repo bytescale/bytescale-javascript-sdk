@@ -343,9 +343,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
         // Headers are set by the BE for multipart uploads.
         if (!isMultipart) {
-          if (summary.mime !== null) {
-            xhr.setRequestHeader("content-type", summary.mime);
-          }
+          xhr.setRequestHeader("content-type", summary.mime);
           if (summary.originalFileName !== null) {
             xhr.setRequestHeader(
               "content-disposition",
