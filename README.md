@@ -95,7 +95,7 @@ const onProgress = ({ progress }) => {
 
 ## Full Working Example (Copy & Paste!)
 
-**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Paste in IDE & Run:**
+**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Copy to IDE & Run:**
 
 ```html
 <html>
@@ -108,11 +108,11 @@ const onProgress = ({ progress }) => {
       });
 
       const onFileSelected = async (event) => {
-        const [ file ] = event.target.files;
         try {
-          const { url } = await upload.uploadFile(file, {
-            onProgress: ({ progress }) => console.log(`${progress}% complete`)
-          });
+          const { url } = await upload.uploadFile(
+            event.target.files[0],
+            { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+          );
           alert(`File uploaded!\n${url}`);
         } catch (e) {
           alert(`Error!\n${e.message}`);
@@ -136,11 +136,11 @@ const upload = Upload({ apiKey: "free" });
 
 const MyUploadButton = () => {
   const onFileSelected = async (event) => {
-    const [ file ] = event.target.files;
     try {
-      const { url } = await upload.uploadFile(file, {
-        onProgress: ({ progress }) => console.log(`${progress}% complete`)
-      });
+      const { url } = await upload.uploadFile(
+        event.target.files[0],
+        { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+      );
       alert(`File uploaded!\n${url}`);
     } catch (e) {
       alert(`Error!\n${e.message}`);
@@ -160,11 +160,11 @@ angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
     $scope.uploadFile = async (event) => {
-      const [ file ] = event.target.files;
       try {
-        const { url } = await upload.uploadFile(file, {
-          onProgress: ({ progress }) => console.log(`${progress}% complete`)
-        });
+        const { url } = await upload.uploadFile(
+          event.target.files[0],
+          { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+        );
         alert(`File uploaded!\n${url}`);
       } catch (e) {
         alert(`Error!\n${e.message}`);
@@ -184,11 +184,11 @@ angular
 const { Upload } = require("upload-js");
 const upload = Upload({ apiKey: "free" });
 const uploadFile = async (event) => {
-  const [ file ] = event.target.files;
   try {
-    const { url } = await upload.uploadFile(file, {
-      onProgress: ({ progress }) => console.log(`${progress}% complete`)
-    });
+    const { url } = await upload.uploadFile(
+      event.target.files[0],
+      { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+    );
     alert(`File uploaded!\n${url}`);
   } catch (e) {
     alert(`Error!\n${e.message}`);
@@ -217,11 +217,12 @@ const vueApp = new Vue({
         $("#file-input").change(async (event) => {
           $("#file-input").hide()
 
-          const [ file ] = event.target.files;
           try {
-            const { url } = await upload.uploadFile(file, {
+            const { url } = await upload.uploadFile(
+              event.target.files[0], {
               onProgress: ({ progress }) => $("#title").html(`File uploading... ${progress}%`)
             });
+
             $("#title").html(`
               File uploaded:
               <br/>
