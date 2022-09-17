@@ -95,7 +95,7 @@ const onProgress = ({ progress }) => {
 
 ## Full Working Example (Copy & Paste!)
 
-**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Run In Browser:**
+**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Copy to IDE & Run:**
 
 ```html
 <html>
