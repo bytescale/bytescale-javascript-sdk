@@ -79,9 +79,9 @@ const upload = Upload({ apiKey: "free" });
 
 // <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = async (event) => {
-  const [ file ]    = event.target.files;
-  const { fileUrl } = await upload.uploadFile(file, { onProgress });
-  console.log(`File uploaded: ${fileUrl}`);
+  const [ file ] = event.target.files;
+  const { url }  = await upload.uploadFile(file, { onProgress });
+  console.log(`File uploaded: ${url}`);
 }
 
 const onProgress = ({ progress }) => {
