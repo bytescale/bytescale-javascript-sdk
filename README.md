@@ -77,7 +77,6 @@ import { Upload } from "upload-js";
 // Get production API keys from Upload.io
 const upload = Upload({ apiKey: "free" });
 
-// <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = async (event) => {
   const [ file ] = event.target.files;
   const { url }  = await upload.uploadFile(file, { onProgress });
@@ -87,6 +86,10 @@ const onFileSelected = async (event) => {
 const onProgress = ({ progress }) => {
   console.log(`File uploading: ${progress}% complete.`)
 }
+
+//
+// <input type="file" onchange="onFileSelected(event)" />
+//
 ```
 
 
