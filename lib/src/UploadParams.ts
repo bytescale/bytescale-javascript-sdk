@@ -1,5 +1,4 @@
-import { JsonObject } from "@upload-io/upload-api-client-upload-js/src/models/JsonObject";
-import { FilePathDefinition } from "@upload-io/upload-api-client-upload-js/src/models/FilePathDefinition";
+import { JsonObject, FilePathDefinition } from "@upload-io/upload-api-client-upload-js";
 
 export interface UploadParams {
   filePath?: FilePathDefinition;
