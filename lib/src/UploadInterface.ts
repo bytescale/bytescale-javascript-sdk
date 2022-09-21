@@ -30,4 +30,6 @@ export interface UploadInterface {
   endAuthSession: () => Promise<void>;
 
   uploadFile: (file: FileLike, params?: UploadParams) => Promise<UploadedFile>;
+
+  url: (filePath: string, transformationSlug: string) => string;
 }

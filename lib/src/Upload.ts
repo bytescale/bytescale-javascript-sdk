@@ -170,6 +170,9 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
   };
 
+  const url = (filePath: string, transformationSlug: string): string =>
+    `${cdnUrl}/${accountId}/${transformationSlug}${filePath}`;
+
   // ----------------
   // PRIVATE METHODS
   // ----------------
@@ -597,6 +600,7 @@ export function Upload(config: UploadConfig): UploadInterface {
   return {
     beginAuthSession,
     endAuthSession,
-    uploadFile
+    uploadFile,
+    url
   };
 }
