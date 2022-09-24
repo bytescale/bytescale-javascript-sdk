@@ -7,7 +7,6 @@
     "start": "npm run start:dev",
     "start:dev": "webpack serve --config webpack.config.dev.js",
     "start:dist": "webpack serve",
-    "preinstall": "npm cache clean --force && (cd ../lib && npm pack)",
     "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js)"
   },
   "dependencies": {
@@ -32,7 +31,7 @@
     "html-webpack-plugin": "4.5.0",
     "minimist": "1.2.6",
     "ts-loader": "8.0.11",
-    "typescript": "4.1.2",
+    "typescript": "4.6.2",
     "webpack": "5.5.1",
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "4.7.4"
