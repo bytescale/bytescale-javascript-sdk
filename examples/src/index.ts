@@ -21,7 +21,7 @@ button.onchange = e => {
 
   upload
     .uploadFile(file, {
-      filePath: {
+      path: {
         fileName: "example-{UNIQUE_TOKEN_2}{ORIGINAL_FILE_NAME_EXT}"
       },
       tags: ["foo"],

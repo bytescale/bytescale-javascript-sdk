@@ -206,7 +206,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
     return await withProgressReporting(onProgressInterval, reportProgress, async () => {
       const uploadRequest: BeginUploadRequestV2 = {
-        filePath: params.filePath,
+        path: params.path,
         metadata: params.metadata,
         mime: normalizeMimeType(file.type),
         originalFileName: file.name,
