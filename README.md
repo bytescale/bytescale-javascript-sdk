@@ -84,6 +84,10 @@ Or via a `<script>` tag:
 To upload a `file` object from the DOM:
 
 ```JavaScript
+//
+// <input type="file" onchange="onFileSelected(event)" />
+//
+
 import { Upload } from "upload-js";
 
 // Get production API keys from Upload.io
@@ -98,10 +102,6 @@ const onFileSelected = async (event) => {
 const onProgress = ({ progress }) => {
   console.log(`File uploading: ${progress}% complete.`)
 }
-
-//
-// <input type="file" onchange="onFileSelected(event)" />
-//
 ```
 
 
