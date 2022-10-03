@@ -49,7 +49,7 @@
 
 <hr/>
 
-<p align="center"><a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a>
+<p align="center"><a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a>
   <br/>
   <b>Supports:</b> Rate Limiting, Volume Limiting, File Size &amp; Type Limiting, JWT Auth, and more...
   <br />
