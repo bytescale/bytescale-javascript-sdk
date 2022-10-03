@@ -1,3 +1,5 @@
+import { MutexInterface } from "upload-js/MutexInterface";
+
 /**
  * A lightweight mutex. (Other libraries contain too many features and we want to keep the size upload-js down).
  *
@@ -7,38 +9,43 @@
  *   - When calling `safe` consecutively with no 'awaits' in-between, the current context will synchronously acquire
  *     the mutex every time.
  */
-export class Mutex {
-  private mutex: Promise<void> | undefined = undefined;
-  private resolver: (() => void) | undefined = undefined;
+export function Mutex(): MutexInterface {
+  let mutex: Promise<void> | undefined;
+  let resolver: (() => void) | undefined;
 
-  async safe<T>(callback: () => Promise<T>): Promise<T> {
-    await this.acquire();
+  const safe = async <T>(callback: () => Promise<T>): Promise<T> => {
+    await acquire();
     try {
       return await callback();
     } finally {
-      this.release();
+      release();
     }
-  }
+  };
 
-  private async acquire(): Promise<void> {
+  const acquire = async (): Promise<void> => {
     // Loop necessary for when multiple calls are made to 'acquire' before a 'release' is called, else the call to
     // 'release' will resume every caller currently waiting on 'acquire'.
-    while (this.mutex !== undefined) {
-      await this.mutex;
+    // eslint-disable-next-line no-unmodified-loop-condition
+    while (mutex !== undefined) {
+      await mutex;
     }
 
-    this.mutex = new Promise(resolve => {
-      this.resolver = resolve;
+    mutex = new Promise(resolve => {
+      resolver = resolve;
     });
-  }
+  };
 
-  private release(): void {
-    if (this.resolver === undefined) {
+  const release = (): void => {
+    if (resolver === undefined) {
       throw new Error("Unable to release mutex: already released.");
     }
 
-    this.resolver();
-    this.resolver = undefined;
-    this.mutex = undefined;
-  }
+    resolver();
+    resolver = undefined;
+    mutex = undefined;
+  };
+
+  return {
+    safe
+  };
 }

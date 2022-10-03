@@ -7,7 +7,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/upload-io/upload-js/">
-    <img src="https://img.shields.io/badge/gzipped-7%20kb-4ba0f6" />
+    <img src="https://img.shields.io/badge/gzipped-6%20kb-4ba0f6" />
   </a>
 
   <a href="https://www.npmjs.com/package/upload-js">
@@ -45,7 +45,19 @@
 
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-<p align="center">Files Hosted on <a href="https://upload.io/">Upload.io</a>: The File Upload Service for Developers.<br/><br/></p>
+<p align="center">100% Serverless File Upload Library  <br /> Powered by <a href="https://upload.io/">Upload.io</a><br/><br/></p>
+
+<hr/>
+
+<p align="center"><a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a>
+  <br/>
+  <b>Supports:</b> Rate Limiting, Volume Limiting, File Size &amp; Type Limiting, JWT Auth, and more...
+  <br />
+</p>
+
+<hr/>
+<br />
+<br />
 
 ## Installation
 
@@ -64,97 +76,67 @@ yarn add upload-js
 Or via a `<script>` tag:
 
 ```html
-<script src="https://js.upload.io/upload-js/v1"></script>
+<script src="https://js.upload.io/upload-js/v2"></script>
 ```
 
-## Usage
+## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
 
-### Option 1: `createFileInputHandler` — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
-
-To implement a `<input type="file" onchange=... />` handler:
-
-```javascript
-import { Upload } from "upload-js";
-
-// Get production API keys from Upload.io
-const upload = new Upload({ apiKey: "free" });
-
-// <input type="file" onchange="onFileSelected(event)" />
-const onFileSelected = upload.createFileInputHandler({
-  onBegin: ({ cancel }) => {
-    console.log("File upload started!");
-  },
-
-  onProgress: ({ progress }) => {
-    console.log(`File uploading... ${progress}%`);
-  },
-
-  onUploaded: ({ fileUrl, fileId }) => {
-    console.log(`File uploaded: ${fileUrl}`);
-  },
-
-  onError: (error) => {
-    console.error(`Error uploading file.`, error);
-  }
-});
-```
-
-### Option 2: `uploadFile`  — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
-
-To upload a `file` DOM object:
+To upload a `file` object from the DOM:
 
 ```JavaScript
 import { Upload } from "upload-js";
 
 // Get production API keys from Upload.io
-const upload = new Upload({ apiKey: "free" });
+const upload = Upload({ apiKey: "free" });
 
-// <input type="file" onchange="onFileSelected(event)" />
 const onFileSelected = async (event) => {
-  const [ file ]    = event.target.files;
-  const { fileUrl } = await upload.uploadFile({ file, onProgress });
-  console.log(`File uploaded: ${fileUrl}`);
+  const [ file ] = event.target.files;
+  const { url }  = await upload.uploadFile(file, { onProgress });
+  console.log(`File uploaded: ${url}`);
 }
 
 const onProgress = ({ progress }) => {
   console.log(`File uploading: ${progress}% complete.`)
 }
+
+//
+// <input type="file" onchange="onFileSelected(event)" />
+//
 ```
 
 
 ## Full Working Example (Copy & Paste!)
 
-**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Run In Browser:**
+**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Copy to IDE & Run:**
 
 ```html
 <html>
   <head>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
-      const upload = new Upload({
+      const upload = Upload({
         // Get production API keys from Upload.io
         apiKey: "free"
       });
 
-      const uploadFile = upload.createFileInputHandler({
-        onProgress: ({ progress }) => {
-          console.log(`${progress}% complete`)
-        },
-        onUploaded: ({ fileUrl, fileId }) => {
-          alert(`File uploaded!\n${fileUrl}`);
-        },
-        onError: (error) => {
-          alert(`Error!\n${error.message}`);
+      const onFileSelected = async (event) => {
+        try {
+          const { url } = await upload.uploadFile(
+            event.target.files[0],
+            { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+          );
+          alert(`File uploaded!\n${url}`);
+        } catch (e) {
+          alert(`Error!\n${e.message}`);
         }
-      });
+      }
     </script>
   </head>
   <body>
-    <input type="file" onchange="uploadFile(event)" />
+    <input type="file" onchange="onFileSelected(event)" />
   </body>
 </html>
 ```
-
 
 ## Examples with Popular Frameworks
 
@@ -162,22 +144,22 @@ const onProgress = ({ progress }) => {
 
 ```javascript
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "free" });
+const upload = Upload({ apiKey: "free" });
 
 const MyUploadButton = () => {
-  const uploadFile = upload.createFileInputHandler({
-    onProgress: ({ bytesSent, bytesTotal }) => {
-      console.log(`${bytesSent / bytesTotal}% complete`)
-    },
-    onUploaded: ({ fileUrl, fileId }) => {
-      alert(`File uploaded!\n${fileUrl}`);
-    },
-    onError: (error) => {
-      alert(`Error!\n${error.message}`);
+  const onFileSelected = async (event) => {
+    try {
+      const { url } = await upload.uploadFile(
+        event.target.files[0],
+        { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+      );
+      alert(`File uploaded!\n${url}`);
+    } catch (e) {
+      alert(`Error!\n${e.message}`);
     }
-  });
+  }
 
-  return <input type="file" onChange={uploadFile} />;
+  return <input type="file" onChange={onFileSelected} />;
 };
 ```
 
@@ -185,21 +167,21 @@ const MyUploadButton = () => {
 
 ```javascript
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "free" });
+const upload = Upload({ apiKey: "free" });
 angular
   .module("exampleApp", [])
   .controller("exampleController", $scope => {
-    $scope.uploadFile = upload.createFileInputHandler({
-      onProgress: ({ bytesSent, bytesTotal }) => {
-        console.log(`${bytesSent / bytesTotal}% complete`)
-      },
-      onUploaded: ({ fileUrl, fileId }) => {
-        alert(`File uploaded!\n${fileUrl}`);
-      },
-      onError: (error) => {
-        alert(`Error!\n${error.message}`);
+    $scope.uploadFile = async (event) => {
+      try {
+        const { url } = await upload.uploadFile(
+          event.target.files[0],
+          { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+        );
+        alert(`File uploaded!\n${url}`);
+      } catch (e) {
+        alert(`Error!\n${e.message}`);
       }
-    });
+    }
   })
   .directive("onChange", () => ({
     link: (scope, element, attrs) => {
@@ -212,18 +194,18 @@ angular
 
 ```javascript
 const { Upload } = require("upload-js");
-const upload = new Upload({ apiKey: "free" });
-const uploadFile = upload.createFileInputHandler({
-  onProgress: ({ bytesSent, bytesTotal }) => {
-    console.log(`${bytesSent / bytesTotal}% complete`)
-  },
-  onUploaded: ({ fileUrl, fileId }) => {
-    alert(`File uploaded!\n${fileUrl}`);
-  },
-  onError: (error) => {
-    alert(`Error!\n${error.message}`);
+const upload = Upload({ apiKey: "free" });
+const uploadFile = async (event) => {
+  try {
+    const { url } = await upload.uploadFile(
+      event.target.files[0],
+      { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
+    );
+    alert(`File uploaded!\n${url}`);
+  } catch (e) {
+    alert(`Error!\n${e.message}`);
   }
-});
+}
 const vueApp = new Vue({
   el: "#example",
   methods: { uploadFile }
@@ -236,36 +218,34 @@ const vueApp = new Vue({
 <html>
   <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
-      const upload = new Upload({
+      const upload = Upload({
         // Get production API keys from Upload.io
         apiKey: "free"
       });
 
       $(() => {
-        $("#file-input").change(
-          upload.createFileInputHandler({
-            onBegin: () => {
-              $("#file-input").hide()
-            },
-            onProgress: ({ bytesSent, bytesTotal }) => {
-              const progress = Math.round(bytesSent / bytesTotal * 100)
-              $("#title").html(`File uploading... ${progress}%`)
-            },
-            onError: (error) => {
-              $("#title").html(`Error:<br/><br/>${error.message}`)
-            },
-            onUploaded: ({ fileUrl, fileId }) => {
-              $("#title").html(`
-                File uploaded:
-                <br/>
-                <br/>
-                <a href="${fileUrl}" target="_blank">${fileUrl}</a>`
-              )
-            }
-          })
-        )
+        $("#file-input").change(async (event) => {
+          $("#file-input").hide()
+
+          try {
+            const { url } = await upload.uploadFile(
+              event.target.files[0], {
+              onProgress: ({ progress }) => $("#title").html(`File uploading... ${progress}%`)
+            });
+
+            $("#title").html(`
+              File uploaded:
+              <br/>
+              <br/>
+              <a href="${url}" target="_blank">${url}</a>`
+            )
+          } catch (e) {
+            $("#title").html(`Error:<br/><br/>${e.message}`)
+          }
+
+        })
       })
     </script>
   </head>
@@ -282,10 +262,10 @@ Please refer to the CodePen example (link above).
 
 Overview of the code:
 
-1. Instantiate `Upload` once in your app (at the start).
-2. Call `createFileInputHandler` once for each file `<input>` element.
+1. Call `Upload` once at the start of your app.
+2. Call `uploadFile` from your `<input onchange="...">` handlers.
 3. Use `onProgress` to display the upload progress for each input element.
-4. When `onUploaded` fires, record the `fileUrl` from the callback's argument to a local variable.
+4. When `onUploaded` fires, record the `url` from the callback's argument to a local variable.
 5. When `onUploaded` has fired for all files, the form is ready to be submitted.
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
@@ -298,10 +278,10 @@ By default, the browser will attempt to render uploaded files:
 https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ
 ```
 
-To force a file to download, add `?download=true` to the file's URL:
+To force a file to download, add `?_download=true` to the file's URL:
 
 ```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
+https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ?_download=true
 ```
 
 ### Resize Images
@@ -309,22 +289,22 @@ https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ?download=true
 Given an uploaded image URL:
 
 ```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ
+https://upcdn.io/W142hJk/raw/HhVSQ5ZQ5bfqvanQ
 ```
 
 Resize with:
 
 ```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail
+https://upcdn.io/W142hJk/thumbnail/HhVSQ5ZQ5bfqvanQ
 ```
 
-Auto-crop with:
+Auto-crop (to square dimensions) with:
 
 ```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ/thumbnail-square
+https://upcdn.io/W142hJk/thumbnail-square/HhVSQ5ZQ5bfqvanQ
 ```
 
-**Tip:** to create more transformations, please [register an account](https://upload.io/pricing).
+**Tip:** for more transformations, please [create an account](https://upload.io/pricing).
 
 ### Crop Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
@@ -333,20 +313,20 @@ To crop images using manually-provided geometry:
 ```html
 <html>
   <head>
-    <script src="https://js.upload.io/upload-js/v1"></script>
+    <script src="https://js.upload.io/upload-js/v2"></script>
     <script>
-      const upload = new Upload({
+      const upload = Upload({
         // Get production API keys from Upload.io
         apiKey: "free"
       });
 
       // Step 1: Upload the original file.
-      const onOriginalImageUploaded = ({ fileId, fileUrl: originalImageUrl }) => {
+      const onOriginalImageUploaded = async (originalImage) => {
 
         // Step 2: Configure crop geometry.
         const crop = {
           // Type Def: https://github.com/upload-io/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
-          input: fileId,
+          inputPath: originalImage.path,
           pipeline: {
             steps: [
               {
@@ -371,33 +351,28 @@ To crop images using manually-provided geometry:
 
         // Step 3: Upload the crop geometry.
         const blob = new Blob([JSON.stringify(crop)], {type: "application/json"});
-        upload
-          .uploadFile({
-            file: {
-              name: `${fileId}_cropped.json`, // Can be anything.
-              type: blob.type,
-              size: blob.size,
-              slice: (start, end) => blob.slice(start, end)
-            }
-          })
-          .then(
-            ({ fileUrl: cropGeometryUrl }) => {
+        const croppedImage = await upload.uploadFile({
+          name: "image_cropped.json", // Can be anything.
+          type: blob.type,
+          size: blob.size,
+          slice: (start, end) => blob.slice(start, end)
+        })
 
-              // Step 4: Done! Here's the cropped image's URL:
-              alert(`Cropped image:\n${cropGeometryUrl}/thumbnail`)
-
-            },
-            e => console.error(e)
-          );
+        // Step 4: Done! Here's the cropped image:
+        return croppedImage;
       };
 
-      const uploadFile = upload.createFileInputHandler({
-        onUploaded: onOriginalImageUploaded
-      });
+      const onFileSelected = async (event) => {
+        const [ file ]      = event.target.files;
+        const originalImage = await upload.uploadFile(file);
+        const croppedImage  = await onOriginalImageUploaded(originalImage)
+
+        alert(`Cropped image:\n${croppedImage.url.replace("/raw/", "/thumbnail/")}`)
+      }
     </script>
   </head>
   <body>
-    <input type="file" onchange="uploadFile(event)" />
+    <input type="file" onchange="onFileSelected(event)" />
   </body>
 </html>
 ```
