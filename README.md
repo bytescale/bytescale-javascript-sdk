@@ -45,7 +45,19 @@
 
 <p align="center"><a href="https://upload.io/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/assets/master/upload-js-demo.gif"></a></p>
 
-<p align="center">Files Hosted on <a href="https://upload.io/">Upload.io</a>: The File Upload Service for Developers.<br/><br/></p>
+<p align="center">100% Serverless File Upload Library  <br /> Powered by <a href="https://upload.io/">Upload.io</a><br/><br/></p>
+
+<hr/>
+
+<p align="center"><a href="https://upload.io/sla" rel="nofollow">99.9% Uptime SLA</a> • <a href="https://upload.io/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://upload.io/dmca" rel="nofollow">DMCA Compliant</a>
+  <br/>
+  <b>Supports:</b> Rate Limiting, Volume Limiting, File Size &amp; Type Limiting, JWT Auth, and more...
+  <br />
+</p>
+
+<hr/>
+<br />
+<br />
 
 ## Installation
 
