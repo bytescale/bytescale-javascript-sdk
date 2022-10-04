@@ -170,7 +170,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
   };
 
-  const url = (filePath: string, transformationSlug: string): string =>
+  const url = (filePath: string, transformationSlug: string = "raw"): string =>
     `${cdnUrl}/${accountId}/${transformationSlug}${filePath}`;
 
   // ----------------
