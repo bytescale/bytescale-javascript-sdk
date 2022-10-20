@@ -67,7 +67,7 @@ Install via NPM:
 npm install upload-js
 ```
 
-Or via NPM:
+Or via YARN:
 
 ```shell
 yarn add upload-js
@@ -79,9 +79,9 @@ Or via a `<script>` tag:
 <script src="https://js.upload.io/upload-js/v2"></script>
 ```
 
-## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/qBVgbqZ?editors=1010)
+## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
 
-To upload a `file` object from the DOM:
+To upload a file from the browser:
 
 ```JavaScript
 //
@@ -90,8 +90,7 @@ To upload a `file` object from the DOM:
 
 import { Upload } from "upload-js";
 
-// Get production API keys from Upload.io
-const upload = Upload({ apiKey: "free" });
+const upload = Upload({ apiKey: "free" }); // Get production API keys from Upload.io
 
 const onFileSelected = async (event) => {
   const [ file ]    = event.target.files;
@@ -326,7 +325,7 @@ To crop images using manually-provided geometry:
         // Step 2: Configure crop geometry.
         const crop = {
           // Type Def: https://github.com/upload-io/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
-          inputPath: originalImage.path,
+          inputPath: originalImage.filePath,
           pipeline: {
             steps: [
               {
