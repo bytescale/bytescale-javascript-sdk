@@ -269,20 +269,6 @@ Overview of the code:
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
 
-### Force File Downloads
-
-By default, the browser will attempt to render uploaded files:
-
-```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ
-```
-
-To force a file to download, add `?_download=true` to the file's URL:
-
-```
-https://upcdn.io/W142hJkHhVSQ5ZQ5bfqvanQ?_download=true
-```
-
 ### Resize Images
 
 Given an uploaded image URL:
