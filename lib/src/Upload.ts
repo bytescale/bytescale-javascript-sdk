@@ -23,6 +23,7 @@ import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
 import { UploadApiError } from "upload-js/UploadApiError";
 import { UploadInterface } from "upload-js/UploadInterface";
+import { UrlParams } from "upload-js/UrlParams";
 
 type AddCancellationHandler = (cancellationHandler: () => void) => void;
 
@@ -170,8 +171,19 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
   };
 
-  const url = (filePath: string, transformationSlug: string = "raw"): string =>
-    `${cdnUrl}/${accountId}/${transformationSlug}${filePath}`;
+  const url = (filePath: string, slugOrParams?: string | UrlParams): string => {
+    const defaultSlug = "raw";
+    const params: UrlParams | undefined =
+      typeof slugOrParams === "string"
+        ? {
+            slug: slugOrParams
+          }
+        : slugOrParams;
+
+    return `${cdnUrl}/${accountId}/${params?.slug ?? defaultSlug}${filePath}${
+      params?.auth === true ? "?_auth=true" : ""
+    }`;
+  };
 
   // ----------------
   // PRIVATE METHODS
