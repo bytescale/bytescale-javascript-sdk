@@ -32,6 +32,5 @@ export interface UploadInterface {
 
   uploadFile: (file: FileLike, params?: UploadParams) => Promise<UploadedFile>;
 
-  url: ((filePath: string, transformationSlug?: string) => string) &
-    ((filePath: string, urlParams?: UrlParams) => string);
+  url: ((filePath: string, slug?: string) => string) & ((filePath: string, urlParams?: UrlParams) => string);
 }
