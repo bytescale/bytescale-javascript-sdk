@@ -39,7 +39,11 @@ const accessTokenPathBase = "/api/v1/access_tokens/";
 const logPrefix = "[upload-js] ";
 
 /**
- * You should only instantiate one instance of this class in your web app.
+ * You should instantiate one instance of this class in your web app.
+ *
+ * Try using:
+ *
+ *    Upload({apiKey: "free"})
  *
  * This is particularly important when using the 'beginAuthSession' and
  * 'endAuthSession' methods, as you don't want multiple running instances of the
