@@ -180,11 +180,11 @@ export function Upload(config: UploadConfig): UploadInterface {
     const params: UrlParams | undefined =
       typeof slugOrParams === "string"
         ? {
-            slug: slugOrParams
+            transformation: slugOrParams
           }
         : slugOrParams;
 
-    return `${cdnUrl}/${accountId}/${params?.slug ?? defaultSlug}${filePath}${
+    return `${cdnUrl}/${accountId}/${params?.transformation ?? defaultSlug}${filePath}${
       params?.auth === true ? "?_auth=true" : ""
     }`;
   };
