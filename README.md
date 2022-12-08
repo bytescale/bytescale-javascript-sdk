@@ -38,7 +38,7 @@
 </p>
 <h1 align="center">
   Get Started —
-  <a href="https://codepen.io/upload-js/pen/abVapaJ?editors=1010">
+  <a href="https://codepen.io/upload-js/pen/abVapaJ?editors=1000">
     Try on CodePen
   </a>
 </h1>
@@ -79,7 +79,7 @@ Or via a `<script>` tag:
 <script src="https://js.upload.io/upload-js/v2"></script>
 ```
 
-## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)
+## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1000)
 
 To upload a file from the browser:
 
@@ -106,7 +106,7 @@ const onProgress = ({ progress }) => {
 
 ## Full Working Example (Copy & Paste)
 
-**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1010)** / **Copy to IDE & Run:**
+**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1000)** / **Copy to IDE & Run:**
 
 ```html
 <html>
