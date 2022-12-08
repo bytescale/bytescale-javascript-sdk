@@ -336,12 +336,7 @@ To crop images using manually-provided geometry:
 
         // Step 3: Upload the crop geometry.
         const blob = new Blob([JSON.stringify(crop)], {type: "application/json"});
-        const croppedImage = await upload.uploadFile({
-          name: "image_cropped.json", // Can be anything.
-          type: blob.type,
-          size: blob.size,
-          slice: (start, end) => blob.slice(start, end)
-        })
+        const croppedImage = await upload.uploadFile(blob);
 
         // Step 4: Done! Here's the cropped image:
         return croppedImage;
