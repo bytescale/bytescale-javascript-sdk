@@ -7,7 +7,9 @@
     "start": "npm run start:dev",
     "start:dev": "webpack serve --config webpack.config.dev.js",
     "start:dist": "webpack serve",
-    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js)"
+    "install": "(rm -rf ./node_modules/upload-js && tar zxvf ../lib/upload-js.tgz -C . && mv package ./node_modules/upload-js)",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "upload-js": "../lib/upload-js.tgz"

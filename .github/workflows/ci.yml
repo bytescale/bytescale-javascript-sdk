@@ -25,9 +25,6 @@ jobs:
       - name: "Install repository dependencies"
         run: npm ci
 
-      - name: "Check code style"
-        run: find . -type f \( -iname \*.js -o -iname \*.jsx -o -iname \*.ts -o -iname \*.tsx \) | grep -v node_modules | grep -v /dist/ | xargs ./node_modules/.bin/prettier --check
-
       - name: "Upload.js (npm install)"
         run: npm ci
         working-directory: ./lib
@@ -48,6 +45,12 @@ jobs:
           # isn't as much of a concern.
           npm install
         working-directory: ./examples
+
+      - name: "Type checks"
+        run: npm run typecheck
+
+      - name: "Linting"
+        run: npm run lint
 
       - name: "Acceptance tests (start web server)"
         run:
