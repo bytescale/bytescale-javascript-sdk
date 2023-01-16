@@ -42,7 +42,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@upload-io/upload-api-client-upload-js": "^2.14.0",
+    "@upload-io/upload-api-client-upload-js": "^2.15.0",
     "progress-smoother": "^1.4.0"
   },
   "devDependencies": {
