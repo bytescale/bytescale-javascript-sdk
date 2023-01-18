@@ -11,13 +11,13 @@ import {
   beginMultipartUpload,
   getUploadPart,
   completeUploadPart,
+  ApiRequestOptions,
   Config
 } from "@upload-io/upload-api-client-upload-js";
 import { UploadedFile } from "upload-js/UploadedFile";
 import { SetAccessTokenResponseDto } from "upload-js/dtos/SetAccessTokenResponseDto";
 import { SetAccessTokenRequestDto } from "upload-js/dtos/SetAccessTokenRequestDto";
 import { AuthSession } from "upload-js/AuthSession";
-import { ApiRequestOptions } from "@upload-io/upload-api-client-upload-js/src/core/ApiRequestOptions";
 import { Mutex } from "upload-js/Mutex";
 import { FileLike } from "upload-js/FileLike";
 import { ProgressSmoother } from "progress-smoother";
