@@ -30,6 +30,7 @@
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-standard": "4.1.0",
+    "eslint-plugin-protractor": "2.1.1",
     "html-webpack-plugin": "4.5.0",
     "minimist": "1.2.6",
     "ts-loader": "8.0.11",
