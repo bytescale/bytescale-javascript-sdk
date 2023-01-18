@@ -24,6 +24,6 @@
       "upload-js/*": ["./*"]
     }
   },
-  "include": ["./src/**/*"],
+  "include": ["./**/*"],
   "exclude": ["./node_modules/**/*"]
 }

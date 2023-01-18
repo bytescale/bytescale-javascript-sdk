@@ -5,6 +5,7 @@ class App {
    * elements
    */
   get uploadButton() {
+    // @ts-expect-error
     return $("#upload");
   }
 
@@ -12,6 +13,7 @@ class App {
    * methods
    */
   async open(path = "/") {
+    // @ts-expect-error
     await browser.url(path);
   }
 }

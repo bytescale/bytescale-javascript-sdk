@@ -36,7 +36,9 @@
     "publish:execute": "npm run publish:cdn && npm publish && npm run publish:createGitHubRelease",
     "publish:createGitHubRelease": "gh release create v$(node -p \"require('./package.json').version\")",
     "publish:cdn": "npm run prepack:cdn && aws s3 cp --recursive --content-type application/javascript dist/ s3://upload-js-releases/upload-js/ && aws cloudfront create-invalidation --distribution-id EO4VJPLCDN8HY --paths '/upload-js/*'",
-    "test": "npx wdio run tests/wdio.conf.ts --autoCompileOpts.tsNodeOpts.project=tests/tsconfig.json"
+    "test": "npx wdio run tests/wdio.conf.ts --autoCompileOpts.tsNodeOpts.project=tests/tsconfig.json",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@upload-io/upload-api-client-upload-js": "^2.10.0",
