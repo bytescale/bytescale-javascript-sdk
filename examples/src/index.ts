@@ -22,7 +22,7 @@ button.onchange = e => {
   upload
     .uploadFile(file, {
       path: {
-        fileName: "example-{UNIQUE_TOKEN_2}{ORIGINAL_FILE_NAME_EXT}"
+        fileName: "example-{UNIQUE_DIGITS_2}{ORIGINAL_FILE_EXT}"
       },
       tags: ["foo"],
       metadata: {

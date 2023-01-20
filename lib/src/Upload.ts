@@ -7,7 +7,6 @@ import {
   UploadPartV2,
   ErrorResponse,
   BeginUploadRequestV2,
-  FileDetails,
   beginMultipartUpload,
   getUploadPart,
   completeUploadPart,
@@ -226,6 +225,7 @@ export function Upload(config: UploadConfig): UploadInterface {
         metadata: params.metadata,
         mime: normalizeMimeType(file.type),
         originalFileName: file.name,
+        protocol: "1.1",
         size: file.size,
         tags: params.tags
       };
@@ -233,7 +233,6 @@ export function Upload(config: UploadConfig): UploadInterface {
       debug(`Initiating file upload. Params = ${JSON.stringify(uploadRequest)}`);
 
       const uploadMetadata = handleApiResult(await beginMultipartUpload(getConfig(), accountId, uploadRequest));
-      const isMultipart = uploadMetadata.uploadParts.count > 1;
 
       debug(`Initiated file upload. Metadata = ${JSON.stringify(uploadMetadata)}`);
 
@@ -281,15 +280,7 @@ export function Upload(config: UploadConfig): UploadInterface {
             const totalBytesSent = bytesSentByEachWorker.reduce((a, b) => a + b);
             progressSmoother.setValue(totalBytesSent);
           };
-          await uploadPart(
-            file,
-            uploadMetadata.file,
-            isMultipart,
-            nextPart,
-            progress,
-            addCancellationHandler,
-            workerIndex
-          );
+          await uploadPart(file, nextPart, progress, addCancellationHandler, workerIndex);
           await uploadNextPart(workerIndex);
         }
       };
@@ -312,8 +303,6 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   const putUploadPart = async (
     url: string,
-    summary: FileDetails,
-    isMultipart: boolean,
     content: Blob,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler
@@ -359,20 +348,6 @@ export function Upload(config: UploadConfig): UploadInterface {
         xhr.ontimeout = () => reject(new Error("File upload timeout."));
 
         xhr.open("PUT", url);
-
-        // Headers are set by the BE for multipart uploads.
-        if (!isMultipart) {
-          xhr.setRequestHeader("content-type", summary.mime);
-          if (summary.originalFileName !== null) {
-            xhr.setRequestHeader(
-              "content-disposition",
-              `inline; filename="${encodeURIComponent(
-                summary.originalFileName
-              )}"; filename*=UTF-8''${encodeURIComponent(summary.originalFileName)}`
-            );
-          }
-        }
-
         xhr.send(content);
       });
     } finally {
@@ -382,8 +357,6 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   const uploadPart = async (
     file: FileLike,
-    summary: FileDetails,
-    isMultipart: boolean,
     part: UploadPartV2,
     progress: (status: { bytesSent: number; bytesTotal: number }) => void,
     addCancellationHandler: AddCancellationHandler,
@@ -394,14 +367,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
     debug(`Uploading part ${part.uploadPartIndex}.`, workerIndex);
 
-    const { etag } = await putUploadPart(
-      part.uploadUrl,
-      summary,
-      isMultipart,
-      content,
-      progress,
-      addCancellationHandler
-    );
+    const { etag } = await putUploadPart(part.uploadUrl, content, progress, addCancellationHandler);
 
     handleApiResult(
       await completeUploadPart(getConfig(), accountId, part.uploadId, part.uploadPartIndex, {
