@@ -269,31 +269,62 @@ Overview of the code:
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
 
-### Resize Images
+# Image Processing (Resize, Crop, etc.)
 
-Given an uploaded image URL:
+[Upload.io](https://upload.io/) comes with an [Image Processing API](https://upload.io/docs/image-processing-api) that supports:
+
+- [Automatic Image Cropping](https://upload.io/docs/image-processing-api#crop)
+- [Manual Image Cropping](https://upload.io/docs/image-processing-api#crop-x)
+- [Image Resizing](https://upload.io/docs/image-processing-api#fit)
+- [Text Layering (e.g for text watermarks)](https://upload.io/docs/image-processing-api#text)
+- [Image Layering (e.g. for image watermarks)](https://upload.io/docs/image-processing-api#image)
+- [Adjustments (blur, sharpen, brightness, etc.)](https://upload.io/docs/image-processing-api#blur)
+- and more...
+
+### Original Image
+
+Here's an example using [a photo of Chicago](https://upcdn.io/W142hJk/raw/example/city-landscape.jpg):
+
+<img src="https://upcdn.io/W142hJk/raw/example/city-landscape.jpg" />
 
 ```
-https://upcdn.io/W142hJk/raw/HhVSQ5ZQ5bfqvanQ
+https://upcdn.io/W142hJk/raw/example/city-landscape.jpg
 ```
 
-Resize with:
+### Processed Image
+
+We can use the [Image Processing API](https://upload.io/docs/image-processing-api) to convert the above photo into [this processed image](https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=800&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400):
+
+<img src="https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=800&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400" />
 
 ```
-https://upcdn.io/W142hJk/thumbnail/HhVSQ5ZQ5bfqvanQ
+https://upcdn.io/W142hJk/image/example/city-landscape.jpg
+  ?w=800
+  &h=600
+  &fit=crop
+  &f=webp
+  &q=80
+  &blur=4
+  &text=WATERMARK
+  &layer-opacity=80
+  &blend=overlay
+  &layer-rotate=315
+  &font-size=100
+  &padding=10
+  &font-weight=900
+  &color=ffffff
+  &repeat=true
+  &text=Chicago
+  &gravity=bottom
+  &padding-x=50
+  &padding-bottom=20
+  &font=/example/fonts/Lobster.ttf
+  &color=ffe400
 ```
 
-Auto-crop (to square dimensions) with:
+## Manually Cropping Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
-```
-https://upcdn.io/W142hJk/thumbnail-square/HhVSQ5ZQ5bfqvanQ
-```
-
-**Tip:** for more transformations, please [create an account](https://upload.io/pricing).
-
-### Crop Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
-
-To crop images using manually-provided geometry:
+To embed crop dimensions into an image:
 
 ```html
 <html>
@@ -357,7 +388,7 @@ To crop images using manually-provided geometry:
 </html>
 ```
 
-## 📖 Documentation
+## 📖 Full Documentation
 
 **[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
 
