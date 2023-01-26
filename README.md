@@ -293,13 +293,13 @@ https://upcdn.io/W142hJk/raw/example/city-landscape.jpg
 
 ### Processed Image
 
-We can use the [Image Processing API](https://upload.io/docs/image-processing-api) to convert the above photo into [this processed image](https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=800&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400):
+We can use the [Image Processing API](https://upload.io/docs/image-processing-api) to convert the above photo into [this processed image](https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400):
 
-<img src="https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=800&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400" />
+<img src="https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400" />
 
 ```
 https://upcdn.io/W142hJk/image/example/city-landscape.jpg
-  ?w=800
+  ?w=900
   &h=600
   &fit=crop
   &f=webp
@@ -378,7 +378,7 @@ To embed crop dimensions into an image:
         const originalImage = await upload.uploadFile(file);
         const croppedImage  = await onOriginalImageUploaded(originalImage)
 
-        alert(`Cropped image:\n${croppedImage.fileUrl.replace("/raw/", "/thumbnail/")}`)
+        alert(`Cropped image:\n${croppedImage.fileUrl.replace("/raw/", "/image/")}`)
       }
     </script>
   </head>
@@ -390,33 +390,25 @@ To embed crop dimensions into an image:
 
 ## Full Documentation
 
-**[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
-
-## 👋 Create your Upload.io Account
-
-Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
-
-**[Create an Upload.io account »](https://upload.io/pricing)**
+[Upload.js Full Documentation »](https://upload.io/docs/upload-js)
 
 ## Need a File Upload Widget?
 
-**[See Uploader »](https://upload.io/uploader)**
+[File Upload Widget »](https://upload.io/uploader)
 
 Uploader is a lightweight file upload widget, powered by Upload.js:
 
 <p align="center"><a href="https://upload.io/uploader"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/jquery-uploader/main/.github/assets/demo.webp"></a></p>
 
+## 👋 Create your Upload.io Account
+
+Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
+
+**[Create an Upload.io account »](https://upload.io/upload-js/get-started)**
+
 ## Building From Source
 
-Please read: [`BUILD.md`](BUILD.md)
-
-## Contribute
-
-If you would like to contribute to Upload.js:
-
-1. Add a [GitHub Star](https://github.com/upload-io/upload-js/stargazers) to the project (if you're feeling generous!).
-2. Determine whether you're raising a bug, feature request or question.
-3. Raise your issue or PR. 🚀
+[BUILD.md](BUILD.md)
 
 ## License
 
