@@ -406,9 +406,11 @@ Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): 
 
 **[Create an Upload.io account »](https://upload.io/upload-js/get-started)**
 
-## 🔧 Can I bring my own file storage?
+## Can I use my own storage?
 
 **Yes!** [Upload.io](https://upload.io) supports custom S3 buckets on [Upload Plus](https://upload.io/pricing) plans.
+
+For ease and simplicity, your files are stored in Upload.io's internal S3 buckets by default. You can change this on a folder-by-folder basis — to your existing S3 bucket(s) — in the Upload Dashboard.
 
 ## Building From Source
 
