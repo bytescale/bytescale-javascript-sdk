@@ -269,7 +269,28 @@ Overview of the code:
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
 
-# Image Processing (Resize, Crop, etc.)
+## 🌐 File Management API
+
+You can use the [Upload API](https://upload.io/docs/upload-api) directly to achieve:
+
+- File uploading.
+- File listing.
+- File deleting.
+- And more...
+
+Uploading a `"Hello World"` text file is as simple as:
+
+```shell
+curl --data "Hello World" \
+     -u apikey:free \
+     -X POST "https://api.upload.io/v1/files/basic"
+```
+
+_Note: Remember to set `-H "Content-Type: mime/type"` when uploading other file types!_
+
+[Read the Upload API docs »](https://upload.io/docs/upload-api)
+
+## 🎨 Image Processing API (Resize, Crop, etc.)
 
 The [Upload.io](https://upload.io/) platform includes a built-in [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
 
