@@ -16,8 +16,8 @@
     "url": "https://github.com/upload-io/upload-js/issues"
   },
   "files": [
-    "/dist/*",
-    "/tests/*"
+    "/dist/**/*",
+    "/tests/**/*"
   ],
   "keywords": [
     "file-upload",
