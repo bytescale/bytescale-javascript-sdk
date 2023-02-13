@@ -404,7 +404,7 @@ Uploader is a lightweight file upload widget, powered by Upload.js:
 
 Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
 
-**[Create an Upload.io account »](https://upload.io/pricing)**
+**[Create an Upload.io account »](https://upload.io/upload-js/get-started)**
 
 ## Building From Source
 
