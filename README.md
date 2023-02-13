@@ -390,15 +390,11 @@ To embed crop dimensions into an image:
 
 ## Full Documentation
 
-**[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
-
-## Building From Source
-
-[BUILD.md](BUILD.md)
+[Upload.js Full Documentation »](https://upload.io/docs/upload-js)
 
 ## Need a File Upload Widget?
 
-**[See Uploader »](https://upload.io/uploader)**
+[File Upload Widget »](https://upload.io/uploader)
 
 Uploader is a lightweight file upload widget, powered by Upload.js:
 
@@ -409,6 +405,10 @@ Uploader is a lightweight file upload widget, powered by Upload.js:
 Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
 
 **[Create an Upload.io account »](https://upload.io/pricing)**
+
+## Building From Source
+
+[BUILD.md](BUILD.md)
 
 ## License
 
