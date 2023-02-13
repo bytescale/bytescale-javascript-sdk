@@ -271,7 +271,7 @@ Note: file uploads will safely run in parallel, despite using the same `Upload` 
 
 # Image Processing (Resize, Crop, etc.)
 
-[Upload.io](https://upload.io/) comes with an [Image Processing API](https://upload.io/docs/image-processing-api) that supports:
+The [Upload.io](https://upload.io/) platform includes a built-in [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
 
 - [Automatic Image Cropping](https://upload.io/docs/image-processing-api#crop)
 - [Manual Image Cropping](https://upload.io/docs/image-processing-api#crop-x)
@@ -388,37 +388,13 @@ To embed crop dimensions into an image:
 </html>
 ```
 
-## 📖 Full Documentation
+## Full Documentation
 
 **[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
 
-## 🎯 Features
+## 👋 Create your Upload.io Account
 
-Upload.js is the JavaScript client library for [Upload.io](https://upload.io/upload-js): the file upload service for developers.
-
-**Core features:**
-
-- File Storage. (Files stored for 4 hours with the `"free"` API key.)
-- File Hosting via CDN. (Files served from 100 locations worldwide.)
-- Fast Image Transformations. (Resize images, crop images & convert images.)
-
-**Available with an account:**
-
-- Permanent Storage. (The `"free"` API key provides temporary storage only.)
-- Unlimited Daily Uploads. (The `"free"` API key allows 100 uploads per day per IP.)
-- Extended CDN Coverage. (Files served from 300+ locations worldwide.)
-- More File Transformations. (Custom image resizing, cropping, converting, etc.)
-- Upload & Download Authentication. (Supports federated auth via your own JWT authorizer.)
-- File & Folder Management.
-- Expiring Links.
-- Custom CNAME.
-- Advanced Upload Control:
-  - Rate Limiting.
-  - Traffic Limiting.
-  - File Size Limiting.
-  - IP Blacklisting.
-  - File Type Blacklisting.
-  - And More...
+Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
 
 **[Create an Upload.io account »](https://upload.io/pricing)**
 
