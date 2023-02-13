@@ -392,19 +392,9 @@ To embed crop dimensions into an image:
 
 **[See Upload.js Documentation »](https://upload.io/docs/upload-js)**
 
-## 👋 Create your Upload.io Account
-
-Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
-
-**[Create an Upload.io account »](https://upload.io/pricing)**
-
 ## Building From Source
 
 [BUILD.md](BUILD.md)
-
-## License
-
-[MIT](LICENSE)
 
 ## Need a File Upload Widget?
 
@@ -414,10 +404,12 @@ Uploader is a lightweight file upload widget, powered by Upload.js:
 
 <p align="center"><a href="https://upload.io/uploader"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/jquery-uploader/main/.github/assets/demo.webp"></a></p>
 
-## Contribute
+## 👋 Create your Upload.io Account
 
-If you would like to contribute to Upload.js:
+Upload.js is the JavaScript client library for [Upload.io](https://upload.io/): the file upload service for web apps.
 
-1. Add a [GitHub Star](https://github.com/upload-io/upload-js/stargazers) to the project (if you're feeling generous!).
-2. Determine whether you're raising a bug, feature request or question.
-3. Raise your issue or PR. 🚀
+**[Create an Upload.io account »](https://upload.io/pricing)**
+
+## License
+
+[MIT](LICENSE)
