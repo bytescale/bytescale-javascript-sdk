@@ -304,6 +304,8 @@ The [Upload.io](https://upload.io/) platform includes a built-in [Image Processi
 - [Adjustments (blur, sharpen, brightness, etc.)](https://upload.io/docs/image-processing-api#blur)
 - and more...
 
+[Read the Image Processing API docs »](https://upload.io/docs/image-processing-api)
+
 ### Original Image
 
 Here's an example using [a photo of Chicago](https://upcdn.io/W142hJk/raw/example/city-landscape.jpg):
