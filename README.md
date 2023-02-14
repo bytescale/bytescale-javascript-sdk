@@ -269,6 +269,8 @@ Overview of the code:
 
 Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
 
+# 🌐 API Support
+
 ## 🌐 File Management API
 
 You can use the [Upload API](https://upload.io/docs/upload-api) directly to achieve:
@@ -290,7 +292,7 @@ _Note: Remember to set `-H "Content-Type: mime/type"` when uploading other file 
 
 [Read the Upload API docs »](https://upload.io/docs/upload-api)
 
-## 🎨 Image Processing API (Resize, Crop, etc.)
+## 🌐 Image Processing API (Resize, Crop, etc.)
 
 The [Upload.io](https://upload.io/) platform includes a built-in [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
 
