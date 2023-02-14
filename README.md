@@ -294,7 +294,7 @@ _Note: Remember to set `-H "Content-Type: mime/type"` when uploading other file 
 
 ## 🌐 Image Processing API (Resize, Crop, etc.)
 
-Upload.io provides an [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
+Upload.io also provides an [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
 
 - [Automatic Image Cropping](https://upload.io/docs/image-processing-api#crop)
 - [Manual Image Cropping](https://upload.io/docs/image-processing-api#crop-x)
