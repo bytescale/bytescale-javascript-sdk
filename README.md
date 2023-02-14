@@ -273,7 +273,7 @@ Note: file uploads will safely run in parallel, despite using the same `Upload` 
 
 ## 🌐 File Management API
 
-You can use the [Upload API](https://upload.io/docs/upload-api) directly to achieve:
+Upload.io provides an [Upload API](https://upload.io/docs/upload-api) that allows you to:
 
 - File uploading.
 - File listing.
@@ -294,7 +294,7 @@ _Note: Remember to set `-H "Content-Type: mime/type"` when uploading other file 
 
 ## 🌐 Image Processing API (Resize, Crop, etc.)
 
-The [Upload.io](https://upload.io/) platform includes a built-in [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
+Upload.io provides an [Image Processing API](https://upload.io/docs/image-processing-api), which supports the following:
 
 - [Automatic Image Cropping](https://upload.io/docs/image-processing-api#crop)
 - [Manual Image Cropping](https://upload.io/docs/image-processing-api#crop-x)
