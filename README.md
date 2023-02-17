@@ -301,8 +301,7 @@ Upload.io also provides an [Image Processing API](https://upload.io/docs/image-p
 - [Image Compression](https://upload.io/docs/image-processing-api#image-compression-api)
 - [Image Conversion](https://upload.io/docs/image-processing-api#f)
 - [Image Manipulation (blur, sharpen, brightness, etc.)](https://upload.io/docs/image-processing-api#image-manipulation-api)
-- [Text Layering (e.g for text watermarks)](https://upload.io/docs/image-processing-api#text)
-- [Image Layering (e.g. for image watermarks)](https://upload.io/docs/image-processing-api#image)
+- [Layering (e.g for text & image watermarks)](https://upload.io/docs/image-processing-api#image)
 
 - and more...
 
@@ -421,21 +420,19 @@ To embed crop dimensions into an image:
 
 ## Need a File Upload Widget?
 
-[File Upload Widget »](https://upload.io/uploader)
-
-Uploader is a lightweight file upload widget, powered by Upload.js:
+See our **[File Upload Widget](https://upload.io/uploader)** that comes pre-integrated with Upload.js.
 
 <p align="center"><a href="https://upload.io/uploader"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/jquery-uploader/main/.github/assets/demo.webp"></a></p>
 
 ## 👋 Create your Upload.io Account
 
-Upload.js is the JavaScript client library for [Upload.io](https://upload.io/) — The File Upload Service for Web Apps.
+Upload.js is the JavaScript client library for Upload.io — The File Upload Service for Web Apps:
 
 **[Create an Upload.io account »](https://upload.io/upload-js/get-started)**
 
 ## Can I use my own storage?
 
-**Yes:** [Upload.io](https://upload.io) supports AWS S3 on [Upload Plus](https://upload.io/pricing) plans.
+**Yes:** Upload.io supports AWS S3 on [Upload Plus](https://upload.io/pricing) plans.
 
 Upload.io offers its own built-in storage for ease and simplicity (default).
 
