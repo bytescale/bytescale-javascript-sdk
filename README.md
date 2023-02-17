@@ -436,7 +436,7 @@ Upload.js is the lightweight JavaScript client library for Upload.io — The Fil
 
 Upload.io offers its own built-in storage for ease and simplicity (default).
 
-You can change this to AWS S3 on a folder-by-folder basis via the Upload Dashboard.
+You can change this to AWS S3 on a folder-by-folder basis in the Upload Dashboard.
 
 ## Building From Source
 
