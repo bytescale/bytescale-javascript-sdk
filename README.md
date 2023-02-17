@@ -426,7 +426,7 @@ See our **[File Upload Widget](https://upload.io/uploader)**. (Built with Upload
 
 ## 👋 Create your Upload.io Account
 
-Upload.js is the JavaScript client library for Upload.io — The File Upload Service for Web Apps:
+Upload.js is the lightweight JavaScript client library for Upload.io — The File Upload Service for Web Apps:
 
 **[Create an Upload.io account »](https://upload.io/upload-js/get-started)**
 
