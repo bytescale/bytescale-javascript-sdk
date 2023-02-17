@@ -420,7 +420,7 @@ To embed crop dimensions into an image:
 
 ## Need a File Upload Widget?
 
-See our **[File Upload Widget](https://upload.io/uploader)** that comes pre-integrated with Upload.js.
+See our **[File Upload Widget](https://upload.io/uploader)**. (Built with Upload.js. Supports: image cropping, cancellation, progress, etc).
 
 <p align="center"><a href="https://upload.io/uploader"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/upload-io/jquery-uploader/main/.github/assets/demo.webp"></a></p>
 
