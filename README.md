@@ -302,7 +302,6 @@ Upload.io also provides an [Image Processing API](https://upload.io/docs/image-p
 - [Image Conversion](https://upload.io/docs/image-processing-api#f)
 - [Image Manipulation (blur, sharpen, brightness, etc.)](https://upload.io/docs/image-processing-api#image-manipulation-api)
 - [Layering (e.g for text & image watermarks)](https://upload.io/docs/image-processing-api#image)
-
 - and more...
 
 [Read the Image Processing API docs »](https://upload.io/docs/image-processing-api)
