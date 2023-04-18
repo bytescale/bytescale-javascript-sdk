@@ -425,11 +425,7 @@ export function Upload(config: UploadConfig): UploadInterface {
           return;
         }
 
-        const endpointName = "Your auth API endpoint";
-        const token = await getAccessToken(authUrl, await authHeaders(), endpointName);
-        if (token.length === 0) {
-          throw new Error(`${logPrefix}${endpointName} returned an empty string. Please return a valid JWT instead.`);
-        }
+        const token = await getAccessToken(authUrl, await authHeaders());
         const setTokenResult = await putJsonGetJson<SetAccessTokenResponseDto, SetAccessTokenRequestDto>(
           accessTokenUrl,
           {},
@@ -477,11 +473,9 @@ export function Upload(config: UploadConfig): UploadInterface {
     );
   };
 
-  const getAccessToken = async (
-    authUrl: string,
-    headers: Record<string, string>,
-    endpointName: string
-  ): Promise<string> => {
+  const getAccessToken = async (authUrl: string, headers: Record<string, string>): Promise<string> => {
+    const endpointName = "Your auth API endpoint";
+
     const result = await nonUploadApiRequest<unknown>(
       {
         method: "GET",
@@ -497,16 +491,26 @@ export function Upload(config: UploadConfig): UploadInterface {
       );
     }
 
-    const resultBody = result.body;
+    const jwt = result.body;
 
-    if (typeof resultBody !== "string") {
+    if (typeof jwt !== "string") {
       // We will receive 'null' if there was no content-type response header.
       throw new Error(
         `${logPrefix}${endpointName} returned an unsupported response. Please ensure: 1) 'Content-Type: text/plain' is in the HTTP response headers 2) the status code is 200.`
       );
     }
 
-    return resultBody;
+    if (jwt.length === 0) {
+      throw new Error(`${logPrefix}${endpointName} returned an empty string. Please return a valid JWT instead.`);
+    }
+
+    if (jwt.trim().length !== jwt.length) {
+      throw new Error(
+        `${logPrefix}${endpointName} returned a JWT with whitespace at the start/end. Please remove the whitespace.`
+      );
+    }
+
+    return jwt;
   };
 
   const deleteNoResponse = async (
