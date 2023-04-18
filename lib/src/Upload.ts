@@ -505,9 +505,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
 
     if (jwt.trim().length !== jwt.length) {
-      throw new Error(
-        `${logPrefix}${endpointName} returned a JWT with whitespace at the start/end. Please remove the whitespace.`
-      );
+      throw new Error(`${logPrefix}${endpointName} returned whitespace around the JWT, please remove it.`);
     }
 
     return jwt;
