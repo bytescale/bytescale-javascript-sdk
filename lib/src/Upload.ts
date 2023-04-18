@@ -109,7 +109,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
   }
 
-  const accessTokenPath = `${cdnUrl}${accessTokenPathBase}${accountId}`;
+  const accessTokenUrl = `${cdnUrl}${accessTokenPathBase}${accountId}`;
 
   // ----------------
   // PUBLIC METHODS
@@ -407,7 +407,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   const deleteAccessToken = async (): Promise<void> => {
     await deleteNoResponse(
-      accessTokenPath,
+      accessTokenUrl,
       {},
       true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
     );
@@ -425,9 +425,13 @@ export function Upload(config: UploadConfig): UploadInterface {
           return;
         }
 
-        const token = await getText(authUrl, await authHeaders());
+        const endpointName = "Your auth API endpoint";
+        const token = await getAccessToken(authUrl, await authHeaders(), endpointName);
+        if (token.length === 0) {
+          throw new Error(`${logPrefix}${endpointName} returned an empty string. Please return a valid JWT instead.`);
+        }
         const setTokenResult = await putJsonGetJson<SetAccessTokenResponseDto, SetAccessTokenRequestDto>(
-          accessTokenPath,
+          accessTokenUrl,
           {},
           {
             accessToken: token
@@ -473,17 +477,36 @@ export function Upload(config: UploadConfig): UploadInterface {
     );
   };
 
-  const getText = async (url: string, headers: Record<string, string>): Promise<string> => {
-    return await handleApiResult(
-      await nonUploadApiRequest(
-        {
-          method: "GET",
-          path: url,
-          headers
-        },
-        false
-      )
+  const getAccessToken = async (
+    authUrl: string,
+    headers: Record<string, string>,
+    endpointName: string
+  ): Promise<string> => {
+    const result = await nonUploadApiRequest<unknown>(
+      {
+        method: "GET",
+        path: authUrl,
+        headers
+      },
+      false
     );
+
+    if (!result.ok) {
+      throw new Error(
+        `${logPrefix}${endpointName} returned a failed response. Please ensure the endpoint's status code is 200.`
+      );
+    }
+
+    const resultBody = result.body;
+
+    if (typeof resultBody !== "string") {
+      // We will receive 'null' if there was no content-type response header.
+      throw new Error(
+        `${logPrefix}${endpointName} returned an unsupported response. Please ensure: 1) 'Content-Type: text/plain' is in the HTTP response headers 2) the status code is 200.`
+      );
+    }
+
+    return resultBody;
   };
 
   const deleteNoResponse = async (
@@ -513,7 +536,7 @@ export function Upload(config: UploadConfig): UploadInterface {
       throw new UploadApiError(errorResponseMaybe as ErrorResponse);
     }
 
-    throw new Error("Unexpected API error.");
+    throw new Error(`${logPrefix}Unexpected API error.`);
   };
 
   const nonUploadApiRequest = async <T>(
