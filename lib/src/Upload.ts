@@ -34,6 +34,7 @@ const maxUploadConcurrency = 5;
 const refreshBeforeExpirySeconds = 20;
 const onProgressInterval = 100;
 const retryAuthAfterErrorSeconds = 5;
+const minJwtTtlSeconds = 10;
 const accessTokenPathBase = "/api/v1/access_tokens/";
 const logPrefix = "[upload-js] ";
 
@@ -130,7 +131,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
     // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
     // can interject and b) nothing has interjected since the lock was relinquished).
-    lastAuthSession = authSession;
+    setAuthSession(authSession);
 
     await refreshAccessToken(authUrl, authHeaders, authSession);
   };
@@ -142,7 +143,7 @@ export function Upload(config: UploadConfig): UploadInterface {
       }
 
       const authSession = lastAuthSession;
-      lastAuthSession = undefined;
+      setAuthSession(undefined);
 
       if (authSession.accessTokenRefreshHandle !== undefined) {
         clearTimeout(authSession.accessTokenRefreshHandle);
@@ -413,6 +414,19 @@ export function Upload(config: UploadConfig): UploadInterface {
     );
   };
 
+  const setAuthSession = (authSession: AuthSession | undefined): void => {
+    const globalKey = "isUploadJsInAuthSession";
+    const isNewAuthSession = authSession !== undefined;
+    const isInAuthSession = (window as any)[globalKey] === true;
+
+    if (isNewAuthSession && isInAuthSession) {
+      warn("Multiple instances of Upload.js detected: 'beginAuthSession' calls will behave unpredictably.");
+    }
+
+    lastAuthSession = authSession;
+    (window as any)[globalKey] = isNewAuthSession;
+  };
+
   const refreshAccessToken = async (
     authUrl: string,
     authHeaders: () => Promise<Record<string, string>>,
@@ -435,18 +449,26 @@ export function Upload(config: UploadConfig): UploadInterface {
           true // Required, else CDN response's `Set-Cookie` header will be silently ignored.
         );
 
+        const desiredTtlSeconds = setTokenResult.ttlSeconds - refreshBeforeExpirySeconds;
+
+        if (desiredTtlSeconds < minJwtTtlSeconds) {
+          warn(`JWT expiration is too short: waiting for ${minJwtTtlSeconds} seconds before refreshing.`);
+        }
+
         authSession.accessToken = setTokenResult.accessToken;
         authSession.accessTokenRefreshHandle = window.setTimeout(() => {
           refreshAccessToken(authUrl, authHeaders, authSession).then(
             () => {},
             e => error(`Permanent error when refreshing access token: ${e as string}`)
           );
-        }, Math.max(0, (setTokenResult.ttlSeconds - refreshBeforeExpirySeconds) * 1000));
+        }, Math.max(minJwtTtlSeconds, desiredTtlSeconds) * 1000);
       });
     } catch (e) {
+      // Use 'error' instead of 'debug' so that the user sees error messages.
+      error(`Error when refreshing access token: ${e as string}`);
+
       // Perform attempts as part of same promise, rather than via a 'setTimeout' so that the 'beginAuthSession' only
       // returns once an auth session has been successfully established.
-      debug(`Error when refreshing access token: ${e as string}`);
       await new Promise(resolve => setTimeout(resolve, retryAuthAfterErrorSeconds * 1000));
 
       // Todo: is this stack safe?
@@ -603,6 +625,10 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   const error = (message: string): void => {
     console.error(`${logPrefix}${message}`);
+  };
+
+  const warn = (message: string): void => {
+    console.warn(`${logPrefix}${message}`);
   };
 
   return {
