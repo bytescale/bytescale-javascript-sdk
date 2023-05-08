@@ -45,9 +45,8 @@ const logPrefix = "[upload-js] ";
  *
  *    Upload({apiKey: "free"})
  *
- * This is particularly important when using the 'beginAuthSession' and
- * 'endAuthSession' methods, as you don't want multiple running instances of the
- * auth process in your web application.
+ * If multiple instances exist, then all '*AuthSession' calls will be forwarded to the first instance that had an
+ * '*AuthSession' call invoked on it.
  */
 export function Upload(config: UploadConfig): UploadInterface {
   // ----------------
@@ -120,39 +119,50 @@ export function Upload(config: UploadConfig): UploadInterface {
     authUrl: string,
     authHeaders: () => Promise<Record<string, string>>
   ): Promise<void> => {
-    await endAuthSession();
+    await callAuthMethod(
+      async x => await x.beginAuthSession(authUrl, authHeaders),
+      async () => {
+        await endAuthSession();
 
-    const authSession: AuthSession = {
-      accessToken: undefined,
-      accessTokenRefreshHandle: undefined,
-      isActive: true
-    };
+        const authSession: AuthSession = {
+          accessToken: undefined,
+          accessTokenRefreshHandle: undefined,
+          isActive: true
+        };
 
-    // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
-    // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
-    // can interject and b) nothing has interjected since the lock was relinquished).
-    setAuthSession(authSession);
+        // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
+        // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
+        // can interject and b) nothing has interjected since the lock was relinquished).
+        lastAuthSession = authSession;
 
-    await refreshAccessToken(authUrl, authHeaders, authSession);
+        await refreshAccessToken(authUrl, authHeaders, authSession);
+      }
+    );
   };
 
   const endAuthSession = async (): Promise<void> => {
-    await authMutex.safe(async () => {
-      if (lastAuthSession === undefined) {
-        return;
+    await callAuthMethod(
+      async x => await x.endAuthSession(),
+      async () => {
+        await authMutex.safe(async () => {
+          if (lastAuthSession === undefined) {
+            return;
+          }
+
+          const authSession = lastAuthSession;
+
+          lastAuthSession = undefined;
+
+          if (authSession.accessTokenRefreshHandle !== undefined) {
+            clearTimeout(authSession.accessTokenRefreshHandle);
+          }
+
+          authSession.isActive = false;
+
+          await deleteAccessToken();
+        });
       }
-
-      const authSession = lastAuthSession;
-      setAuthSession(undefined);
-
-      if (authSession.accessTokenRefreshHandle !== undefined) {
-        clearTimeout(authSession.accessTokenRefreshHandle);
-      }
-
-      authSession.isActive = false;
-
-      await deleteAccessToken();
-    });
+    );
   };
 
   const uploadFile = async (file: FileLike, params: UploadParams = {}): Promise<UploadedFile> => {
@@ -187,6 +197,13 @@ export function Upload(config: UploadConfig): UploadInterface {
     return `${cdnUrl}/${accountId}/${params?.transformation ?? defaultSlug}${filePath}${
       params?.auth === true ? "?_auth=true" : ""
     }`;
+  };
+
+  const self: UploadInterface = {
+    beginAuthSession,
+    endAuthSession,
+    uploadFile,
+    url
   };
 
   // ----------------
@@ -414,18 +431,36 @@ export function Upload(config: UploadConfig): UploadInterface {
     );
   };
 
-  const setAuthSession = (authSession: AuthSession | undefined): void => {
-    const globalKey = "isUploadJsInAuthSession";
-    const isNewAuthSession = authSession !== undefined;
-    const isInAuthSession = (window as any)[globalKey] === true;
+  /**
+   * Calls the given auth method on the canonical auth instance.
+   */
+  const callAuthMethod = async (
+    other: (instance: UploadInterface) => Promise<void>,
+    me: () => Promise<void>
+  ): Promise<void> => {
+    const authInstance = getAuthInstance();
+    if (authInstance !== self) {
+      // Forward call to global auth instance.
+      await other(authInstance);
+    } else {
+      await me();
+    }
+  };
 
-    if (isNewAuthSession && isInAuthSession) {
-      // Warnings aren't obvious enough, and this will result in bad things happening, so is an error.
-      error("Multiple instances of Upload.js detected: 'beginAuthSession' calls will behave unpredictably.");
+  /**
+   * Returns a single global instance of Upload.js for all auth calls.
+   * If we require multiple instances in the future, we can provide a parameter to disable this behaviour.
+   */
+  const getAuthInstance = (): UploadInterface => {
+    const globalKey = "uploadJsAuthInstance";
+    let globalAuthInstance = (window as any)[globalKey] as UploadInterface | undefined;
+
+    if (globalAuthInstance === undefined) {
+      globalAuthInstance = self;
+      (window as any)[globalKey] = self;
     }
 
-    lastAuthSession = authSession;
-    (window as any)[globalKey] = isNewAuthSession;
+    return globalAuthInstance;
   };
 
   const refreshAccessToken = async (
@@ -632,10 +667,5 @@ export function Upload(config: UploadConfig): UploadInterface {
     console.warn(`${logPrefix}${message}`);
   };
 
-  return {
-    beginAuthSession,
-    endAuthSession,
-    uploadFile,
-    url
-  };
+  return self;
 }
