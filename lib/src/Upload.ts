@@ -420,7 +420,8 @@ export function Upload(config: UploadConfig): UploadInterface {
     const isInAuthSession = (window as any)[globalKey] === true;
 
     if (isNewAuthSession && isInAuthSession) {
-      warn("Multiple instances of Upload.js detected: 'beginAuthSession' calls will behave unpredictably.");
+      // Warnings aren't obvious enough, and this will result in bad things happening, so is an error.
+      error("Multiple instances of Upload.js detected: 'beginAuthSession' calls will behave unpredictably.");
     }
 
     lastAuthSession = authSession;
