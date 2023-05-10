@@ -60,6 +60,7 @@ export function Upload(config: UploadConfig): UploadInterface {
   const authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
   const headers = config.internal?.headers;
   const debugMode = config.debug === true;
+  const wasCalled = " was called by the user's code.";
 
   // ------------------
   // READ/WRITE MEMBERS
@@ -122,7 +123,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     await callAuthMethod(
       async x => await x.beginAuthSession(authUrl, authHeaders),
       async () => {
-        debug("User code called 'beginAuthSession'");
+        debug(`'beginAuthSession'${wasCalled}`);
 
         // Explanation:
         // - Prevents restarting the auth session on accidental double-calls to 'beginAuthSession': in some users' code,
@@ -132,7 +133,7 @@ export function Upload(config: UploadConfig): UploadInterface {
         //   don't need to call 'beginAuthSession' just to update it.
         if (lastAuthSession?.authUrl === authUrl) {
           error(
-            "'beginAuthSession' has already been called. Ignoring this call. (Hint: call 'endAuthSession' and then 'beginAuthSession' if you want to restart the auth session.)"
+            "'beginAuthSession' already called. Ignoring this call. Hint: call 'endAuthSession' and then 'beginAuthSession' if you want to restart the auth session."
           );
           return;
         }
@@ -160,14 +161,14 @@ export function Upload(config: UploadConfig): UploadInterface {
     await callAuthMethod(
       async x => await x.endAuthSession(),
       async () => {
-        debug("User code called 'endAuthSession'");
+        debug(`'endAuthSession'${wasCalled}`);
         await doEndAuthSession();
       }
     );
   };
 
   const uploadFile = async (file: FileLike, params: UploadParams = {}): Promise<UploadedFile> => {
-    debug("User code called 'uploadFile'");
+    debug(`'uploadFile'${wasCalled}`);
 
     // Initial progress (raised immediately and synchronously).
     const cancellationHandlers: Array<() => void> = [];
