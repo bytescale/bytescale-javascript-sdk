@@ -147,8 +147,8 @@ export function Upload(config: UploadConfig): UploadInterface {
         };
 
         // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
-        // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution, so we know a) nothing
-        // can interject and b) nothing has interjected since the lock was relinquished).
+        // since the mutex from 'endAuthSession' was relinquished (meaning we still have execution,
+        // so we know a) nothing can interject and b) nothing has interjected since the lock was relinquished).
         lastAuthSession = authSession;
 
         await refreshAccessToken(authUrl, authHeaders, authSession);
