@@ -60,7 +60,7 @@ export function Upload(config: UploadConfig): UploadInterface {
   const authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
   const headers = config.internal?.headers;
   const debugMode = config.debug === true;
-  const wasCalled = " was called by the user's code.";
+  const wasCalled = " was called.";
 
   // ------------------
   // READ/WRITE MEMBERS
