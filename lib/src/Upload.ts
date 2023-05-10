@@ -122,12 +122,28 @@ export function Upload(config: UploadConfig): UploadInterface {
     await callAuthMethod(
       async x => await x.beginAuthSession(authUrl, authHeaders),
       async () => {
-        await endAuthSession();
+        debug("User code called 'beginAuthSession'");
+
+        // Explanation:
+        // - Prevents restarting the auth session on accidental double-calls to 'beginAuthSession': in some users' code,
+        //   this happens accidentally every second, so we want to bail-out if we detect this is occurring.
+        // - We only check 'authUrl' to determine if the 'same call' is being made, since 'authHeaders' is a function
+        //   and therefore its body can be switched-out by the user's code if they desire a change to its behaviour, so
+        //   don't need to call 'beginAuthSession' just to update it.
+        if (lastAuthSession?.authUrl === authUrl) {
+          error(
+            "'beginAuthSession' has already been called. Ignoring this call. (Hint: call 'endAuthSession' and then 'beginAuthSession' if you want to restart the auth session.)"
+          );
+          return;
+        }
+
+        await doEndAuthSession();
 
         const authSession: AuthSession = {
           accessToken: undefined,
           accessTokenRefreshHandle: undefined,
-          isActive: true
+          isActive: true,
+          authUrl
         };
 
         // Does not need to be inside the mutex since the environment is single-threaded, and we have not async-yielded
@@ -144,28 +160,15 @@ export function Upload(config: UploadConfig): UploadInterface {
     await callAuthMethod(
       async x => await x.endAuthSession(),
       async () => {
-        await authMutex.safe(async () => {
-          if (lastAuthSession === undefined) {
-            return;
-          }
-
-          const authSession = lastAuthSession;
-
-          lastAuthSession = undefined;
-
-          if (authSession.accessTokenRefreshHandle !== undefined) {
-            clearTimeout(authSession.accessTokenRefreshHandle);
-          }
-
-          authSession.isActive = false;
-
-          await deleteAccessToken();
-        });
+        debug("User code called 'endAuthSession'");
+        await doEndAuthSession();
       }
     );
   };
 
   const uploadFile = async (file: FileLike, params: UploadParams = {}): Promise<UploadedFile> => {
+    debug("User code called 'uploadFile'");
+
     // Initial progress (raised immediately and synchronously).
     const cancellationHandlers: Array<() => void> = [];
     const addCancellationHandler: AddCancellationHandler = (ca: () => void): void => {
@@ -209,6 +212,26 @@ export function Upload(config: UploadConfig): UploadInterface {
   // ----------------
   // PRIVATE METHODS
   // ----------------
+
+  const doEndAuthSession = async (): Promise<void> => {
+    await authMutex.safe(async () => {
+      if (lastAuthSession === undefined) {
+        return;
+      }
+
+      const authSession = lastAuthSession;
+
+      lastAuthSession = undefined;
+
+      if (authSession.accessTokenRefreshHandle !== undefined) {
+        clearTimeout(authSession.accessTokenRefreshHandle);
+      }
+
+      authSession.isActive = false;
+
+      await deleteAccessToken();
+    });
+  };
 
   const beginFileUpload = async (
     file: FileLike,
