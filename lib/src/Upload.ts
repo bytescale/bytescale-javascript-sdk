@@ -189,14 +189,14 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
   };
 
-  const url = (filePath: string, slugOrParams?: string | UrlParams): string => {
+  const url = (filePath: string, transformationOrParams?: string | UrlParams): string => {
     const defaultSlug = "raw";
     const params: UrlParams | undefined =
-      typeof slugOrParams === "string"
+      typeof transformationOrParams === "string"
         ? {
-            transformation: slugOrParams
+            transformation: transformationOrParams
           }
-        : slugOrParams;
+        : transformationOrParams;
 
     return `${cdnUrl}/${accountId}/${params?.transformation ?? defaultSlug}${filePath}${
       params?.auth === true ? "?_auth=true" : ""
