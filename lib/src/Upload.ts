@@ -621,7 +621,9 @@ export function Upload(config: UploadConfig): UploadInterface {
       throw new UploadApiError(errorResponseMaybe as ErrorResponse);
     }
 
-    throw new Error(`${logPrefix}Unexpected API error.`);
+    throw new Error(
+      `${logPrefix}Network error. If problem persists, and your network connectivity is healthy, please contact support@upload.io and provide: (a) time of failed request in UTC (b) screenshot of failed network response body (c) screenshot of failed network response header (d) browser + version.`
+    );
   };
 
   const nonUploadApiRequest = async <T>(
