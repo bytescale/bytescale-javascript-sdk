@@ -24,7 +24,7 @@ This repository comprises 3 packages:
 ### 1. Clone
 
 ```shell
-git clone git@github.com:upload-io/upload-js.git
+git clone git@github.com:bytescale/upload-js.git
 cd upload-js
 ```
 

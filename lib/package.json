@@ -1,19 +1,19 @@
 {
   "name": "upload-js",
   "version": "2.21.0",
-  "author": "Upload <hello@upload.io> (https://upload.io)",
+  "author": "Bytescale <hello@bytescale.com> (https://www.bytescale.com)",
   "description": "File Upload Library — Upload.js gives developers AJAX multipart file uploading via XHR 🚀 Comes with Cloud Storage 🌐",
   "license": "MIT",
   "main": "dist/main.js",
   "types": "dist/index.d.ts",
-  "homepage": "https://upload.io/upload-js",
+  "homepage": "https://www.bytescale.com/upload-js",
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/upload-io/upload-js.git"
+    "url": "git+https://github.com/bytescale/upload-js.git"
   },
   "bugs": {
-    "url": "https://github.com/upload-io/upload-js/issues"
+    "url": "https://github.com/bytescale/upload-js/issues"
   },
   "files": [
     "/dist/**/*",
@@ -42,8 +42,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@upload-io/upload-api-client-upload-js": "^2.15.0",
-    "progress-smoother": "^1.4.0"
+    "@upload-io/upload-api-client-upload-js": "^2.18.0",
+    "progress-smoother": "^1.7.0"
   },
   "devDependencies": {
     "@babel/cli": "7.17.6",
@@ -67,15 +67,15 @@
     "eslint-plugin-return-types-object-literals": "1.0.1",
     "eslint-plugin-standard": "4.1.0",
     "eslint-plugin-wdio": "^7.19.0",
+    "minimist": "1.2.6",
     "ts-loader": "8.0.11",
     "ts-node": "^10.7.0",
     "tsc-alias": "1.2.10",
     "typescript": "4.6.2",
-    "minimist": "1.2.6",
     "wdio-chromedriver-service": "^7.3.2",
     "wdio-wait-for": "^2.2.5",
     "webdriverio": "^7.19.3",
-    "webpack": "5.5.1",
+    "webpack": "^5.88.2",
     "webpack-bundle-analyzer": "4.2.0",
     "webpack-cli": "4.10.0",
     "webpack-node-externals": "2.5.2"

@@ -1,7 +1,7 @@
 {
   "name": "@upload.io/upload-js-examples",
   "version": "0.0.0",
-  "author": "Upload.io <hello@upload.io> (https://upload.io)",
+  "author": "Bytescale <hello@bytescale.com> (https://www.bytescale.com)",
   "private": true,
   "scripts": {
     "start": "npm run start:dev",
