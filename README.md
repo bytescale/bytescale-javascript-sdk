@@ -38,7 +38,7 @@
 </p>
 <h1 align="center">
   Get Started —
-  <a href="https://codepen.io/upload-js/pen/abVapaJ?editors=1000">
+  <a href="https://codepen.io/bytescale/pen/abVapaJ?editors=1000">
     Try on CodePen
   </a>
 </h1>
@@ -79,7 +79,7 @@ Or via a `<script>` tag:
 <script src="https://js.bytescale.com/upload-js/v2"></script>
 ```
 
-## Usage — [Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1000)
+## Usage — [Try on CodePen](https://codepen.io/bytescale/pen/abVapaJ?editors=1000)
 
 To upload a file from the browser:
 
@@ -106,7 +106,7 @@ const onProgress = ({ progress }) => {
 
 ## Full Working Example (Copy & Paste)
 
-**[Try on CodePen](https://codepen.io/upload-js/pen/abVapaJ?editors=1000)** / **Copy to IDE & Run:**
+**[Try on CodePen](https://codepen.io/bytescale/pen/abVapaJ?editors=1000)** / **Copy to IDE & Run:**
 
 ```html
 <html>
@@ -139,7 +139,7 @@ const onProgress = ({ progress }) => {
 
 ## Examples with Popular Frameworks
 
-### Upload Files with React — [Try on CodePen](https://codepen.io/upload-js/pen/jOavBPb?editors=1010)
+### Upload Files with React — [Try on CodePen](https://codepen.io/bytescale/pen/jOavBPb?editors=1010)
 
 ```javascript
 const { Upload } = require("upload-js");
@@ -162,7 +162,7 @@ const MyUploadButton = () => {
 };
 ```
 
-### Upload Files with Angular — [Try on CodePen](https://codepen.io/upload-js/pen/qBVMYPK?editors=1010)
+### Upload Files with Angular — [Try on CodePen](https://codepen.io/bytescale/pen/qBVMYPK?editors=1010)
 
 ```javascript
 const { Upload } = require("upload-js");
@@ -189,7 +189,7 @@ angular
   }));
 ```
 
-### Upload Files with Vue.js — [Try on CodePen](https://codepen.io/upload-js/pen/BamOvma?editors=1010)
+### Upload Files with Vue.js — [Try on CodePen](https://codepen.io/bytescale/pen/BamOvma?editors=1010)
 
 ```javascript
 const { Upload } = require("upload-js");
@@ -211,7 +211,7 @@ const vueApp = new Vue({
 });
 ```
 
-### Upload Files with jQuery — [Try on CodePen](https://codepen.io/upload-js/pen/BamOMPd?editors=1010)
+### Upload Files with jQuery — [Try on CodePen](https://codepen.io/bytescale/pen/BamOMPd?editors=1010)
 
 ```html
 <html>
@@ -255,7 +255,7 @@ const vueApp = new Vue({
 </html>
 ```
 
-### Upload Multiple Files with jQuery — [Try on CodePen](https://codepen.io/upload-js/pen/JjOawge?editors=1010)
+### Upload Multiple Files with jQuery — [Try on CodePen](https://codepen.io/bytescale/pen/JjOawge?editors=1010)
 
 Please refer to the CodePen example (link above).
 
@@ -306,7 +306,7 @@ Bytescale also provides an [Image Processing API](https://www.bytescale.com/docs
 
 [Read the Image Processing API docs »](https://www.bytescale.com/docs/image-processing-api)
 
-### Manually Cropping Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
+### Manually Cropping Images — [Try on CodePen](https://codepen.io/bytescale/pen/JjOaWpB?editors=1010)
 
 To embed crop dimensions into an image:
 
