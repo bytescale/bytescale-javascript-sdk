@@ -3,7 +3,7 @@
     <img alt="Upload.js" width="315" height="93" src="https://raw.githubusercontent.com/bytescale/upload-js/main/.github/assets/logo.svg">
   </a>
 </h1>
-<p align="center"><b>JavaScript File Upload Library</b><br/> (With Integrated Cloud Storage)</p>
+<p align="center"><b>JavaScript File Upload Library</b><br/>(With Integrated Cloud Storage)</p>
 <br/>
 <p align="center">
   <a href="https://github.com/bytescale/upload-js/">
