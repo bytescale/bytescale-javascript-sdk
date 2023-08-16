@@ -1,6 +1,6 @@
 {
   "name": "upload-js",
-  "version": "2.22.0",
+  "version": "2.23.0",
   "author": "Bytescale <hello@bytescale.com> (https://www.bytescale.com)",
   "description": "File Upload Library — Upload.js gives developers AJAX multipart file uploading via XHR 🚀 Comes with Cloud Storage 🌐",
   "license": "MIT",
