@@ -306,48 +306,7 @@ Bytescale also provides an [Image Processing API](https://www.bytescale.com/docs
 
 [Read the Image Processing API docs »](https://www.bytescale.com/docs/image-processing-api)
 
-### Original Image
-
-Here's an example using [a photo of Chicago](https://upcdn.io/W142hJk/raw/example/city-landscape.jpg):
-
-<img src="https://upcdn.io/W142hJk/raw/example/city-landscape.jpg" />
-
-```
-https://upcdn.io/W142hJk/raw/example/city-landscape.jpg
-```
-
-### Processed Image
-
-Using the [Image Processing API](https://www.bytescale.com/docs/image-processing-api), you can produce [this image](https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400):
-
-<img src="https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400" />
-
-```
-https://upcdn.io/W142hJk/image/example/city-landscape.jpg
-  ?w=900
-  &h=600
-  &fit=crop
-  &f=webp
-  &q=80
-  &blur=4
-  &text=WATERMARK
-  &layer-opacity=80
-  &blend=overlay
-  &layer-rotate=315
-  &font-size=100
-  &padding=10
-  &font-weight=900
-  &color=ffffff
-  &repeat=true
-  &text=Chicago
-  &gravity=bottom
-  &padding-x=50
-  &padding-bottom=20
-  &font=/example/fonts/Lobster.ttf
-  &color=ffe400
-```
-
-## Manually Cropping Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
+### Manually Cropping Images — [Try on CodePen](https://codepen.io/upload-js/pen/JjOaWpB?editors=1010)
 
 To embed crop dimensions into an image:
 
