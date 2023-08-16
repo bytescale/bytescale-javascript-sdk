@@ -55,7 +55,7 @@ export function Upload(config: UploadConfig): UploadInterface {
 
   let accountId: AccountId;
   const authMutex = Mutex();
-  const apiUrl = config.internal?.apiUrl ?? "https://api.upload.io";
+  const apiUrl = config.internal?.apiUrl ?? "https://api.bytescale.com";
   const cdnUrl = config.internal?.cdnUrl ?? "https://upcdn.io";
   const authenticateWithApiKey = config.internal?.authenticateWithApiKey ?? true;
   const headers = config.internal?.headers;
@@ -90,8 +90,8 @@ export function Upload(config: UploadConfig): UploadInterface {
     throw new Error(`${logPrefix}API key needs trimming (whitespace detected).`);
   }
 
-  // Non-api-key authentication is required by Upload Dashboard, which uses bearer tokens instead of API keys because
-  // the user may not have any active API keys, but might still want to upload files via the Upload Dashboard.
+  // Non-api-key authentication is required by Bytescale Dashboard, which uses bearer tokens instead of API keys because
+  // the user may not have any active API keys, but might still want to upload files via the Bytescale Dashboard.
   if (config.internal?.authenticateWithApiKey === false) {
     accountId = config.internal.accountId;
   } else {
@@ -241,8 +241,8 @@ export function Upload(config: UploadConfig): UploadInterface {
   ): Promise<UploadedFile> => {
     const progressSmoother = ProgressSmoother({
       maxValue: file.size,
-      teardownTime: 1000, // Accounts for the 'finalizeUpload' request to the Upload API.
-      minDelayUntilFirstValue: 2000, // Accounts for the 'beginUpload' request to the Upload API.
+      teardownTime: 1000, // Accounts for the 'finalizeUpload' request to the Bytescale API.
+      minDelayUntilFirstValue: 2000, // Accounts for the 'beginUpload' request to the Bytescale API.
       valueIncreaseDelta: 200 * 1024, // An estimated 200KB per XHR progress callback.
       valueIncreaseRatePerSecond: 50 * 1024, // 50kB/sec worse-case connection (anything beyond we'll consider an outlier).
       averageTimeBetweenValues: 1000 // When running, XHR should (hopefully) report at least every second, regardless of connection speed.
@@ -622,7 +622,7 @@ export function Upload(config: UploadConfig): UploadInterface {
     }
 
     throw new Error(
-      `${logPrefix}Network error. If problem persists, and your network connectivity is healthy, please contact support@upload.io and provide: (a) time of failed request in UTC (b) screenshot of failed network response body (c) screenshot of failed network response header (d) browser + version.`
+      `${logPrefix}Network error. If problem persists, and your network connectivity is healthy, please contact support@bytescale.com and provide: (a) time of failed request in UTC (b) screenshot of failed network response body (c) screenshot of failed network response header (d) browser + version.`
     );
   };
 

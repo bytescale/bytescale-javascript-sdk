@@ -7,7 +7,7 @@ export interface UploadInterface {
   /**
    * Call after a user has signed-in to your web app.
    *
-   * Allows the user to perform authenticated uploads and/or downloads to the Upload CDN.
+   * Allows the user to perform authenticated uploads and/or downloads to the Bytescale CDN.
    *
    * You must await the promise before attempting to perform any uploads or downloads that require authentication.
    *
