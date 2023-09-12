@@ -35,6 +35,7 @@ const refreshBeforeExpirySeconds = 20;
 const onProgressInterval = 100;
 const retryAuthAfterErrorSeconds = 5;
 const minJwtTtlSeconds = 10;
+const maxJwtTtlSeconds = 2147483; // Max value for window.setTimeout is 2147483647ms -- if we go over this, the timeout fires immediately.
 const accessTokenPathBase = "/api/v1/access_tokens/";
 const logPrefix = "[upload-js] ";
 
@@ -521,7 +522,7 @@ export function Upload(config: UploadConfig): UploadInterface {
             () => {},
             e => error(`Permanent error when refreshing access token: ${e as string}`)
           );
-        }, Math.max(minJwtTtlSeconds, desiredTtlSeconds) * 1000);
+        }, Math.min(maxJwtTtlSeconds, Math.max(minJwtTtlSeconds, desiredTtlSeconds)) * 1000);
       });
     } catch (e) {
       // Use 'error' instead of 'debug' so that the user sees error messages.
