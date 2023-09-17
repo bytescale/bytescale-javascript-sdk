@@ -1,0 +1,9 @@
+.openapi-generator-ignore
+apis/FileApi.ts
+apis/FolderApi.ts
+apis/JobApi.ts
+apis/UploadApi.ts
+apis/index.ts
+index.ts
+models/index.ts
+runtime.ts

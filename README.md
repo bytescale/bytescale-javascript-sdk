@@ -1,134 +1,238 @@
 <h1 align="center">
-  <a href="https://www.bytescale.com/upload-js">
-    <img alt="Upload.js" width="315" height="93" src="https://raw.githubusercontent.com/bytescale/upload-js/main/.github/assets/logo.svg">
+  <a href="https://www.bytescale.com/docs/sdks/javascript">
+    <img alt="Bytescale JavaScript SDK" width="557" height="67" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk.svg">
   </a>
 </h1>
-<p align="center"><b>JavaScript File Upload Library</b><br/>(With Integrated Cloud Storage)</p>
-<br/>
+
 <p align="center">
-  <a href="https://github.com/bytescale/upload-js/">
-    <img src="https://img.shields.io/badge/gzipped-6%20kb-4ba0f6" />
+  <a href="https://www.npmjs.com/package/@bytescale/sdk">
+    <img src="https://img.shields.io/badge/%40bytescale%2Fsdk-npm-4ba0f6" />
   </a>
 
-  <a href="https://www.npmjs.com/package/upload-js">
-    <img src="https://img.shields.io/badge/upload--js-npm-4ba0f6" />
-  </a>
-
-  <a href="https://github.com/bytescale/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/actions/workflows/ci.yml">
     <img src="https://img.shields.io/badge/build-passing-4ba0f6" />
   </a>
 
-  <a href="https://www.npmjs.com/package/upload-js">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/">
+    <img src="https://img.shields.io/badge/gzipped-9%20kb-4ba0f6" />
+  </a>
+
+  <a href="https://www.npmjs.com/package/@bytescale/sdk">
     <img src="https://img.shields.io/npm/dt/upload-js?color=%234ba0f6" />
   </a>
   <br/>
 
-  <a href="https://www.npmjs.com/package/upload-js">
+  <a href="https://www.npmjs.com/package/@bytescale/sdk">
     <img src="https://img.shields.io/badge/TypeScript-included-4ba0f6" />
   </a>
 
-  <a href="https://github.com/bytescale/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/actions/workflows/ci.yml">
     <img src="https://img.shields.io/npms-io/maintenance-score/upload-js?color=4ba0f6" />
   </a>
 
-  <a target="_blank" href="https://twitter.com/intent/tweet?text=I%20just%20found%20Upload.js%20%26%20Bytescale%20%E2%80%94%20they%20make%20it%20super%20easy%20to%20upload%20files%20%E2%80%94%20installs%20with%207%20lines%20of%20code%20https%3A%2F%2Fgithub.com%2Fupload-io%2Fupload-js&hashtags=javascript,opensource,js,webdev,developers&via=UploadJS">
-    <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fupload-io%2Fupload-js%2F" />
+  <a target="_blank" href="https://twitter.com/intent/tweet?text=This%20was%20a%20great%20find...%0A%0Ahttps%3A%2F%2Fgithub.com%2Fbytescale%2Fbytescale-javascript-sdk">
+    <img alt="Twitter URL" src="https://img.shields.io/twitter/url?style=social&url=https%3A%2F%2Fgithub.com%2Fbytescale%2Fbytescale-javascript-sdk" />
   </a>
 
 </p>
-<h1 align="center">
-  Get Started —
-  <a href="https://codepen.io/bytescale/pen/abVapaJ?editors=1000">
-    Try on CodePen
-  </a>
-</h1>
-
-<p align="center"><a href="https://www.bytescale.com/upload-js"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/bytescale/assets/master/upload-js-demo.gif"></a></p>
-
-<p align="center">100% Serverless File Upload Library  <br /> Powered by <a href="https://www.bytescale.com/">Bytescale</a><br/><br/></p>
 
 <hr/>
 
-<p align="center"><a href="https://www.bytescale.com/dmca" rel="nofollow">DMCA Compliant</a> • <a href="https://www.bytescale.com/dpa" rel="nofollow">GDPR Compliant</a> • <a href="https://www.bytescale.com/sla" rel="nofollow">99.9% Uptime SLA</a>
-  <br/>
-  <b>Supports:</b> Rate Limiting, Volume Limiting, File Size &amp; Type Limiting, JWT Auth, and more...
+<p align="center">
+  <b>Bytescale is the developer platform for images, video, and audio.</b>
   <br />
+  <br />
+  Use the Bytescale JavaScript SDK to upload, transform, and serve files at scale.
+  <br />
+  <br />
+  <a href="https://www.bytescale.com/docs/sdks/javascript" rel="nofollow"><b>Full SDK Documentation</b></a> • <a href="https://www.bytescale.com/docs/upload-widget" rel="nofollow">Upload Widget</a> • <a href="https://www.bytescale.com/docs/media-processing-apis" rel="nofollow">Media Processing APIs</a> • <a href="https://www.bytescale.com/docs/storage/sources" rel="nofollow">Storage</a> • <a href="https://www.bytescale.com/docs/cdn" rel="nofollow">CDN</a>
 </p>
 
 <hr/>
-<br />
-<br />
+
+<img alt="Bytescale JavaScript SDK Example" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk.png">
 
 ## Installation
 
-Install via NPM:
+#### For Node.js:
 
-```shell
-npm install upload-js
+```bash
+npm install @bytescale/sdk node-fetch
 ```
 
-Or via YARN:
+#### For Browsers:
 
-```shell
-yarn add upload-js
+```bash
+npm install @bytescale/sdk
 ```
 
-Or via a `<script>` tag:
+Or:
 
 ```html
-<script src="https://js.bytescale.com/upload-js/v2"></script>
+<script src="https://js.bytescale.com/sdk/v3"></script>
 ```
 
-## Usage — [Try on CodePen](https://codepen.io/bytescale/pen/abVapaJ?editors=1000)
+## Uploading Files
 
-To upload a file from the browser:
+This library is isomorphic, which means you can upload files from Node.js, or the browser, or both.
 
-```JavaScript
-//
-// <input type="file" onchange="onFileSelected(event)" />
-//
+#### From Node.js:
 
-import { Upload } from "upload-js";
+```javascript
+import * as Bytescale from "@bytescale/sdk";
+import nodeFetch from "node-fetch";
 
-const upload = Upload({ apiKey: "free" }); // Get production API keys from Bytescale
+const uploadManager = new Bytescale.UploadManager({
+  fetchApi: nodeFetch, // import nodeFetch from "node-fetch"; // Only required for Node.js. TypeScript: 'nodeFetch as any' may be necessary.
+  apiKey: "free" // Get API keys from: www.bytescale.com
+});
 
-const onFileSelected = async (event) => {
-  const [ file ]    = event.target.files;
-  const { fileUrl } = await upload.uploadFile(file, { onProgress });
-  console.log(`File uploaded: ${fileUrl}`);
-}
+uploadManager
+  .upload({
+    // Supported types:
+    // - String
+    // - Blob
+    // - ArrayBuffer
+    // - Buffer
+    // - ReadableStream (Node.js), e.g. fs.createReadStream("file.txt")
+    data: "Hello World",
 
-const onProgress = ({ progress }) => {
-  console.log(`File uploading: ${progress}% complete.`)
-}
+    // ---------
+    // Optional:
+    // ---------
+
+    // Required if 'data' is a stream.
+    // size: 5098, // e.g. fs.statSync("file.txt").size
+
+    // Required if 'data' is a stream, buffer, or string.
+    mime: "text/plain",
+
+    // Required if 'data' is a stream, buffer, or string.
+    originalFileName: "my_file.txt"
+
+    // Reports progress: bytesTotal, bytesSent, progress.
+    // onProgress: ({ progress }) => console.log(progress),
+
+    // Controls multipart upload concurrency. Ignored if 'data' is a stream.
+    // maxConcurrentUploadParts: 4,
+
+    // Up to 2KB of arbitrary JSON.
+    // metadata: {
+    //   productId: 60891
+    // },
+
+    // Up to 25 tags per file.
+    // tags: [
+    //   "example_tag"
+    // ],
+
+    // About file paths:
+    // - Your API key's "file upload path" is used by default, and can be changed by editing the API key's settings.
+    // - You can override the API key's file upload path by specifying a path below.
+    // - You may use path variables (e.g. "{UTC_DAY}"): http://localhost:3201/docs/path-variables
+    // path: {
+    //   folderPath: "/uploads/{UTC_YEAR}/{UTC_MONTH}/{UTC_DAY}",
+    //   fileName: "{UTC_TIME_TOKEN_INVERSE}{UNIQUE_DIGITS_2}{ORIGINAL_FILE_EXT}"
+    // },
+
+    // Set to 'isCancelled = true' after invoking 'upload' to cancel the upload.
+    // cancellationToken: {
+    //   isCancelled: false
+    // }
+  })
+  .then(
+    ({ fileUrl, filePath }) => {
+      // --------------------------------------------
+      // File successfully uploaded!
+      // --------------------------------------------
+      // The 'filePath' uniquely identifies the file,
+      // and is what you should save to your DB.
+      // --------------------------------------------
+      console.log(`File uploaded to: ${fileUrl}`);
+    },
+    error => console.error(`Error: ${error.message}`, error)
+  );
 ```
 
-
-## Full Working Example (Copy & Paste)
-
-**[Try on CodePen](https://codepen.io/bytescale/pen/abVapaJ?editors=1000)** / **Copy to IDE & Run:**
+#### From the Browser:
 
 ```html
 <html>
   <head>
-    <script src="https://js.bytescale.com/upload-js/v2"></script>
+    <script src="https://js.bytescale.com/sdk/v3"></script>
     <script>
-      const upload = Upload({
-        // Get production API keys from Bytescale
-        apiKey: "free"
+      // import * as Bytescale from "@bytescale/sdk"
+      const uploadManager = new Bytescale.UploadManager({
+        apiKey: "free" // Get API keys from: www.bytescale.com
       });
 
-      const onFileSelected = async (event) => {
+      const onFileSelected = async event => {
+        const file = event.target.files[0];
+
         try {
-          const { fileUrl } = await upload.uploadFile(
-            event.target.files[0],
-            { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
-          );
-          alert(`File uploaded!\n${fileUrl}`);
+          const { fileUrl, filePath } = await uploadManager.upload({
+            // Supported types:
+            // - String
+            // - Blob
+            // - ArrayBuffer
+            // - File (i.e. from a DOM file input element)
+            data: file
+
+            // ---------
+            // Optional:
+            // ---------
+
+            // Required if 'data' is a stream. (Not required for DOM file inputs, blobs, buffers, or strings.)
+            // size: 5098, // e.g. fs.statSync("file.txt").size
+
+            // Required if 'data' is a stream, buffer, or string. (Not required for DOM file inputs or blobs.)
+            // mime: "application/octet-stream",
+
+            // Required if 'data' is a stream, buffer, or string. (Not required for DOM file inputs or blobs.)
+            // originalFileName: "my_file.txt",
+
+            // Reports progress: bytesTotal, bytesSent, progress.
+            // onProgress: ({ progress }) => console.log(progress),
+
+            // Controls multipart upload concurrency. Ignored if 'data' is a stream.
+            // maxConcurrentUploadParts: 4,
+
+            // Up to 2KB of arbitrary JSON.
+            // metadata: {
+            //   productId: 60891
+            // },
+
+            // Up to 25 tags per file.
+            // tags: [
+            //   "example_tag"
+            // ],
+
+            // About file paths:
+            // - Your API key's "file upload path" is used by default, and can be changed by editing the API key's settings.
+            // - You can override the API key's file upload path by specifying a path below.
+            // - You may use path variables (e.g. "{UTC_DAY}"): http://localhost:3201/docs/path-variables
+            // path: {
+            //   folderPath: "/uploads/{UTC_YEAR}/{UTC_MONTH}/{UTC_DAY}",
+            //   fileName: "{UTC_TIME_TOKEN_INVERSE}{UNIQUE_DIGITS_2}{ORIGINAL_FILE_EXT}"
+            // },
+
+            // Set to 'isCancelled = true' after invoking 'upload' to cancel the upload.
+            // cancellationToken: {
+            //   isCancelled: false
+            // }
+          });
+
+          // --------------------------------------------
+          // File successfully uploaded!
+          // --------------------------------------------
+          // The 'filePath' uniquely identifies the file,
+          // and is what you should save to your API.
+          // --------------------------------------------
+          alert(`File uploaded:\n${fileUrl}`);
         } catch (e) {
-          alert(`Error!\n${e.message}`);
+          alert(`Error:\n${e.message}`);
         }
-      }
+      };
     </script>
   </head>
   <body>
@@ -137,268 +241,270 @@ const onProgress = ({ progress }) => {
 </html>
 ```
 
-## Examples with Popular Frameworks
-
-### Upload Files with React — [Try on CodePen](https://codepen.io/bytescale/pen/jOavBPb?editors=1010)
+## Downloading Files
 
 ```javascript
-const { Upload } = require("upload-js");
-const upload = Upload({ apiKey: "free" });
+import * as Bytescale from "@bytescale/sdk";
+import nodeFetch from "node-fetch"; // Only required for Node.js
 
-const MyUploadButton = () => {
-  const onFileSelected = async (event) => {
-    try {
-      const { fileUrl } = await upload.uploadFile(
-        event.target.files[0],
-        { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
-      );
-      alert(`File uploaded!\n${fileUrl}`);
-    } catch (e) {
-      alert(`Error!\n${e.message}`);
-    }
-  }
+const fileApi = new Bytescale.FileApi({
+  fetchApi: nodeFetch, // import nodeFetch from "node-fetch"; // Only required for Node.js. TypeScript: 'nodeFetch as any' may be necessary.
+  apiKey: "YOUR_API_KEY" // e.g. "secret_xxxxx"
+});
 
-  return <input type="file" onChange={onFileSelected} />;
-};
+fileApi
+  .downloadFile({
+    accountId: "YOUR_ACCOUNT_ID", // e.g. "W142hJk"
+    filePath: "/uploads/2022/12/25/hello_world.txt"
+  })
+  .then(response => response.text()) // .text() | .json() | .blob() | .stream()
+  .then(
+    fileContents => console.log(fileContents),
+    error => console.error(error)
+  );
 ```
 
-### Upload Files with Angular — [Try on CodePen](https://codepen.io/bytescale/pen/qBVMYPK?editors=1010)
+Use the [`UrlBuilder`](#urlbuilder) to get a URL to your file (if you need a URL instead of downloading the file).
+
+## Processing Files
 
 ```javascript
-const { Upload } = require("upload-js");
-const upload = Upload({ apiKey: "free" });
-angular
-  .module("exampleApp", [])
-  .controller("exampleController", $scope => {
-    $scope.uploadFile = async (event) => {
-      try {
-        const { fileUrl } = await upload.uploadFile(
-          event.target.files[0],
-          { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
-        );
-        alert(`File uploaded!\n${fileUrl}`);
-      } catch (e) {
-        alert(`Error!\n${e.message}`);
-      }
+import * as Bytescale from "@bytescale/sdk";
+import fetch from "node-fetch"; // Only required for Node.js
+import fs from "fs";
+
+const fileApi = new Bytescale.FileApi({
+  fetchApi: nodeFetch, // import nodeFetch from "node-fetch"; // Only required for Node.js. TypeScript: 'nodeFetch as any' may be necessary.
+  apiKey: "YOUR_API_KEY" // e.g. "secret_xxxxx"
+});
+
+fileApi
+  .processFile({
+    accountId: "YOUR_ACCOUNT_ID", // e.g. "W142hJk"
+    filePath: "/uploads/2022/12/25/image.jpg",
+
+    // See: https://www.bytescale.com/docs/image-processing-api
+    transformation: "image",
+    transformationParams: {
+      w: 800,
+      h: 600
     }
   })
-  .directive("onChange", () => ({
-    link: (scope, element, attrs) => {
-      element.on("change", scope.$eval(attrs.onChange));
-    }
-  }));
+  .then(response => response.stream()) // .text() | .json() | .blob() | .stream()
+  .then(
+    imageByteStream =>
+      new Promise((resolve, reject) => {
+        const writer = fs.createWriteStream("image-thumbnail.jpg");
+        writer.on("close", resolve);
+        writer.on("error", reject);
+        imageByteStream.pipe(writer);
+      })
+  )
+  .then(
+    () => console.log("Thumbnail saved to 'image-thumbnail.jpg'"),
+    error => console.error(error)
+  );
 ```
 
-### Upload Files with Vue.js — [Try on CodePen](https://codepen.io/bytescale/pen/BamOvma?editors=1010)
+Use the [`UrlBuilder`](#urlbuilder) to get a URL to your file (if you need a URL instead of downloading the file).
+
+## Get File Details
 
 ```javascript
-const { Upload } = require("upload-js");
-const upload = Upload({ apiKey: "free" });
-const uploadFile = async (event) => {
-  try {
-    const { fileUrl } = await upload.uploadFile(
-      event.target.files[0],
-      { onProgress: ({ progress }) => console.log(`${progress}% complete`) }
-    );
-    alert(`File uploaded!\n${fileUrl}`);
-  } catch (e) {
-    alert(`Error!\n${e.message}`);
-  }
-}
-const vueApp = new Vue({
-  el: "#example",
-  methods: { uploadFile }
+import * as Bytescale from "@bytescale/sdk";
+import fetch from "node-fetch"; // Only required for Node.js
+
+const fileApi = new Bytescale.FileApi({
+  fetchApi: nodeFetch, // import nodeFetch from "node-fetch"; // Only required for Node.js. TypeScript: 'nodeFetch as any' may be necessary.
+  apiKey: "YOUR_API_KEY" // e.g. "secret_xxxxx"
+});
+
+fileApi
+  .getFileDetails({
+    accountId: "YOUR_ACCOUNT_ID", // e.g. "W142hJk"
+    filePath: "/uploads/2022/12/25/image.jpg"
+  })
+  .then(
+    fileDetails => console.log(fileDetails),
+    error => console.error(error)
+  );
+```
+
+## Listing Folders
+
+```javascript
+import * as Bytescale from "@bytescale/sdk";
+import fetch from "node-fetch"; // Only required for Node.js
+
+const folderApi = new Bytescale.FolderApi({
+  fetchApi: nodeFetch, // import nodeFetch from "node-fetch"; // Only required for Node.js. TypeScript: 'nodeFetch as any' may be necessary.
+  apiKey: "YOUR_API_KEY" // e.g. "secret_xxxxx"
+});
+
+folderApi
+  .listFolder({
+    accountId: "YOUR_ACCOUNT_ID", // e.g. "W142hJk"
+    folderPath: "/",
+    recursive: false
+  })
+  .then(
+    // Note: operation is paginated, see 'result.cursor' and 'params.cursor'.
+    result => console.log(`Items in folder: ${result.items.length}`),
+    error => console.error(error)
+  );
+```
+
+## More Operations
+
+For a complete list of operations, please see:
+
+**[Bytescale JavaScript SDK Docs »](https://www.bytescale.com/docs/sdks/javascript)**
+
+## Authorization
+
+The Bytescale JavaScript SDK supports two types of authorization:
+
+### API Keys
+
+The Bytescale JavaScript SDK automatically adds the `apiKey` from the constructor to the `Authorization` header for all requests made via the SDK.
+
+With API key auth, the requester has access to the resources available to the API key:
+
+- Secret API keys (`secret_***`) have access to all API endpoints.
+
+- Public API keys (`public_***`) have access to file upload, file download, and file listing API endpoints. File overwrites, file deletes, and all other destructive operations cannot be performed using public API keys. File listing is also disabled by default (but can be changed in the API key's settings).
+
+Each Public API Key and Secret API Key can have its read/write access limited to a subset of files/folders.
+
+### JWT Cookies
+
+JWT cookies are optional.
+
+With JWT cookies, the user can download private files directly via the URL, as authorization is performed implicitly via a session cookie. This allows the browser to display private files in `<img>` and `<video>` elements.
+
+With JWT cookies, the user can also perform API requests (e.g. file uploads) granted by the [JWT's payload](https://www.bytescale.com/docs/types/BytescaleJwt). This is because the Bytescale JavaScript SDK automatically injects the user's JWT into the `authorization-token` request header for all API requests, assuming the `AuthManager.beginAuthSession` method has been called.
+
+_Note: when using JWT cookies to download files, the `?auth=true` query parameter must be added to the URL._
+
+[Learn more about the `AuthManager` and JWT cookies »](https://www.bytescale.com/docs/authorization#jwt-cookie)
+
+## UrlBuilder
+
+Use the `UrlBuilder` to construct URLs for your uploaded files:
+
+```javascript
+import { UrlBuilder } from "@bytescale/sdk";
+```
+
+#### Raw Files
+
+To get the URL for the uploaded image `/example.jpg` in its original form, use the following params:
+
+```javascript
+// Returns: "https://upcdn.io/1234abc/raw/example.jpg"
+UrlBuilder.url({
+  accountId: "1234abc",
+  filePath: "/example.jpg"
 });
 ```
 
-### Upload Files with jQuery — [Try on CodePen](https://codepen.io/bytescale/pen/BamOMPd?editors=1010)
+#### Images
 
-```html
-<html>
-  <head>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://js.bytescale.com/upload-js/v2"></script>
-    <script>
-      const upload = Upload({
-        // Get production API keys from Bytescale
-        apiKey: "free"
-      });
+To resize the uploaded image `/example.jpg` to 800x600, use the following params:
 
-      $(() => {
-        $("#file-input").change(async (event) => {
-          $("#file-input").hide()
-
-          try {
-            const { fileUrl } = await upload.uploadFile(
-              event.target.files[0], {
-              onProgress: ({ progress }) => $("#title").html(`File uploading... ${progress}%`)
-            });
-
-            $("#title").html(`
-              File uploaded:
-              <br/>
-              <br/>
-              <a href="${fileUrl}" target="_blank">${fileUrl}</a>`
-            )
-          } catch (e) {
-            $("#title").html(`Error:<br/><br/>${e.message}`)
-          }
-
-        })
-      })
-    </script>
-  </head>
-  <body>
-    <h1 id="title">Please select a file...</h1>
-    <input type="file" id="file-input" />
-  </body>
-</html>
+```javascript
+// Returns: "https://upcdn.io/1234abc/image/example.jpg?w=800&h=600"
+UrlBuilder.url({
+  accountId: "1234abc",
+  filePath: "/example.jpg",
+  options: {
+    transformation: "image",
+    transformationParams: {
+      w: 800,
+      h: 600
+    }
+  }
+});
 ```
 
-### Upload Multiple Files with jQuery — [Try on CodePen](https://codepen.io/bytescale/pen/JjOawge?editors=1010)
+[Image Processing API Docs »](https://www.bytescale.com/docs/image-processing-api)
 
-Please refer to the CodePen example (link above).
+#### Videos
 
-Overview of the code:
+To transcode the uploaded video `/example.mov` to MP4/H.264 in HD, use the following params:
 
-1. Call `Upload` once at the start of your app.
-2. Call `uploadFile` from your `<input onchange="...">` handlers.
-3. Use `onProgress` to display the upload progress for each input element.
-4. When `onUploaded` fires, record the `fileUrl` from the callback's argument to a local variable.
-5. When `onUploaded` has fired for all files, the form is ready to be submitted.
-
-Note: file uploads will safely run in parallel, despite using the same `Upload` instance.
-
-# 🌐 API Support
-
-## 🌐 File Management API
-
-Bytescale provides an [Upload API](https://www.bytescale.com/docs/upload-api), which supports the following:
-
-- File uploading.
-- File listing.
-- File deleting.
-- And more...
-
-Uploading a `"Hello World"` text file is as simple as:
-
-```shell
-curl --data "Hello World" \
-     -u apikey:free \
-     -X POST "https://api.bytescale.com/v1/files/basic"
+```javascript
+// Returns: "https://upcdn.io/1234abc/video/example.mov?f=mp4-h264&h=1080"
+UrlBuilder.url({
+  accountId: "1234abc",
+  filePath: "/example.mov",
+  options: {
+    transformation: "video",
+    transformationParams: {
+      f: "mp4-h264",
+      h: 1080
+    }
+  }
+});
 ```
 
-_Note: Remember to set `-H "Content-Type: mime/type"` when uploading other file types!_
+[Video Processing API Docs »](https://www.bytescale.com/docs/video-processing-api)
 
-[Read the Upload API docs »](https://www.bytescale.com/docs/upload-api)
+#### Audio
 
-## 🌐 Image Processing API (Resize, Crop, etc.)
+To transcode the uploaded audio `/example.wav` to AAC in 192kbps, use the following params:
 
-Bytescale also provides an [Image Processing API](https://www.bytescale.com/docs/image-processing-api), which supports the following:
-
-- [Image Resizing](https://www.bytescale.com/docs/image-processing-api#image-resizing-api)
-- [Image Cropping](https://www.bytescale.com/docs/image-processing-api#image-cropping-api)
-- [Image Compression](https://www.bytescale.com/docs/image-processing-api#image-compression-api)
-- [Image Conversion](https://www.bytescale.com/docs/image-processing-api#f)
-- [Image Manipulation (blur, sharpen, brightness, etc.)](https://www.bytescale.com/docs/image-processing-api#image-manipulation-api)
-- [Layering (e.g for text & image watermarks)](https://www.bytescale.com/docs/image-processing-api#image)
-- and more...
-
-[Read the Image Processing API docs »](https://www.bytescale.com/docs/image-processing-api)
-
-### Manually Cropping Images — [Try on CodePen](https://codepen.io/bytescale/pen/JjOaWpB?editors=1010)
-
-To embed crop dimensions into an image:
-
-```html
-<html>
-  <head>
-    <script src="https://js.bytescale.com/upload-js/v2"></script>
-    <script>
-      const upload = Upload({
-        // Get production API keys from Bytescale
-        apiKey: "free"
-      });
-
-      // Step 1: Upload the original file.
-      const onOriginalImageUploaded = async (originalImage) => {
-
-        // Step 2: Configure crop geometry.
-        const crop = {
-          // Type Def: https://github.com/bytescale/upload-image-plugin/blob/main/src/types/ParamsFromFile.ts
-          inputPath: originalImage.filePath,
-          pipeline: {
-            steps: [
-              {
-                geometry: {
-                  // Prompt your user for these dimensions...
-                  offset: {
-                    x: 20,
-                    y: 40
-                  },
-                  size: {
-                    // ...and these too...
-                    width: 200,
-                    height: 100,
-                    type: "widthxheight!"
-                  }
-                },
-                type: "crop"
-              }
-            ]
-          }
-        }
-
-        // Step 3: Upload the crop geometry.
-        const blob = new Blob([JSON.stringify(crop)], {type: "application/json"});
-        const croppedImage = await upload.uploadFile(blob);
-
-        // Step 4: Done! Here's the cropped image:
-        return croppedImage;
-      };
-
-      const onFileSelected = async (event) => {
-        const [ file ]      = event.target.files;
-        const originalImage = await upload.uploadFile(file);
-        const croppedImage  = await onOriginalImageUploaded(originalImage)
-
-        alert(`Cropped image:\n${croppedImage.fileUrl.replace("/raw/", "/image/")}`)
-      }
-    </script>
-  </head>
-  <body>
-    <input type="file" onchange="onFileSelected(event)" />
-  </body>
-</html>
+```javascript
+// Returns: "https://upcdn.io/1234abc/audio/example.wav?f=aac&br=192"
+UrlBuilder.url({
+  accountId: "1234abc",
+  filePath: "/example.wav",
+  options: {
+    transformation: "audio",
+    transformationParams: {
+      f: "aac",
+      br: 192
+    }
+  }
+});
 ```
 
-## Full Documentation
+[Audio Processing API Docs »](https://www.bytescale.com/docs/audio-processing-api)
 
-[Upload.js Full Documentation »](https://www.bytescale.com/docs/upload-js)
+#### Archives
 
-## Need a File Upload Widget?
+To extract the file `document.docx` from the uploaded ZIP file `/example.zip`, use the following params:
 
-See our **[File Upload Widget](https://www.bytescale.com/docs/upload-widget)**. (Built with Upload.js. Supports: image cropping, cancellation, progress, etc).
+```javascript
+// Returns: "https://upcdn.io/1234abc/archive/example.zip?m=extract&artifact=/document.docx"
+UrlBuilder.url({
+  accountId: "1234abc",
+  filePath: "/example.zip",
+  options: {
+    transformation: "archive",
+    transformationParams: {
+      m: "extract"
+    },
+    artifact: "/document.docx"
+  }
+});
+```
 
-<p align="center"><a href="https://www.bytescale.com/docs/upload-widget"><img alt="Upload.js Demo" width="100%" src="https://raw.githubusercontent.com/bytescale/jquery-uploader/main/.github/assets/demo.webp"></a></p>
+[Archive Processing API Docs »](https://www.bytescale.com/docs/archive-processing-api)
+
+## 🙋 Can I use my own storage?
+
+Bytescale supports AWS S3, Cloudflare R2, Google Storage, DigitalOcean Spaces, and Bytescale Storage.
+
+**[Bytescale Storage Docs »](https://www.bytescale.com/docs/storage/sources)**
+
+**[Bytescale JavaScript SDK Docs »](https://www.bytescale.com/docs/sdks/javascript)**
 
 ## 👋 Create your Bytescale Account
 
-Upload.js is the JS client library for Bytescale: the best way to serve images, videos, and audio for web apps.
+Bytescale is the best way to upload, transform, and serve images, videos, and audio at scale.
 
-**[Create a Bytescale account »](https://www.bytescale.com/)**
-
-## Can I use my own storage?
-
-**Yes:** Bytescale supports AWS S3, Cloudflare R2, Google Storage, and DigitalOcean Spaces.
-
-To configure a custom storage backend, please see:
-
-[https://www.bytescale.com/docs/storage/sources](https://www.bytescale.com/docs/storage/sources)
-
-## Building From Source
-
-[BUILD.md](BUILD.md)
+**[Create a Bytescale account »](https://www.bytescale.com/get-started)**
 
 ## License
 

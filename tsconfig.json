@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "es2015", "es2016", "es2017"],
+    "target": "es2017",
+    "module": "commonJs",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "noImplicitAny": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "preserveSymlinks": true,
+    "skipLibCheck": true,
+    "outDir": "./dist/types",
+    "baseUrl": "./src",
+    "paths": {}
+  },
+  "include": ["./**/*"],
+  "exclude": ["./node_modules/**/*"]
+}
