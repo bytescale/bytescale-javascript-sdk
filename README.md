@@ -491,7 +491,7 @@ UrlBuilder.url({
 
 ## 🙋 Can I use my own storage?
 
-Bytescale supports AWS S3, Cloudflare R2, Google Storage, DigitalOcean Spaces, and Bytescale Storage.
+Bytescale supports AWS S3, Cloudflare R2, Google Storage, DigitalOcean, and Bytescale Storage.
 
 **[Bytescale Storage Docs »](https://www.bytescale.com/docs/storage/sources)**
 
