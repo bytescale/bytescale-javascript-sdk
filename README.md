@@ -47,7 +47,7 @@
 
 <hr/>
 
-<img alt="Bytescale JavaScript SDK Example" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk.png">
+<img alt="Bytescale JavaScript SDK Example" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk-2.png">
 
 ## Installation
 
