@@ -39,9 +39,6 @@
 <hr/>
 
 <p align="center">
-  <b>Bytescale is the developer platform for images, video, and audio.</b>
-  <br />
-  <br />
   Use the Bytescale JavaScript SDK to upload, transform, and serve files at scale.
   <br />
   <br />
