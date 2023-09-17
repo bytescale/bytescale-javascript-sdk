@@ -23,12 +23,20 @@ $RECYCLE.BIN/
 
 # Node.js
 node_modules/
+peer_modules/
 npm-debug.log*
 
 # NPM Packages
 *.tgz
 dist/
 
+# Serverless directories
+.serverless
+
+# Webpack directories
+.webpack
+
 # Standard
 tmp/
+.tmp/
 *.log
