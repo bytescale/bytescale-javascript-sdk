@@ -63,7 +63,7 @@ npm install @bytescale/sdk node-fetch
 npm install @bytescale/sdk
 ```
 
-Or:
+If you want to use a script tag:
 
 ```html
 <script src="https://js.bytescale.com/sdk/v3"></script>
