@@ -87,8 +87,9 @@ Steps:
 
 1. Install `@bytescale/sdk`
 2. Uninstall `upload-js-full`
-3. Replace `"upload-js-full"` with `"@bytescale/sdk"` in your `import` statements
-4. Remove `accountId` from `uploadManager.upload({...options...})` (it's no-longer required).
+3. Replace `"upload-js-full"` with `"@bytescale/sdk"` in your `import` statements.
+4. Replace `new Configuration({ apiKey: 'YOUR_API_KEY' })` with `{ apiKey: 'YOUR_API_KEY' }`
+5. Remove `accountId` from `uploadManager.upload({...options...})` (it's no-longer required).
 
 ## See also
 
