@@ -17,6 +17,10 @@
         "require": "./dist/worker/cjs/main.js",
         "import": "./dist/worker/esm/main.mjs"
       },
+      "browser": {
+        "require": "./dist/browser/cjs/main.js",
+        "import": "./dist/browser/esm/main.mjs"
+      },
       "default": "./dist/browser/cjs/main.js"
     }
   },
