@@ -71,7 +71,7 @@ If you'd prefer to use a script tag:
 
 ## Uploading Files
 
-This library is isomorphic, which means you can upload files from Node.js, or the browser, or both.
+This library is isomorphic, meaning you can upload files from Node.js, or the browser, or both.
 
 #### From Node.js:
 
