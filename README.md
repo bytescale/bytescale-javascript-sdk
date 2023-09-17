@@ -1,6 +1,6 @@
 <h1 align="center">
   <a href="https://www.bytescale.com/docs/sdks/javascript">
-    <img alt="Bytescale JavaScript SDK" width="557" height="67" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk.svg">
+    <img alt="Bytescale JavaScript SDK" width="467" height="80" src="https://raw.githubusercontent.com/bytescale/bytescale-javascript-sdk/main/.github/assets/bytescale-javascript-sdk.svg">
   </a>
 </h1>
 
@@ -179,7 +179,7 @@ uploadManager
             // Optional:
             // ---------
 
-            // Required if 'data' is a stream. (Not required for DOM file inputs, blobs, buffers, or strings.)
+            // Required if 'data' is a stream. Node.js only. (Not required when uploading files from the browser.)
             // size: 5098, // e.g. fs.statSync("file.txt").size
 
             // Required if 'data' is a stream, buffer, or string. (Not required for DOM file inputs or blobs.)
