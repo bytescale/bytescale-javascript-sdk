@@ -49,7 +49,7 @@ jobs:
         env:
           SLACK_CHANNEL: deployments
           SLACK_COLOR: "#17BB5E"
-          SLACK_TITLE: "Built: bytescale-javascript-sdk :rocket:"
+          SLACK_TITLE: "Built: @bytescale/sdk :rocket:"
           SLACK_FOOTER: "This package was successfully built."
           MSG_MINIMAL: true
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
@@ -59,7 +59,7 @@ jobs:
         env:
           SLACK_CHANNEL: deployments
           SLACK_COLOR: "#BB1717"
-          SLACK_TITLE: "Failed: bytescale-javascript-sdk :boom:"
+          SLACK_TITLE: "Failed: @bytescale/sdk :boom:"
           SLACK_FOOTER: "No packages published."
           MSG_MINIMAL: true
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
