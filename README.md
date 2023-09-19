@@ -351,7 +351,7 @@ folderApi
   );
 ```
 
-## More Operations
+## 📙 Bytescale SDK API Reference
 
 For a complete list of operations, please see:
 
