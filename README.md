@@ -69,7 +69,7 @@ If you'd prefer to use a script tag:
 <script src="https://js.bytescale.com/sdk/v3"></script>
 ```
 
-## Uploading Files
+## Uploading Files — [Try on CodePen](https://codepen.io/bytescale/pen/abVapaJ?editors=1010)
 
 This library is isomorphic, meaning you can upload files from Node.js, or the browser, or both.
 
