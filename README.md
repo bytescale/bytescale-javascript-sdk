@@ -357,6 +357,55 @@ For a complete list of operations, please see:
 
 **[Bytescale JavaScript SDK Docs »](https://www.bytescale.com/docs/sdks/javascript)**
 
+## 🌐 Media Processing APIs (Image/Video/Audio)
+
+Bytescale provides several real-time [Media Processing APIs](https://www.bytescale.com/docs/media-processing-apis):
+
+- **[Image Processing APIs](https://www.bytescale.com/docs/image-processing-api)** ([resize](https://www.bytescale.com/docs/image-processing-api#image-resizing-api), [crop](https://www.bytescale.com/docs/image-processing-api#image-cropping-api), [convert](https://www.bytescale.com/docs/image-processing-api#f), [compress](https://www.bytescale.com/docs/image-processing-api#image-compression-api) & [watermark](https://www.bytescale.com/docs/image-processing-api#Text-layering-api))
+- **[Video Processing APIs](https://www.bytescale.com/docs/video-processing-api)** ([transcode](https://www.bytescale.com/docs/video-processing-api#video-transcoding-api), [optimize](https://www.bytescale.com/docs/video-processing-api#video-compression-api), [resize](https://www.bytescale.com/docs/video-processing-api#video-resizing-api) & [extract metadata](https://www.bytescale.com/docs/video-processing-api#video-metadata-api))
+- **[Audio Processing APIs](https://www.bytescale.com/docs/audio-processing-api)** ([transcode](https://www.bytescale.com/docs/audio-processing-api#audio-transcoding-api), [optimize](https://www.bytescale.com/docs/audio-processing-api#audio-compression-api), [trim](https://www.bytescale.com/docs/audio-processing-api#audio-trimming-api) & [extract metadata](https://www.bytescale.com/docs/audio-processing-api#audio-metadata-api))
+
+### Image Processing API (Original Image)
+
+Here's an example using [a photo of Chicago](https://upcdn.io/W142hJk/raw/example/city-landscape.jpg):
+
+<img src="https://upcdn.io/W142hJk/raw/example/city-landscape.jpg" />
+
+```
+https://upcdn.io/W142hJk/raw/example/city-landscape.jpg
+```
+
+### Image Processing API (Transformed Image)
+
+Using the [Image Processing API](https://www.bytescale.com/docs/image-processing-api), you can produce [this image](https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400):
+
+<img src="https://upcdn.io/W142hJk/image/example/city-landscape.jpg?w=900&h=600&fit=crop&f=webp&q=80&blur=4&text=WATERMARK&layer-opacity=80&blend=overlay&layer-rotate=315&font-size=100&padding=10&font-weight=900&color=ffffff&repeat=true&text=Chicago&gravity=bottom&padding-x=50&padding-bottom=20&font=/example/fonts/Lobster.ttf&color=ffe400" />
+
+```
+https://upcdn.io/W142hJk/image/example/city-landscape.jpg
+  ?w=900
+  &h=600
+  &fit=crop
+  &f=webp
+  &q=80
+  &blur=4
+  &text=WATERMARK
+  &layer-opacity=80
+  &blend=overlay
+  &layer-rotate=315
+  &font-size=100
+  &padding=10
+  &font-weight=900
+  &color=ffffff
+  &repeat=true
+  &text=Chicago
+  &gravity=bottom
+  &padding-x=50
+  &padding-bottom=20
+  &font=/example/fonts/Lobster.ttf
+  &color=ffe400
+```
+
 ## Authorization
 
 The Bytescale JavaScript SDK supports two types of authorization:
