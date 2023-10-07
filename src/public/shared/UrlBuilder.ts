@@ -59,7 +59,7 @@ export class UrlBuilder {
   }
 
   private static getCommonTransformationQueryParams(trans: UrlBuilderTransformationOptions): KeyValuePair[] {
-    return this.makeQueryParams(["cachePermanently", "large", "artifact"], {
+    return this.makeQueryParams(["cachePermanently", "artifact"], {
       cachePermanently: "cache_perm"
     })(trans);
   }
