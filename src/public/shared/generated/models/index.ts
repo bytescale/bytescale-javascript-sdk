@@ -296,8 +296,6 @@ export interface CopyFolderBatchRequest {
 }
 /**
  * Request body for CopyFolder.
- *
- * You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles```, ```includeOverriddenStorage``` and ```includeVirtualFolders``` set to match the values you're using here. Leave all other flags unset.
  * @export
  * @interface CopyFolderRequest
  */

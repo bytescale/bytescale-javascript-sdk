@@ -179,17 +179,4 @@ export interface UrlBuilderOptionsTransformation extends UrlBuilderOptionsBase {
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
   cachePermanently?: "auto" | boolean;
-
-  /**
-   * Only set this parameter to `true` if you expect the HTTP response body for the transformation request to be over 6MB.
-   *
-   * We recommend leaving this parameter unset (so it defaults to `false`) and controlling the HTTP response body size via transformation parameters. E.g. for Image Processing API requests, you can shrink the HTTP response body by reducing the output image's dimensions and/or quality.
-   *
-   * Setting this parameter to `true` will route the request via an alternative CDN path, which allows responses over 6MB, but incurs a ~200ms latency on all CDN edge cache misses for the URL.
-   *
-   * Setting this parameter to `false` (default) results in faster routing. If a response over 6MB is returned, the initial response will be a JSON error indicating the response was too large to return. All subsequent requests to the same URL will successfully return the transformed file (forever).
-   *
-   * Default: false
-   */
-  large?: boolean;
 }

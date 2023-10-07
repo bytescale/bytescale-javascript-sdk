@@ -57,9 +57,9 @@ describe("UrlBuilder", () => {
     const actual = UrlBuilder.url({
       accountId: "1234abc",
       filePath: "/example.jpg",
-      options: { transformation: "preset", transformationPreset: "thumbnail", artifact: "/foo", large: false }
+      options: { transformation: "preset", transformationPreset: "thumbnail", artifact: "/foo" }
     });
-    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?large=false&artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?artifact=%2Ffoo";
     expect(actual).toEqual(expected);
   });
 
@@ -117,13 +117,12 @@ describe("UrlBuilder", () => {
         },
         cachePermanently: "auto",
         artifact: "/foo",
-        large: true,
         version: "50",
         auth: true
       }
     });
     const expected =
-      "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&auth=true&version=50&cache_perm=auto&large=true&artifact=%2Ffoo";
+      "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&auth=true&version=50&cache_perm=auto&artifact=%2Ffoo";
     expect(actual).toEqual(expected);
   });
 
