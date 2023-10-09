@@ -45,7 +45,7 @@ export interface BytescaleApiClientConfig {
    *
    * These headers take precedence over any headers automatically added by the SDK (e.g. "Authorization", "Content-Type", etc.).
    */
-  headers?: () => Promise<HTTPHeaders>; //header params we want to use on every request
+  headers?: HTTPHeaders | (() => Promise<HTTPHeaders> | HTTPHeaders); // This should be present on all Bytescale SDKs, as it's how we instruct users to pass the "Authorization-Token" request header for non-cookie-based JWT auth.
 }
 
 export class BytescaleApiClientConfigUtils {
@@ -225,7 +225,11 @@ export class BaseAPI {
       ...context.headers,
       // Headers from config take precedence, to allow us to override the "Authorization" header (which is added earlier
       // on) with a JWT session token.
-      ...(configHeaders === undefined ? {} : await configHeaders())
+      ...(configHeaders === undefined
+        ? {}
+        : typeof configHeaders === "function"
+        ? await configHeaders()
+        : configHeaders)
     };
     Object.keys(headers).forEach(key => (headers[key] === undefined ? delete headers[key] : {}));
 
