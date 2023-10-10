@@ -14,7 +14,7 @@ export interface BeginAuthSessionParams {
   authHeaders: () => Promise<Record<string, string>>;
 
   /**
-   * The fully-qualified URL for your backend API's auth endpoint.
+   * The fully-qualified URL for your backend API's auth endpoint (the endpoint that returns a JWT as plain text).
    */
   authUrl: string;
 
@@ -26,7 +26,9 @@ export interface BeginAuthSessionParams {
 
 export interface AuthManagerInterface {
   /**
-   * Begins an authenticated Bytescale API and Bytescale CDN session.
+   * Begins a JWT auth session with the Bytescale API and Bytescale CDN.
+   *
+   * Specifically, calling this method will cause the SDK to periodically acquire a JWT from your JWT endpoint. The SDK will then automatically include this JWT in all subsequent Bytescale API requests (via the 'authorization-token' request header) and also in all Bytescale CDN download requests (via a session cookie).
    *
    * You can only call this method if 'isAuthSessionActive() === false', else an error will be returned.
    *
@@ -38,7 +40,7 @@ export interface AuthManagerInterface {
    *
    * 1) You must add '?auth=true' to the URL of any private file you're trying to access. This includes the URLs you use in 'src' elements in img/video elements, etc.
    *
-   * 2) You must await the promise before attempting to perform any downloads or API operations that require authentication.
+   * 2) You must await the returned promise before attempting to perform any downloads or API operations that require authentication.
    *
    * The auth process works as follows:
    *
