@@ -10,16 +10,34 @@
   "exports": {
     ".": {
       "node": {
-        "require": "./dist/node/cjs/main.js",
-        "import": "./dist/node/esm/main.mjs"
+        "require": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/node/cjs/main.js"
+        },
+        "import": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/node/esm/main.mjs"
+        }
       },
       "worker": {
-        "require": "./dist/worker/cjs/main.js",
-        "import": "./dist/worker/esm/main.mjs"
+        "require": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/worker/cjs/main.js"
+        },
+        "import": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/worker/esm/main.mjs"
+        }
       },
       "browser": {
-        "require": "./dist/browser/cjs/main.js",
-        "import": "./dist/browser/esm/main.mjs"
+        "require": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/browser/cjs/main.js"
+        },
+        "import": {
+          "types": "./dist/types/index.d.ts",
+          "default": "./dist/browser/esm/main.mjs"
+        }
       },
       "types": "./dist/types/index.d.ts",
       "default": "./dist/browser/cjs/main.js"
