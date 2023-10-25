@@ -315,9 +315,7 @@ export interface CopyFolderRequest {
    */
   copyFiles?: boolean;
   /**
-   * If `true` then copies files from folders that have overridden storage settings, else skips them.
-   *
-   * If the current folder inherits its storage settings, then the current folder's files will be copied, assuming `copyFiles=true`.
+   * If `true` then copies files from folders that have overridden storage settings, else skips them. The current folder is treated the same: if it has overridden storage settings, then its files will only be copied if this flag is `true`, else they will be skipped.
    *
    * You can ignore this setting if your account does not use folders with overridden storage settings, such as custom AWS S3 buckets.
    *
@@ -818,13 +816,15 @@ export interface FolderDetails {
    */
   settings: FolderSettingsStorageLayerSummary;
   /**
-   *
+   * Indicates this item is a folder (as opposed to a file).
    * @type {string}
    * @memberof FolderDetails
    */
   type: FolderDetailsTypeEnum;
   /**
+   * If `true` then the folder was created using the PutFolder operation.
    *
+   * If `false` then the folder was created automatically as the result of a file upload operation, and will disappear if/when the folder later becomes empty.
    * @type {boolean}
    * @memberof FolderDetails
    */
@@ -849,7 +849,7 @@ export type FolderDetailsTypeEnum = "Folder";
  *
  * Each inherited setting contains a `folderPath` field to indicate which folder the setting was inherited from.
  *
- * Note: if the requester has insufficient privileges to read a setting, that setting's value will be `null`.
+ * Note: if the requester has insufficient privileges to read a setting, that setting's value will be undefined.
  * @export
  * @interface FolderSettingsInherited
  */
@@ -859,13 +859,13 @@ export interface FolderSettingsInherited {
    * @type {WithFolderPathPublicPermissionsArray}
    * @memberof FolderSettingsInherited
    */
-  publicPermissions: WithFolderPathPublicPermissionsArray | null;
+  publicPermissions?: WithFolderPathPublicPermissionsArray;
   /**
    *
    * @type {WithFolderPathStorageLayerSummary}
    * @memberof FolderSettingsInherited
    */
-  storageLayer: WithFolderPathStorageLayerSummary | null;
+  storageLayer?: WithFolderPathStorageLayerSummary;
 }
 /**
  *
@@ -874,103 +874,24 @@ export interface FolderSettingsInherited {
  */
 export interface FolderSettingsStorageLayerSummary {
   /**
-   *
+   * Folder description.
    * @type {string}
    * @memberof FolderSettingsStorageLayerSummary
    */
-  description: string | null;
+  description?: string;
   /**
    *
    * @type {Array<PublicPermissions>}
    * @memberof FolderSettingsStorageLayerSummary
    */
-  publicPermissions: Array<PublicPermissions> | null;
+  publicPermissions?: Array<PublicPermissions>;
   /**
    *
-   * @type {FolderSettingsStorageLayerSummaryStorageLayer}
+   * @type {StorageLayerSummary}
    * @memberof FolderSettingsStorageLayerSummary
    */
-  storageLayer: FolderSettingsStorageLayerSummaryStorageLayer | null;
+  storageLayer?: StorageLayerSummary;
 }
-/**
- *
- * @export
- * @interface FolderSettingsStorageLayerSummaryStorageLayer
- */
-export interface FolderSettingsStorageLayerSummaryStorageLayer {
-  /**
-   * The type of this storage layer.
-   * @type {string}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  type: FolderSettingsStorageLayerSummaryStorageLayerTypeEnum;
-  /**
-   * Base URL to proxy requests to. Should contain a trailing `/`.
-   *
-   * If `baseUrl` is set to `null`, then this folder will behave as an open reverse proxy.
-   *
-   * *Example 1:* if the `baseUrl` is `null` and the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/https://images.unsplash.com/example.jpg`
-   *
-   * *Example 2:* if the `baseUrl` is:
-   *
-   * `https://images.unsplash.com/`
-   *
-   * And the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/test/example.jpg`
-   *
-   * Which will be routed to the URL:
-   *
-   * `https://images.unsplash.com/test/example.jpg`
-   * @type {string}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  baseUrl: string | null;
-  /**
-   *
-   * @type {PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  bucket: PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket;
-  /**
-   * If `true` then writes Google Storage objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
-   *
-   * If `false` then writes Google Storage objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
-   * @type {boolean}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  useAbsolutePaths: boolean;
-  /**
-   * Enables S3 transfer acceleration, providing improved file upload speeds for larger files.
-   *
-   * Note: this setting must also be enabled on the S3 bucket.
-   * @type {boolean}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  useTransferAcceleration: boolean;
-  /**
-   * Cloudflare Account ID.
-   * @type {string}
-   * @memberof FolderSettingsStorageLayerSummaryStorageLayer
-   */
-  cloudflareAccountId: string;
-}
-
-/**
- * @export
- */
-export type FolderSettingsStorageLayerSummaryStorageLayerTypeEnum = "GoogleStorage";
-
 /**
  * Summary information about a folder (a subset of the FolderDetails type).
  * @export
@@ -990,13 +911,15 @@ export interface FolderSummary {
    */
   settings: FolderSettingsStorageLayerSummary;
   /**
-   *
+   * Indicates this item is a folder (as opposed to a file).
    * @type {string}
    * @memberof FolderSummary
    */
   type: FolderSummaryTypeEnum;
   /**
+   * If `true` then the folder was created using the PutFolder operation.
    *
+   * If `false` then the folder was created automatically as the result of a file upload operation, and will disappear if/when the folder later becomes empty.
    * @type {boolean}
    * @memberof FolderSummary
    */
@@ -1097,6 +1020,12 @@ export type InternalStorageV1TypeEnum = "InternalStorageV1";
  * @interface InternalStorageV2
  */
 export interface InternalStorageV2 {
+  /**
+   * Absolute path to a folder. Begins with a `/`. Should not end with a `/`.
+   * @type {string}
+   * @memberof InternalStorageV2
+   */
+  mount?: string;
   /**
    * The type of this storage layer.
    * @type {string}
@@ -1283,22 +1212,22 @@ export type ObjectSummary = FileSummary | FolderSummary;
 export interface PatchFolderSettings {
   /**
    *
-   * @type {UpdatableFieldFolderDescriptionOrNull}
+   * @type {UpdatableFieldEmptiableFolderDescription}
    * @memberof PatchFolderSettings
    */
-  description: UpdatableFieldFolderDescriptionOrNull;
+  description?: UpdatableFieldEmptiableFolderDescription;
   /**
    *
-   * @type {UpdatableFieldPublicPermissionsArrayOrNull}
+   * @type {UpdatableFieldEmptiablePublicPermissionsArray}
    * @memberof PatchFolderSettings
    */
-  publicPermissions: UpdatableFieldPublicPermissionsArrayOrNull;
+  publicPermissions?: UpdatableFieldEmptiablePublicPermissionsArray;
   /**
    *
-   * @type {UpdatableFieldStorageLayerUpdateOrNull}
+   * @type {UpdatableFieldEmptiableStorageLayerUpdate}
    * @memberof PatchFolderSettings
    */
-  storageLayer: UpdatableFieldStorageLayerUpdateOrNull;
+  storageLayer?: UpdatableFieldEmptiableStorageLayerUpdate;
 }
 /**
  * Specifies the level in the file tree, relative to the path, that these permissions apply.
@@ -1929,162 +1858,77 @@ export interface S3StorageCredentials {
 /**
  * This data type specifies the field must be updated.
  * @export
- * @interface SpecifiedFieldValueFolderDescriptionOrNull
+ * @interface SpecifiedFieldValueEmptiableFolderDescription
  */
-export interface SpecifiedFieldValueFolderDescriptionOrNull {
+export interface SpecifiedFieldValueEmptiableFolderDescription {
   /**
-   * This field is always `true`.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
    * @type {boolean}
-   * @memberof SpecifiedFieldValueFolderDescriptionOrNull
+   * @memberof SpecifiedFieldValueEmptiableFolderDescription
    */
-  set: SpecifiedFieldValueFolderDescriptionOrNullSetEnum;
+  set: SpecifiedFieldValueEmptiableFolderDescriptionSetEnum;
   /**
-   * The value to set into the field.
+   * Folder description.
    * @type {string}
-   * @memberof SpecifiedFieldValueFolderDescriptionOrNull
+   * @memberof SpecifiedFieldValueEmptiableFolderDescription
    */
-  value: string | null;
+  value?: string;
 }
 
 /**
  * @export
  */
-export type SpecifiedFieldValueFolderDescriptionOrNullSetEnum = true;
+export type SpecifiedFieldValueEmptiableFolderDescriptionSetEnum = true;
 
 /**
  * This data type specifies the field must be updated.
  * @export
- * @interface SpecifiedFieldValuePublicPermissionsArrayOrNull
+ * @interface SpecifiedFieldValueEmptiablePublicPermissionsArray
  */
-export interface SpecifiedFieldValuePublicPermissionsArrayOrNull {
+export interface SpecifiedFieldValueEmptiablePublicPermissionsArray {
   /**
-   * This field is always `true`.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
    * @type {boolean}
-   * @memberof SpecifiedFieldValuePublicPermissionsArrayOrNull
+   * @memberof SpecifiedFieldValueEmptiablePublicPermissionsArray
    */
-  set: SpecifiedFieldValuePublicPermissionsArrayOrNullSetEnum;
+  set: SpecifiedFieldValueEmptiablePublicPermissionsArraySetEnum;
   /**
    * The value to set into the field.
    * @type {Array<PublicPermissions>}
-   * @memberof SpecifiedFieldValuePublicPermissionsArrayOrNull
+   * @memberof SpecifiedFieldValueEmptiablePublicPermissionsArray
    */
-  value: Array<PublicPermissions> | null;
+  value?: Array<PublicPermissions>;
 }
 
 /**
  * @export
  */
-export type SpecifiedFieldValuePublicPermissionsArrayOrNullSetEnum = true;
+export type SpecifiedFieldValueEmptiablePublicPermissionsArraySetEnum = true;
 
 /**
  * This data type specifies the field must be updated.
  * @export
- * @interface SpecifiedFieldValueStorageLayerUpdateOrNull
+ * @interface SpecifiedFieldValueEmptiableStorageLayerUpdate
  */
-export interface SpecifiedFieldValueStorageLayerUpdateOrNull {
+export interface SpecifiedFieldValueEmptiableStorageLayerUpdate {
   /**
-   * This field is always `true`.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
    * @type {boolean}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNull
+   * @memberof SpecifiedFieldValueEmptiableStorageLayerUpdate
    */
-  set: SpecifiedFieldValueStorageLayerUpdateOrNullSetEnum;
+  set: SpecifiedFieldValueEmptiableStorageLayerUpdateSetEnum;
   /**
    *
-   * @type {SpecifiedFieldValueStorageLayerUpdateOrNullValue}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNull
+   * @type {StorageLayerUpdate}
+   * @memberof SpecifiedFieldValueEmptiableStorageLayerUpdate
    */
-  value: SpecifiedFieldValueStorageLayerUpdateOrNullValue | null;
+  value?: StorageLayerUpdate;
 }
 
 /**
  * @export
  */
-export type SpecifiedFieldValueStorageLayerUpdateOrNullSetEnum = true;
-
-/**
- * The value to set into the field.
- * @export
- * @interface SpecifiedFieldValueStorageLayerUpdateOrNullValue
- */
-export interface SpecifiedFieldValueStorageLayerUpdateOrNullValue {
-  /**
-   * The type of this storage layer.
-   * @type {string}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  type: SpecifiedFieldValueStorageLayerUpdateOrNullValueTypeEnum;
-  /**
-   * Base URL to proxy requests to. Should contain a trailing `/`.
-   *
-   * If `baseUrl` is set to `null`, then this folder will behave as an open reverse proxy.
-   *
-   * *Example 1:* if the `baseUrl` is `null` and the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/https://images.unsplash.com/example.jpg`
-   *
-   * *Example 2:* if the `baseUrl` is:
-   *
-   * `https://images.unsplash.com/`
-   *
-   * And the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/test/example.jpg`
-   *
-   * Which will be routed to the URL:
-   *
-   * `https://images.unsplash.com/test/example.jpg`
-   * @type {string}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  baseUrl: string | null;
-  /**
-   *
-   * @type {PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  bucket: PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket;
-  /**
-   *
-   * @type {GoogleStorageCredentials}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  credentials: GoogleStorageCredentials;
-  /**
-   * If `true` then writes Google Storage objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
-   *
-   * If `false` then writes Google Storage objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
-   * @type {boolean}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  useAbsolutePaths: boolean;
-  /**
-   * Enables S3 transfer acceleration, providing improved file upload speeds for larger files.
-   *
-   * Note: this setting must also be enabled on the S3 bucket.
-   * @type {boolean}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  useTransferAcceleration: boolean;
-  /**
-   * Cloudflare Account ID.
-   * @type {string}
-   * @memberof SpecifiedFieldValueStorageLayerUpdateOrNullValue
-   */
-  cloudflareAccountId: string;
-}
-
-/**
- * @export
- */
-export type SpecifiedFieldValueStorageLayerUpdateOrNullValueTypeEnum = "GoogleStorage";
+export type SpecifiedFieldValueEmptiableStorageLayerUpdateSetEnum = true;
 
 /**
  * @type StorageLayerSummary
@@ -2296,7 +2140,7 @@ export type TagConditionOrTypeEnum = "Or";
  */
 export interface UnspecifiedFieldValue {
   /**
-   * This field is always `false`.
+   * This field is always `false`. Indicates the property *will not* be updated as part of the request.
    * @type {boolean}
    * @memberof UnspecifiedFieldValue
    */
@@ -2309,26 +2153,28 @@ export interface UnspecifiedFieldValue {
 export type UnspecifiedFieldValueSetEnum = false;
 
 /**
- * @type UpdatableFieldFolderDescriptionOrNull
+ * @type UpdatableFieldEmptiableFolderDescription
  *
  * @export
  */
-export type UpdatableFieldFolderDescriptionOrNull = SpecifiedFieldValueFolderDescriptionOrNull | UnspecifiedFieldValue;
-/**
- * @type UpdatableFieldPublicPermissionsArrayOrNull
- *
- * @export
- */
-export type UpdatableFieldPublicPermissionsArrayOrNull =
-  | SpecifiedFieldValuePublicPermissionsArrayOrNull
+export type UpdatableFieldEmptiableFolderDescription =
+  | SpecifiedFieldValueEmptiableFolderDescription
   | UnspecifiedFieldValue;
 /**
- * @type UpdatableFieldStorageLayerUpdateOrNull
+ * @type UpdatableFieldEmptiablePublicPermissionsArray
  *
  * @export
  */
-export type UpdatableFieldStorageLayerUpdateOrNull =
-  | SpecifiedFieldValueStorageLayerUpdateOrNull
+export type UpdatableFieldEmptiablePublicPermissionsArray =
+  | SpecifiedFieldValueEmptiablePublicPermissionsArray
+  | UnspecifiedFieldValue;
+/**
+ * @type UpdatableFieldEmptiableStorageLayerUpdate
+ *
+ * @export
+ */
+export type UpdatableFieldEmptiableStorageLayerUpdate =
+  | SpecifiedFieldValueEmptiableStorageLayerUpdate
   | UnspecifiedFieldValue;
 /**
  * Request body for UploadFromUrl.
@@ -2464,37 +2310,11 @@ export interface UploadPartRange {
  */
 export interface WebStorage {
   /**
-   * Base URL to proxy requests to. Should contain a trailing `/`.
-   *
-   * If `baseUrl` is set to `null`, then this folder will behave as an open reverse proxy.
-   *
-   * *Example 1:* if the `baseUrl` is `null` and the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/https://images.unsplash.com/example.jpg`
-   *
-   * *Example 2:* if the `baseUrl` is:
-   *
-   * `https://images.unsplash.com/`
-   *
-   * And the folder you're configuring the storage layer on is:
-   *
-   * `https://upcdn.io/abc1234/raw/demo`
-   *
-   * Then you can issue requests such as:
-   *
-   * `https://upcdn.io/abc1234/raw/demo/test/example.jpg`
-   *
-   * Which will be routed to the URL:
-   *
-   * `https://images.unsplash.com/test/example.jpg`
+   * URL for an http(s) resource.
    * @type {string}
    * @memberof WebStorage
    */
-  baseUrl: string | null;
+  baseUrl?: string;
   /**
    * The type of this storage layer.
    * @type {string}

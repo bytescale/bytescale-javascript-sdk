@@ -102,7 +102,7 @@ export interface ProcessFileParams {
   filePath: string;
 
   /**
-   * The name of the File Processing API (e.g. "image", "video", "audio") or transformation preset (created in the Bytescale Dashboard) to use when processing the file.
+   * The name of the File Processing API (e.g. `image`, `video`, `audio`) or transformation preset (created in the Bytescale Dashboard) to use when processing the file.
    */
   transformation: string;
 
@@ -182,7 +182,7 @@ export interface ProcessFileAndSaveOperationParams {
   filePath: string;
 
   /**
-   * The name of the File Processing API (e.g. "image", "video", "audio") or transformation preset (created in the Bytescale Dashboard) to use when processing the file.
+   * The name of the File Processing API (e.g. `image`, `video`, `audio`) or transformation preset (created in the Bytescale Dashboard) to use when processing the file.
    */
   transformation: string;
 
