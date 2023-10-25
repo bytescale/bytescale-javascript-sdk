@@ -1862,7 +1862,7 @@ export interface S3StorageCredentials {
  */
 export interface SpecifiedFieldValueEmptiableFolderDescription {
   /**
-   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the property's new value will be ```value```.
    * @type {boolean}
    * @memberof SpecifiedFieldValueEmptiableFolderDescription
    */
@@ -1887,7 +1887,7 @@ export type SpecifiedFieldValueEmptiableFolderDescriptionSetEnum = true;
  */
 export interface SpecifiedFieldValueEmptiablePublicPermissionsArray {
   /**
-   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the property's new value will be ```value```.
    * @type {boolean}
    * @memberof SpecifiedFieldValueEmptiablePublicPermissionsArray
    */
@@ -1912,7 +1912,7 @@ export type SpecifiedFieldValueEmptiablePublicPermissionsArraySetEnum = true;
  */
 export interface SpecifiedFieldValueEmptiableStorageLayerUpdate {
   /**
-   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the properties new value will be ```value```.
+   * This field is always `true`. Indicates the property *will* be updated as part of the request, and the property's new value will be ```value```.
    * @type {boolean}
    * @memberof SpecifiedFieldValueEmptiableStorageLayerUpdate
    */
