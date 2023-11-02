@@ -1,5 +1,5 @@
 import { AuthSession } from "./model/AuthSession";
-import { Mutex } from "./Mutex";
+import { FairMutex } from "./FairMutex";
 
 /**
  * Maintains a global session state, even across package versions.
@@ -20,12 +20,12 @@ export class AuthSessionState {
   /**
    * Called in the browser only.
    */
-  static getMutex(): Mutex {
+  static getMutex(): FairMutex {
     const key = AuthSessionState.mutexKey;
-    let mutex = (window as any)[key] as Mutex | undefined;
+    let mutex = (window as any)[key] as FairMutex | undefined;
 
     if (mutex === undefined) {
-      mutex = new Mutex();
+      mutex = new FairMutex();
       (window as any)[key] = mutex;
     }
 

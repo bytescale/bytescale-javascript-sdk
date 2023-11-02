@@ -36,7 +36,7 @@ class AuthManagerImpl implements AuthManagerInterface {
       // We check both 'session' and 'sessionDisposing' here, as we don't want to call 'beginAuthSession' until the session is fully disposed.
       if (this.isAuthSessionActive()) {
         throw new Error(
-          "Auth session already active: see AuthManager.isAuthSessionActive(). Please call 'await endAuthSession()' and then 'await beginAuthSession(...)' if you want to start a new auth session."
+          "Auth session already active. Please call 'await endAuthSession()' and then call 'await beginAuthSession(...)' to start a new auth session."
         );
       }
 
