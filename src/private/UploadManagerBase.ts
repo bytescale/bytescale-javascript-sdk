@@ -67,7 +67,9 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
 
   protected getBlobInfo({ value: { name, size, type } }: UploadSourceBlob): Partial<PreUploadInfo> & { size: number } {
     return {
-      mime: type,
+      // Some browsers/OSs return 'type: ""' for files with unknown MIME types, like HEICs, which causes a validation
+      // error from the Bytescale API as "" is not a valid MIME type, so we coalesce to undefined here.
+      mime: type === "" ? undefined : type,
       size,
       originalFileName: name,
       maxConcurrentUploadParts: undefined
