@@ -88,13 +88,14 @@ class AuthManagerImpl implements AuthManagerInterface {
 
         session.accessToken = setTokenResult.accessToken;
       } catch (e) {
-        // Use 'error' instead of 'debug' so that the user sees error messages.
-        ConsoleUtils.error(`Error when refreshing access token: ${e as string}`);
+        // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
+        ConsoleUtils.warn(`Unable to refresh JWT access token: ${e as string}`);
       } finally {
         session.accessTokenRefreshHandle = window.setTimeout(() => {
           this.refreshAccessToken(session).then(
             () => {},
-            e => ConsoleUtils.error(`Unexpected error when refreshing access token: ${e as string}`)
+            // Should not occur, as this method shouldn't throw errors.
+            e => ConsoleUtils.error(`Unexpected error when refreshing JWT access token: ${e as string}`)
           );
         }, timeout * 1000);
       }
