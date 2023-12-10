@@ -146,7 +146,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
         this.setServiceWorkerConfig(session, [
           {
-            headers: [{ key: "Authorization-Token", value: jwt }],
+            headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
             expires: Date.now() + setTokenResult.ttlSeconds * 1000,
             urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
           }

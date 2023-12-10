@@ -66,7 +66,7 @@ self.addEventListener("fetch", function (event) {
             newHeaders.append(key, value);
           }
           const newRequest = new Request(event.request, {
-            mode: "cors",
+            mode: "cors", // Required for adding custom HTTP headers.
             headers: newHeaders
           });
           event.respondWith(fetch(newRequest));
