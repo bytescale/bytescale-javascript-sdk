@@ -85,6 +85,19 @@ class AuthManagerImpl implements AuthManagerInterface {
       return undefined;
     }
 
+    const field: keyof BeginAuthSessionParams = "serviceWorkerScript";
+
+    if (!serviceWorkerScript.startsWith("/")) {
+      throw new Error(`The '${field}' field must start with a '/' and reference a script at the root of your website.`);
+    }
+
+    const forwardSlashCount = serviceWorkerScript.split("/").length - 1;
+    if (forwardSlashCount > 1) {
+      ConsoleUtils.warn(
+        `The '${field}' field should be a root script (e.g. '/bytescale-auth-sw.js'). The Bytescale SDK can only authorize requests originating from webpages that are at the same level as the script or below.`
+      );
+    }
+
     try {
       if ("serviceWorker" in navigator) {
         const registration = await navigator.serviceWorker.register(serviceWorkerScript);
