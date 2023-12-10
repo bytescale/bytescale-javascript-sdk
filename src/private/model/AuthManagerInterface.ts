@@ -64,7 +64,7 @@ export interface BeginAuthSessionParams {
    * Service workers can only interact with events raised by pages at the same level or below them, hence why your
    * script must be hosted on your website's domain in the root directory.
    */
-  serviceWorkerScript: string | undefined;
+  serviceWorkerScript?: string;
 }
 
 export interface AuthManagerInterface {
