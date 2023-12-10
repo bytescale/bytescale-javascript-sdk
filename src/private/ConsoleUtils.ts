@@ -1,4 +1,8 @@
 export class ConsoleUtils {
+  static debug(message: string): void {
+    console.log(ConsoleUtils.prefix(message));
+  }
+
   static warn(message: string): void {
     console.warn(ConsoleUtils.prefix(message));
   }

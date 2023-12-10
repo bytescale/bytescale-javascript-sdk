@@ -22,6 +22,49 @@ export interface BeginAuthSessionParams {
    * Optional configuration.
    */
   options?: Pick<BytescaleApiClientConfig, "fetchApi" | "cdnUrl">;
+
+  /**
+   * The Bytescale Auth Service Worker enables JWT-based auth for browsers that block third-party cookies.
+   *
+   * You must set this field if you need to support browsers that block third-party cookies (like Safari).
+   *
+   * This feature works by running a "service worker" in the background that adds "Authorization" and "Authorization-Token"
+   * request headers to HTTP requests made to the Bytescale CDN. This allows the Bytescale CDN to authorize requests
+   * to private files using JWTs issued by your application. Historically, these requests have been authorized using
+   * JWT cookies (i.e. JWTs sent to the Bytescale CDN via the "Cookies" header). However, modern browsers are starting
+   * to block these cookies, meaning "Authorization" request headers must be used instead. Authorization headers can
+   * only be added to requests originating from page elements like "<img>" elements through the use of service workers.
+   *
+   * Usage:
+   *
+   * 1. Create a JavaScript file that contains the following line:
+   *
+   *      importScripts("https://js.bytescale.com/auth-sw/v1");
+   *
+   * 2. Host this JavaScript file from your website:
+   *
+   *    2a. It MUST be under the ROOT directory of your website.
+   *        (e.g. "/bytescale-auth-sw.js")
+   *
+   *    2b. It MUST be on the SAME DOMAIN as your website.
+   *        (e.g. "www.example.com" and not "assets.example.com")
+   *
+   * 3. Specify the absolute path to your JavaScript file in the 'beginAuthSession' call.
+   *    (e.g. { ..., serviceWorkerScript: "/bytescale-auth-sw.js" })
+   *
+   * Examples:
+   *
+   * - CORRECT:   "/bytescale-auth-sw.js"
+   * - INCORRECT: "bytescale-auth-sw.js"
+   * - INCORRECT: "/scripts/bytescale-auth-sw.js"
+   * - INCORRECT: "https://example.com/bytescale-auth-sw.js"
+   *
+   * Why does the script need to be hosted on the website's domain, under the root directory?:
+   *
+   * Service workers can only interact with events raised by pages at the same level or below them, hence why your
+   * script must be hosted on your website's domain in the root directory.
+   */
+  serviceWorkerScript: string | undefined;
 }
 
 export interface AuthManagerInterface {

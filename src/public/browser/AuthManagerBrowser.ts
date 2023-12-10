@@ -5,6 +5,8 @@ import { BaseAPI, BytescaleApiClientConfigUtils } from "../shared/generated";
 import { AuthSession } from "../../private/model/AuthSession";
 import { SetAccessTokenRequestDto } from "../../private/dtos/SetAccessTokenRequestDto";
 import { SetAccessTokenResponseDto } from "../../private/dtos/SetAccessTokenResponseDto";
+import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
+import { AuthSwConfigDto } from "../../private/dtos/AuthSwConfigDto";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -25,14 +27,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   }
 
   async beginAuthSession(params: BeginAuthSessionParams): Promise<void> {
-    const newSession: AuthSession = {
-      accessToken: undefined,
-      accessTokenRefreshHandle: undefined,
-      params,
-      isActive: true
-    };
-
-    await this.authSessionMutex.safe(async () => {
+    const session = await this.authSessionMutex.safe(async () => {
       // We check both 'session' and 'sessionDisposing' here, as we don't want to call 'beginAuthSession' until the session is fully disposed.
       if (this.isAuthSessionActive()) {
         throw new Error(
@@ -40,11 +35,21 @@ class AuthManagerImpl implements AuthManagerInterface {
         );
       }
 
+      const newSession: AuthSession = {
+        accessToken: undefined,
+        accessTokenRefreshHandle: undefined,
+        params,
+        isActive: true,
+        authServiceWorker: await this.registerAuthServiceWorker(params)
+      };
+
       AuthSessionState.setSession(newSession);
+
+      return newSession;
     });
 
     // IMPORTANT: must be called outside the above, else re-entrant deadlock will occur.
-    await this.refreshAccessToken(newSession);
+    await this.refreshAccessToken(session);
   }
 
   async endAuthSession(): Promise<void> {
@@ -62,7 +67,56 @@ class AuthManagerImpl implements AuthManagerInterface {
       }
 
       await this.deleteAccessToken(session.params);
+      this.setServiceWorkerConfig(session, []); // Prevent service worker from authorizing subsequent requests.
     });
+  }
+
+  /**
+   * Idempotent.
+   *
+   * Only returns once the service worker has been activated.
+   *
+   * We don't need to unregister it: we just need to clear the config when auth ends.
+   */
+  private async registerAuthServiceWorker({
+    serviceWorkerScript
+  }: BeginAuthSessionParams): Promise<ServiceWorker | undefined> {
+    if (serviceWorkerScript === undefined) {
+      return undefined;
+    }
+
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.register(serviceWorkerScript);
+
+        // Occurs when: (service worker is already registered AND there's been no code changes) OR (service worker was not previously registered).
+        if (registration.active !== null) {
+          return registration.active;
+        }
+
+        // Occurs when: service worker is already registered AND there's been code changes.
+        await new Promise(resolve => {
+          registration.addEventListener("updatefound", () => {
+            const newWorker = registration.installing;
+            if (newWorker !== null) {
+              newWorker.addEventListener("statechange", () => {
+                if (newWorker.state === "activated") {
+                  resolve(newWorker);
+                }
+              });
+            }
+          });
+        });
+      } else {
+        ConsoleUtils.warn(
+          "Service workers not supported by browser. Falling back to Bytescale CDN cookies for auth. These are third-party cookies, which some modern browsers block."
+        );
+      }
+    } catch (e) {
+      throw new Error(
+        `Failed to install Bytescale Auth Service Worker (SW). ${(e as Error).name}: ${(e as Error).message}`
+      );
+    }
   }
 
   private async refreshAccessToken(session: AuthSession): Promise<void> {
@@ -77,13 +131,21 @@ class AuthManagerImpl implements AuthManagerInterface {
         const jwt = await this.getAccessToken(session.params, await session.params.authHeaders());
         const setTokenResult = await this.setAccessToken(session.params, jwt);
 
+        this.setServiceWorkerConfig(session, [
+          {
+            headers: [{ key: "Authorization-Token", value: jwt }],
+            expires: Date.now() + setTokenResult.ttlSeconds * 1000,
+            urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
+          }
+        ]);
+
         const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
         timeout = Math.max(desiredTtl, this.minJwtTtlSeconds);
         if (desiredTtl !== timeout) {
           ConsoleUtils.warn(`JWT expiration is too short: waiting for ${timeout} seconds before refreshing.`);
         }
 
-        // There's need to print a warning for this: it's OK to silently request the JWT before it expires. Also, this is 24 days in this case!
+        // There's no need to print a warning for this: it's OK to silently request the JWT before it expires. Also, this is 24 days in this case!
         timeout = Math.min(timeout, this.maxJwtTtlSeconds);
 
         session.accessToken = setTokenResult.accessToken;
@@ -102,9 +164,20 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
   }
 
+  private setServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): void {
+    const message: AuthSwSetConfigDto = {
+      type: "SET_CONFIG",
+      config
+    };
+    session.authServiceWorker?.postMessage(message);
+  }
+
   private getAccessTokenUrl(params: BeginAuthSessionParams): string {
-    const cdnUrl = BytescaleApiClientConfigUtils.getCdnUrl(params.options ?? {});
-    return `${cdnUrl}/api/v1/access_tokens/${params.accountId}`;
+    return `${this.getCdnUrl(params)}/api/v1/access_tokens/${params.accountId}`;
+  }
+
+  private getCdnUrl(params: BeginAuthSessionParams): string {
+    return BytescaleApiClientConfigUtils.getCdnUrl(params.options ?? {});
   }
 
   private async deleteAccessToken(params: BeginAuthSessionParams): Promise<void> {

@@ -31,12 +31,12 @@ export interface BytescaleApiClientConfig {
   apiKey: string;
 
   /**
-   * The base URL of the Bytescale API.
+   * The base URL of the Bytescale API. (Excludes trailing "/".)
    */
   apiUrl?: string;
 
   /**
-   * The base URL of the Bytescale CDN.
+   * The base URL of the Bytescale CDN. (Excludes trailing "/".)
    */
   cdnUrl?: string;
 
