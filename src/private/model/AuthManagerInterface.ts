@@ -24,9 +24,11 @@ export interface BeginAuthSessionParams {
   options?: Pick<BytescaleApiClientConfig, "fetchApi" | "cdnUrl">;
 
   /**
-   * The Bytescale Auth Service Worker enables JWT-based auth for browsers that block third-party cookies.
+   * Enables support for modern browsers that block third-party cookies (like Safari).
    *
-   * You must set this field if you need to support browsers that block third-party cookies (like Safari).
+   * The value of this field must be the path to the service worker JavaScript file hosted at the root of your website.
+   *
+   * OVERVIEW:
    *
    * This feature works by running a "service worker" in the background that adds "Authorization" and "Authorization-Token"
    * request headers to HTTP requests made to the Bytescale CDN. This allows the Bytescale CDN to authorize requests
@@ -35,21 +37,23 @@ export interface BeginAuthSessionParams {
    * to block these cookies, meaning "Authorization" request headers must be used instead. Authorization headers can
    * only be added to requests originating from page elements like "<img>" elements through the use of service workers.
    *
-   * Usage:
+   * INSTRUCTIONS:
    *
-   * 1. Create a JavaScript file that contains the following line:
+   * 1. Your JWT must include the 'accountId' field at the root of the 'payload' section of the JWT (i.e. next to the 'exp' field).
+   *
+   * 2. Create a JavaScript file that contains the following line:
    *
    *      importScripts("https://js.bytescale.com/auth-sw/v1");
    *
-   * 2. Host this JavaScript file from your website:
+   * 3. Host this JavaScript file from your website:
    *
-   *    2a. It MUST be under the ROOT directory of your website.
+   *    3a. It MUST be under the ROOT directory of your website.
    *        (e.g. "/bytescale-auth-sw.js")
    *
-   *    2b. It MUST be on the SAME DOMAIN as your website.
+   *    3b. It MUST be on the SAME DOMAIN as your website.
    *        (e.g. "www.example.com" and not "assets.example.com")
    *
-   * 3. Specify the absolute path to your JavaScript file in the 'beginAuthSession' call.
+   * 4. Specify the absolute path to your JavaScript file in the 'beginAuthSession' call.
    *    (e.g. { ..., serviceWorkerScript: "/bytescale-auth-sw.js" })
    *
    * Examples:
