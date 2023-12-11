@@ -22,20 +22,27 @@
 // See: AuthSwConfigDto
 let config; // [{urlPrefix, headers, expires?}]
 let resolveInitialConfig; // Thunk created during the "install" event and called during the first "message" event.
+const version = "3.19.1";
 
-console.log(`[bytescale] Auth SW Registered.`);
+console.log(`[bytescale@${version}] Auth SW: Registered`);
 
 /* eslint-disable no-undef */
 self.addEventListener("install", function (event) {
+  console.log(`[bytescale@${version}] Auth SW: Installing`);
+
   event.waitUntil(install());
 });
 
 self.addEventListener("activate", function (event) {
+  console.log(`[bytescale@${version}] Auth SW: Activating`);
+
   // Immediately allow the service worker to intercept "fetch" events (instead of requiring a page refresh) if this is the first time this service worker is being installed.
   event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("message", event => {
+  console.log(`[bytescale@${version}] Auth SW: Message Received`);
+
   // Allows communication with the windows/tabs that have are able to generate the JWT (as they have the auth session with the user's API).
   // See: AuthSwSetConfigDto
   if (event.data) {
@@ -48,6 +55,7 @@ self.addEventListener("message", event => {
         config = event.data.config;
 
         if (resolveInitialConfig !== undefined) {
+          console.log(`[bytescale@${version}] Auth SW: Initial Config Resolved`);
           resolveInitialConfig();
           resolveInitialConfig = undefined;
         }
@@ -58,6 +66,8 @@ self.addEventListener("message", event => {
 
 self.addEventListener("fetch", function (event) {
   const url = event.request.url;
+
+  console.log(`[bytescale@${version}] Auth SW: Fetch Received`);
 
   if (config !== undefined) {
     // Config is an array to support multiple different accounts within a single website, if needed.
@@ -88,11 +98,16 @@ async function install() {
   // has no config, and thus causes private file downloads to fail as they're temporarily not being authorized due to
   // the new service worker being active but not having its config yet.
   await new Promise(resolve => {
+    console.log(`[bytescale@${version}] Auth SW: Setting Resolver`);
     resolveInitialConfig = resolve;
   });
+
+  console.log(`[bytescale@${version}] Auth SW: Initial Config Resolved (Continue)`);
 
   // Typically service workers go: 'installing' -> 'waiting' -> 'activated'.
   // However, we skip the 'waiting' phase as we want this service worker to be used immediately after it's installed,
   // instead of requiring a page refresh if the browser already has an old version of the service worker installed.
   await self.skipWaiting();
+
+  console.log(`[bytescale@${version}] Auth SW: Skipped Waiting`);
 }

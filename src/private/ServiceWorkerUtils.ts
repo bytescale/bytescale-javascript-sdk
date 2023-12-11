@@ -15,11 +15,7 @@ export class ServiceWorkerUtils<TMessage> {
     const result =
       config.serviceWorkerScope !== undefined
         ? await this.getActiveServiceWorkerElseRegister(config, message)
-        : await this.registerServiceWorkerIfSupported(
-            config.serviceWorkerScript,
-            message,
-            serviceWorkerScriptFieldName
-          );
+        : await this.registerServiceWorkerValidated(config.serviceWorkerScript, message, serviceWorkerScriptFieldName);
 
     if (!result.messageSent) {
       result.serviceWorker.postMessage(message);
@@ -27,7 +23,7 @@ export class ServiceWorkerUtils<TMessage> {
     return result.config;
   }
 
-  private async registerServiceWorkerIfSupported(
+  private async registerServiceWorkerValidated(
     serviceWorkerScript: string,
     init: TMessage,
     serviceWorkerScriptFieldName: string
@@ -45,7 +41,7 @@ export class ServiceWorkerUtils<TMessage> {
       );
     }
 
-    return await this.registerAuthServiceWorker(serviceWorkerScript, init);
+    return await this.registerServiceWorker(serviceWorkerScript, init);
   }
 
   private async getActiveServiceWorkerElseRegister(
@@ -61,7 +57,7 @@ export class ServiceWorkerUtils<TMessage> {
       };
     }
 
-    return await this.registerAuthServiceWorker(config.serviceWorkerScript, init);
+    return await this.registerServiceWorker(config.serviceWorkerScript, init);
   }
 
   /**
@@ -71,10 +67,7 @@ export class ServiceWorkerUtils<TMessage> {
    *
    * We don't need to unregister it: we just need to clear the config when auth ends.
    */
-  private async registerAuthServiceWorker(
-    serviceWorkerScript: string,
-    init: TMessage
-  ): Promise<ServiceWorkerInitStatus> {
+  private async registerServiceWorker(serviceWorkerScript: string, init: TMessage): Promise<ServiceWorkerInitStatus> {
     try {
       const registration = await navigator.serviceWorker.register(serviceWorkerScript);
 
@@ -97,7 +90,32 @@ export class ServiceWorkerUtils<TMessage> {
     registration: ServiceWorkerRegistration,
     init: TMessage
   ): Promise<{ messageSent: boolean; serviceWorker: ServiceWorker }> {
-    // If the service worker is already active, return it.
+    // We must check the 'installing' state before the 'active' state (see comment below).
+    // The state will be 'installing' when the service worker is installed for the first time, or if there have been
+    // code changes to the service worker, else the state will be 'active'.
+    const installing = registration.installing;
+    if (installing !== null) {
+      installing.postMessage(init);
+
+      return await new Promise<{ messageSent: boolean; serviceWorker: ServiceWorker }>(resolve => {
+        const stateChangeHandler = (e: Event): void => {
+          const sw = e.target as ServiceWorker;
+          if (sw.state === "activated") {
+            installing.removeEventListener("statechange", stateChangeHandler);
+            resolve({
+              messageSent: true,
+              serviceWorker: sw
+            });
+          }
+        };
+        installing.addEventListener("statechange", stateChangeHandler);
+      });
+    }
+
+    // We must check the 'installing' state before the 'active' state, because if we've just installed a new service
+    // worker, then the new service worker will be in the 'installing' slot whereas the old service worker will be in
+    // the 'active' slot. So, if we checked this first, we would always return the old service worker, and therefore the
+    // new service worker would never be initialized.
     if (registration.active !== null) {
       return {
         serviceWorker: registration.active,
@@ -105,36 +123,8 @@ export class ServiceWorkerUtils<TMessage> {
       };
     }
 
-    // Service worker has not finished installing, which means we've just started installing a new one, so send the INIT
-    // message to it, as it will be waiting for it to complete its install phase.
-    let messageSent: boolean;
-    if (registration.installing !== null) {
-      messageSent = true;
-      registration.installing.postMessage(init);
-    } else {
-      messageSent = false;
-    }
-
-    // Wait for the service worker to become active.
-    return await new Promise<{ messageSent: boolean; serviceWorker: ServiceWorker }>((resolve, reject) => {
-      const serviceWorker = registration.installing ?? registration.waiting ?? undefined;
-      if (serviceWorker !== undefined) {
-        const stateChangeHandler = (e: Event): void => {
-          const sw = e.target as ServiceWorker;
-          if (sw.state === "activated") {
-            serviceWorker.removeEventListener("statechange", stateChangeHandler);
-            resolve({
-              messageSent,
-              serviceWorker: sw
-            });
-          }
-        };
-        serviceWorker.addEventListener("statechange", stateChangeHandler);
-      } else {
-        // If there's no installing or waiting service worker, reject.
-        reject(new Error("No service worker is installing or waiting."));
-      }
-    });
+    // We expect the service worker to use 'skipWaiting', so we don't expect 'waiting' service workers.
+    throw new Error("Service worker was neither 'installing' or 'active'.");
   }
 
   private async getActiveServiceWorker(serviceWorkerScope: string): Promise<ServiceWorker | undefined> {
