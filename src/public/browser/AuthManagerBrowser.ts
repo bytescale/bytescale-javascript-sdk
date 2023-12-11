@@ -142,7 +142,14 @@ class AuthManagerImpl implements AuthManagerInterface {
 
       try {
         const jwt = await this.getAccessToken(session.params, await session.params.authHeaders());
-        const setTokenResult = await this.setAccessToken(session.params, jwt);
+
+        // We don't use cookie-based auth if the browser supports service worker-based auth, as using both will cause
+        // confusion for us in the future (i.e. we may question "do we need to use both together? was there a reason?").
+        // Also: if the user has omitted "allowedOrigins" from their JWT, then service worker-based auth is more secure
+        // than cookie-based auth, which is another reason to prevent these cookies from being set unless required.
+        const setCookie = !this.isUsingServiceWorker(session);
+
+        const setTokenResult = await this.setAccessToken(session.params, jwt, setCookie);
 
         this.setServiceWorkerConfig(session, [
           {
@@ -177,6 +184,10 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
   }
 
+  private isUsingServiceWorker(session: AuthSession): boolean {
+    return session.authServiceWorker !== undefined;
+  }
+
   private setServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): void {
     const message: AuthSwSetConfigDto = {
       type: "SET_CONFIG",
@@ -185,8 +196,10 @@ class AuthManagerImpl implements AuthManagerInterface {
     session.authServiceWorker?.postMessage(message);
   }
 
-  private getAccessTokenUrl(params: BeginAuthSessionParams): string {
-    return `${this.getCdnUrl(params)}/api/v1/access_tokens/${params.accountId}`;
+  private getAccessTokenUrl(params: BeginAuthSessionParams, setCookie: boolean): string {
+    return `${this.getCdnUrl(params)}/api/v1/access_tokens/${params.accountId}?set-cookie=${
+      setCookie ? "true" : "false"
+    }`;
   }
 
   private getCdnUrl(params: BeginAuthSessionParams): string {
@@ -195,7 +208,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
   private async deleteAccessToken(params: BeginAuthSessionParams): Promise<void> {
     await BaseAPI.fetch(
-      this.getAccessTokenUrl(params),
+      this.getAccessTokenUrl(params, true),
       {
         method: "DELETE",
         credentials: "include", // Required, else Bytescale CDN response's `Set-Cookie` header will be silently ignored.
@@ -208,12 +221,16 @@ class AuthManagerImpl implements AuthManagerInterface {
     );
   }
 
-  private async setAccessToken(params: BeginAuthSessionParams, jwt: string): Promise<SetAccessTokenResponseDto> {
+  private async setAccessToken(
+    params: BeginAuthSessionParams,
+    jwt: string,
+    setCookie: boolean
+  ): Promise<SetAccessTokenResponseDto> {
     const request: SetAccessTokenRequestDto = {
       accessToken: jwt
     };
     const response = await BaseAPI.fetch(
-      this.getAccessTokenUrl(params),
+      this.getAccessTokenUrl(params, setCookie),
       {
         method: "PUT",
         credentials: "include", // Required, else Bytescale CDN response's `Set-Cookie` header will be silently ignored.
