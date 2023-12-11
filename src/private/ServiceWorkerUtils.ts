@@ -95,9 +95,7 @@ export class ServiceWorkerUtils<TMessage> {
     // code changes to the service worker, else the state will be 'active'.
     const installing = registration.installing;
     if (installing !== null) {
-      installing.postMessage(init);
-
-      return await new Promise<{ messageSent: boolean; serviceWorker: ServiceWorker }>(resolve => {
+      const waitForActive = new Promise<{ messageSent: boolean; serviceWorker: ServiceWorker }>(resolve => {
         const stateChangeHandler = (e: Event): void => {
           const sw = e.target as ServiceWorker;
           if (sw.state === "activated") {
@@ -110,6 +108,10 @@ export class ServiceWorkerUtils<TMessage> {
         };
         installing.addEventListener("statechange", stateChangeHandler);
       });
+
+      installing.postMessage(init);
+
+      return await waitForActive;
     }
 
     // We must check the 'installing' state before the 'active' state, because if we've just installed a new service
