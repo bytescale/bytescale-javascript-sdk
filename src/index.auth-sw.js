@@ -42,7 +42,7 @@ self.addEventListener("message", event => {
   // See: AuthSwSetConfigDto
   if (event.data) {
     switch (event.data.type) {
-      case "SET_CONFIG":
+      case "SET_BYTESCALE_AUTH_CONFIG":
         // Auth sessions are started/ended by calling SET_CONFIG with auth config or with 'undefined' config, respectively.
         // We use 'undefined' to end the auth session instead of unregistering the worker, as there may be multiple tabs
         // in the user's application, so while the user may sign out in one tab, they may remain signed in to another tab,

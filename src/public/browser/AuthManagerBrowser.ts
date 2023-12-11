@@ -7,6 +7,7 @@ import { SetAccessTokenRequestDto } from "../../private/dtos/SetAccessTokenReque
 import { SetAccessTokenResponseDto } from "../../private/dtos/SetAccessTokenResponseDto";
 import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
 import { AuthSwConfigDto } from "../../private/dtos/AuthSwConfigDto";
+import { ServiceWorkerUtils } from "../../private/ServiceWorkerUtils";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -18,7 +19,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly refreshBeforeExpirySeconds = 20;
 
-  constructor() {
+  constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils) {
     this.authSessionMutex = AuthSessionState.getMutex();
   }
 
@@ -35,12 +36,17 @@ class AuthManagerImpl implements AuthManagerInterface {
         );
       }
 
+      const serviceWorkerScriptField: keyof BeginAuthSessionParams = "serviceWorkerScript";
       const newSession: AuthSession = {
         accessToken: undefined,
         accessTokenRefreshHandle: undefined,
         params,
         isActive: true,
-        authServiceWorker: await this.registerAuthServiceWorker(params)
+        authServiceWorker: await this.serviceWorkerUtils.registerServiceWorkerIfSupported(
+          params.serviceWorkerScript,
+          serviceWorkerScriptField,
+          "Falling back to Bytescale CDN cookies for auth. These are third-party cookies, which some modern browsers block."
+        )
       };
 
       AuthSessionState.setSession(newSession);
@@ -67,69 +73,8 @@ class AuthManagerImpl implements AuthManagerInterface {
       }
 
       await this.deleteAccessToken(session.params);
-      this.setServiceWorkerConfig(session, []); // Prevent service worker from authorizing subsequent requests.
+      await this.setServiceWorkerConfig(session, []); // Prevent service worker from authorizing subsequent requests.
     });
-  }
-
-  /**
-   * Idempotent.
-   *
-   * Only returns once the service worker has been activated.
-   *
-   * We don't need to unregister it: we just need to clear the config when auth ends.
-   */
-  private async registerAuthServiceWorker({
-    serviceWorkerScript
-  }: BeginAuthSessionParams): Promise<ServiceWorker | undefined> {
-    if (serviceWorkerScript === undefined) {
-      return undefined;
-    }
-
-    const field: keyof BeginAuthSessionParams = "serviceWorkerScript";
-
-    if (!serviceWorkerScript.startsWith("/")) {
-      throw new Error(`The '${field}' field must start with a '/' and reference a script at the root of your website.`);
-    }
-
-    const forwardSlashCount = serviceWorkerScript.split("/").length - 1;
-    if (forwardSlashCount > 1) {
-      ConsoleUtils.warn(
-        `The '${field}' field should be a root script (e.g. '/bytescale-auth-sw.js'). The Bytescale SDK can only authorize requests originating from webpages that are at the same level as the script or below.`
-      );
-    }
-
-    try {
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.register(serviceWorkerScript);
-
-        // Occurs when: (service worker is already registered AND there's been no code changes) OR (service worker was not previously registered).
-        if (registration.active !== null) {
-          return registration.active;
-        }
-
-        // Occurs when: service worker is already registered AND there's been code changes.
-        await new Promise(resolve => {
-          registration.addEventListener("updatefound", () => {
-            const newWorker = registration.installing;
-            if (newWorker !== null) {
-              newWorker.addEventListener("statechange", () => {
-                if (newWorker.state === "activated") {
-                  resolve(newWorker);
-                }
-              });
-            }
-          });
-        });
-      } else {
-        ConsoleUtils.warn(
-          "Service workers not supported by browser. Falling back to Bytescale CDN cookies for auth. These are third-party cookies, which some modern browsers block."
-        );
-      }
-    } catch (e) {
-      throw new Error(
-        `Failed to install Bytescale Auth Service Worker (SW). ${(e as Error).name}: ${(e as Error).message}`
-      );
-    }
   }
 
   private async refreshAccessToken(session: AuthSession): Promise<void> {
@@ -151,7 +96,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
         const setTokenResult = await this.setAccessToken(session.params, jwt, setCookie);
 
-        this.setServiceWorkerConfig(session, [
+        await this.setServiceWorkerConfig(session, [
           {
             headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
             expires: Date.now() + setTokenResult.ttlSeconds * 1000,
@@ -188,12 +133,18 @@ class AuthManagerImpl implements AuthManagerInterface {
     return session.authServiceWorker !== undefined;
   }
 
-  private setServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): void {
+  private async setServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): Promise<void> {
+    if (session.authServiceWorker === undefined) {
+      return undefined;
+    }
+    // We re-fetch the latest active worker, as another tab may have registered a new one, and then the tab may be closed,
+    // leaving us as the only open tab but with an old and ineffective service worker reference.
+    const serviceWorker = await this.serviceWorkerUtils.getActiveServiceWorkerElseRegister(session.authServiceWorker);
     const message: AuthSwSetConfigDto = {
-      type: "SET_CONFIG",
+      type: "SET_BYTESCALE_AUTH_CONFIG",
       config
     };
-    session.authServiceWorker?.postMessage(message);
+    serviceWorker.postMessage(message);
   }
 
   private getAccessTokenUrl(params: BeginAuthSessionParams, setCookie: boolean): string {
@@ -290,4 +241,4 @@ class AuthManagerImpl implements AuthManagerInterface {
 /**
  * Alternative way of implementing a static class (i.e. all methods static). We do this so we can use a interface on the class (interfaces can't define static methods).
  */
-export const AuthManager = new AuthManagerImpl();
+export const AuthManager = new AuthManagerImpl(new ServiceWorkerUtils());
