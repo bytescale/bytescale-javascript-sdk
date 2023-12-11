@@ -102,7 +102,7 @@ async function install() {
     resolveInitialConfig = resolve;
   });
 
-  console.log(`[bytescale@${version}] Auth SW: Initial Config Resolved (Continue)`);
+  console.log(`[bytescale@${version}] Auth SW: Initial Config Resolved (Cont)`);
 
   // Typically service workers go: 'installing' -> 'waiting' -> 'activated'.
   // However, we skip the 'waiting' phase as we want this service worker to be used immediately after it's installed,
