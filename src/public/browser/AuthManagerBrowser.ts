@@ -6,11 +6,11 @@ import { AuthSession } from "../../private/model/AuthSession";
 import { SetAccessTokenRequestDto } from "../../private/dtos/SetAccessTokenRequestDto";
 import { SetAccessTokenResponseDto } from "../../private/dtos/SetAccessTokenResponseDto";
 import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
-import { AuthSwConfigDto } from "../../private/dtos/AuthSwConfigDto";
 import { ServiceWorkerUtils } from "../../private/ServiceWorkerUtils";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
+  private readonly serviceWorkerScriptFieldName: keyof BeginAuthSessionParams = "serviceWorkerScript";
   private readonly contentType = "content-type";
   private readonly contentTypeJson = "application/json";
   private readonly contentTypeText = "text/plain";
@@ -19,7 +19,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly refreshBeforeExpirySeconds = 20;
 
-  constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils) {
+  constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils<AuthSwSetConfigDto>) {
     this.authSessionMutex = AuthSessionState.getMutex();
   }
 
@@ -36,17 +36,18 @@ class AuthManagerImpl implements AuthManagerInterface {
         );
       }
 
-      const serviceWorkerScriptField: keyof BeginAuthSessionParams = "serviceWorkerScript";
       const newSession: AuthSession = {
         accessToken: undefined,
         accessTokenRefreshHandle: undefined,
         params,
         isActive: true,
-        authServiceWorker: await this.serviceWorkerUtils.registerServiceWorkerIfSupported(
-          params.serviceWorkerScript,
-          serviceWorkerScriptField,
-          "Falling back to Bytescale CDN cookies for auth. These are third-party cookies, which some modern browsers block."
-        )
+        authServiceWorker:
+          params.serviceWorkerScript !== undefined && this.serviceWorkerUtils.canUseServiceWorkers()
+            ? {
+                serviceWorkerScript: params.serviceWorkerScript,
+                serviceWorkerScope: undefined
+              }
+            : undefined
       };
 
       AuthSessionState.setSession(newSession);
@@ -73,7 +74,15 @@ class AuthManagerImpl implements AuthManagerInterface {
       }
 
       await this.deleteAccessToken(session.params);
-      await this.setServiceWorkerConfig(session, []); // Prevent service worker from authorizing subsequent requests.
+
+      if (session.authServiceWorker !== undefined) {
+        // Prevent service worker from authorizing subsequent requests.
+        await this.serviceWorkerUtils.sendMessage(
+          { type: "SET_BYTESCALE_AUTH_CONFIG", config: [] },
+          session.authServiceWorker,
+          this.serviceWorkerScriptFieldName
+        );
+      }
     });
   }
 
@@ -92,17 +101,26 @@ class AuthManagerImpl implements AuthManagerInterface {
         // confusion for us in the future (i.e. we may question "do we need to use both together? was there a reason?").
         // Also: if the user has omitted "allowedOrigins" from their JWT, then service worker-based auth is more secure
         // than cookie-based auth, which is another reason to prevent these cookies from being set unless required.
-        const setCookie = !this.isUsingServiceWorker(session);
+        const setCookie = session.authServiceWorker === undefined;
 
         const setTokenResult = await this.setAccessToken(session.params, jwt, setCookie);
 
-        await this.setServiceWorkerConfig(session, [
-          {
-            headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
-            expires: Date.now() + setTokenResult.ttlSeconds * 1000,
-            urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
-          }
-        ]);
+        if (session.authServiceWorker !== undefined) {
+          await this.serviceWorkerUtils.sendMessage(
+            {
+              type: "SET_BYTESCALE_AUTH_CONFIG",
+              config: [
+                {
+                  headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
+                  expires: Date.now() + setTokenResult.ttlSeconds * 1000,
+                  urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
+                }
+              ]
+            },
+            session.authServiceWorker,
+            this.serviceWorkerScriptFieldName
+          );
+        }
 
         const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
         timeout = Math.max(desiredTtl, this.minJwtTtlSeconds);
@@ -127,24 +145,6 @@ class AuthManagerImpl implements AuthManagerInterface {
         }, timeout * 1000);
       }
     });
-  }
-
-  private isUsingServiceWorker(session: AuthSession): boolean {
-    return session.authServiceWorker !== undefined;
-  }
-
-  private async setServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): Promise<void> {
-    if (session.authServiceWorker === undefined) {
-      return undefined;
-    }
-    // We re-fetch the latest active worker, as another tab may have registered a new one, and then the tab may be closed,
-    // leaving us as the only open tab but with an old and ineffective service worker reference.
-    const serviceWorker = await this.serviceWorkerUtils.getActiveServiceWorkerElseRegister(session.authServiceWorker);
-    const message: AuthSwSetConfigDto = {
-      type: "SET_BYTESCALE_AUTH_CONFIG",
-      config
-    };
-    serviceWorker.postMessage(message);
   }
 
   private getAccessTokenUrl(params: BeginAuthSessionParams, setCookie: boolean): string {
@@ -241,4 +241,4 @@ class AuthManagerImpl implements AuthManagerInterface {
 /**
  * Alternative way of implementing a static class (i.e. all methods static). We do this so we can use a interface on the class (interfaces can't define static methods).
  */
-export const AuthManager = new AuthManagerImpl(new ServiceWorkerUtils());
+export const AuthManager = new AuthManagerImpl(new ServiceWorkerUtils<AuthSwSetConfigDto>());

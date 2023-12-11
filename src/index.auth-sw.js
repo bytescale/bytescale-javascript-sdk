@@ -21,20 +21,18 @@
 
 // See: AuthSwConfigDto
 let config; // [{urlPrefix, headers, expires?}]
+let resolveInitialConfig; // Thunk created during the "install" event and called during the first "message" event.
 
-console.log(`[bytescale] Auth service worker registered.`);
+console.log(`[bytescale] Auth SW Registered.`);
 
 /* eslint-disable no-undef */
 self.addEventListener("install", function (event) {
-  event.waitUntil(
-    self.skipWaiting() // Immediately use the new version of the service worker (instead of requiring a page refresh) if the browser already has an old version of the service worker installed.
-  );
+  event.waitUntil(install());
 });
 
 self.addEventListener("activate", function (event) {
-  event.waitUntil(
-    self.clients.claim() // Immediately allow the service worker to intercept "fetch" events (instead of requiring a page refresh) if this is the first time this service worker is being installed.
-  );
+  // Immediately allow the service worker to intercept "fetch" events (instead of requiring a page refresh) if this is the first time this service worker is being installed.
+  event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener("message", event => {
@@ -48,6 +46,11 @@ self.addEventListener("message", event => {
         // in the user's application, so while the user may sign out in one tab, they may remain signed in to another tab,
         // which may subsequently send a follow-up 'SET_CONFIG' which will resume auth.
         config = event.data.config;
+
+        if (resolveInitialConfig !== undefined) {
+          resolveInitialConfig();
+          resolveInitialConfig = undefined;
+        }
         break;
     }
   }
@@ -78,3 +81,18 @@ self.addEventListener("fetch", function (event) {
     }
   }
 });
+
+async function install() {
+  // Wait for the initial config to be received before activating this service worker.
+  // This prevents us from replacing a functional service worker (with config) with a service worker that initially
+  // has no config, and thus causes private file downloads to fail as they're temporarily not being authorized due to
+  // the new service worker being active but not having its config yet.
+  await new Promise(resolve => {
+    resolveInitialConfig = resolve;
+  });
+
+  // Typically service workers go: 'installing' -> 'waiting' -> 'activated'.
+  // However, we skip the 'waiting' phase as we want this service worker to be used immediately after it's installed,
+  // instead of requiring a page refresh if the browser already has an old version of the service worker installed.
+  await self.skipWaiting();
+}
