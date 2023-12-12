@@ -38,11 +38,7 @@ export type UrlBuilderTransformationApiOptions =
 
 export interface UrlBuilderOptionsBase {
   /**
-   * Set to 'true' to download a private file. Requires an active auth session. See AuthManager.beginAuthSession.
-   *
-   * Set to 'false' or omit when downloading publicly-accessible files.
-   *
-   * Default: false
+   * @deprecated This field has no effect: the 'auth' querystring parameter is no-longer required by the Bytescale CDN. You may remove this field from your code.
    */
   auth?: boolean;
 

@@ -75,7 +75,7 @@ export interface AuthManagerInterface {
   /**
    * Begins a JWT auth session with the Bytescale API and Bytescale CDN.
    *
-   * Specifically, calling this method will cause the SDK to periodically acquire a JWT from your JWT endpoint. The SDK will then automatically include this JWT in all subsequent Bytescale API requests (via the 'authorization-token' request header) and also in all Bytescale CDN download requests (via a session cookie).
+   * Specifically, calling this method will cause the SDK to periodically acquire a JWT from your JWT endpoint. The SDK will then automatically include this JWT in all subsequent Bytescale API requests (via the 'authorization-token' request header) and also in all Bytescale CDN download requests (via a session cookie, or an 'authorization' header if service workers are being used).
    *
    * You can only call this method if 'isAuthSessionActive() === false', else an error will be returned.
    *
@@ -85,17 +85,15 @@ export interface AuthManagerInterface {
    *
    * After calling this method:
    *
-   * 1) You must add '?auth=true' to the URL of any private file you're trying to access. This includes the URLs you use in 'src' elements in img/video elements, etc.
-   *
-   * 2) You must await the returned promise before attempting to perform any downloads or API operations that require authentication.
+   * 1) You must await the returned promise before attempting to perform any downloads or API operations that require authentication.
    *
    * The auth process works as follows:
    *
    * 1) After you call this method, the AuthManager will periodically fetch a JWT in plain text from the given 'authUrl'.
    *
-   * 2) The JWT will be saved to a cookie scoped to the Bytescale CDN. This allows the user to view private files via the URL in the browser, including <img> elements on the page that reference private images, etc.
+   * 2) The JWT will be added as a request header via 'authorization-token' to all Bytescale API requests made via this SDK. This allows the user to upload private files and perform administrative operations permitted by the JWT, such as deleting files, etc.
    *
-   * 3) The JWT will also be added as a request header via 'authorization-token' to all Bytescale API requests made via this SDK. This allows the user to upload private files and perform administrative operations permitted by the JWT, such as deleting files, etc.
+   * 3) The JWT will be also saved to a cookie scoped to the Bytescale CDN if service workers are not being used (see the 'serviceWorkerScript' field). This allows the user to view private files via the URL in the browser, including <img> elements on the page that reference private images, etc. If service workers are being used, then the JWT will be submitted to the Bytescale CDN via the 'authorization' header instead.
    */
   beginAuthSession: (params: BeginAuthSessionParams) => Promise<void>;
 

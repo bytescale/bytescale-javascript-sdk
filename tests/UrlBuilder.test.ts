@@ -9,7 +9,7 @@ describe("UrlBuilder", () => {
 
   test("raw file with one param", () => {
     const actual = UrlBuilder.url({ accountId: "1234abc", filePath: "/example.jpg", options: { auth: true } });
-    const expected = "https://upcdn.io/1234abc/raw/example.jpg?auth=true";
+    const expected = "https://upcdn.io/1234abc/raw/example.jpg";
     expect(actual).toEqual(expected);
   });
 
@@ -19,7 +19,7 @@ describe("UrlBuilder", () => {
       filePath: "/example.jpg",
       options: { auth: true, cache: true, version: "42" }
     });
-    const expected = "https://upcdn.io/1234abc/raw/example.jpg?auth=true&cache=true&version=42";
+    const expected = "https://upcdn.io/1234abc/raw/example.jpg?cache=true&version=42";
     expect(actual).toEqual(expected);
   });
 
@@ -29,7 +29,7 @@ describe("UrlBuilder", () => {
       filePath: "/example.jpg",
       options: { auth: true, cache: true, cacheTtl: 100 } // cacheTtl is rewritten to cache_ttl
     });
-    const expected = "https://upcdn.io/1234abc/raw/example.jpg?auth=true&cache=true&cache_ttl=100";
+    const expected = "https://upcdn.io/1234abc/raw/example.jpg?cache=true&cache_ttl=100";
     expect(actual).toEqual(expected);
   });
 
@@ -121,8 +121,7 @@ describe("UrlBuilder", () => {
         auth: true
       }
     });
-    const expected =
-      "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&auth=true&version=50&cache_perm=auto&artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&version=50&cache_perm=auto&artifact=%2Ffoo";
     expect(actual).toEqual(expected);
   });
 
@@ -140,7 +139,7 @@ describe("UrlBuilder", () => {
         auth: true
       }
     });
-    const expected = "https://upcdn.io/1234abc/image/example.jpg?r=52&auth=true";
+    const expected = "https://upcdn.io/1234abc/image/example.jpg?r=52";
     expect(actual).toEqual(expected);
   });
 

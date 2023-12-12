@@ -65,7 +65,7 @@ export class UrlBuilder {
   }
 
   private static getCommonQueryParams(params: UrlBuilderOptions): KeyValuePair[] {
-    return this.makeQueryParams(["auth", "cache", "cacheTtl", "version", "forceDownloadPrompt"], {
+    return this.makeQueryParams(["cache", "cacheTtl", "version", "forceDownloadPrompt"], {
       cacheTtl: "cache_ttl",
       forceDownloadPrompt: "download"
     })(params);
