@@ -108,6 +108,11 @@ async function install() {
   // This prevents us from replacing a functional service worker (with config) with a service worker that initially
   // has no config, and thus causes private file downloads to fail as they're temporarily not being authorized due to
   // the new service worker being active but not having its config yet.
+  // ---
+  // Timeout is required else all subsequent 'navigator.serviceWorker.register' calls for future service workers will
+  // hang forever if the current service worker never completes its 'install' phase. Same applies to 'unregister' calls
+  // for the current service worker.
+  // ---
   try {
     await withTimeout(
       new Promise(resolve => {
