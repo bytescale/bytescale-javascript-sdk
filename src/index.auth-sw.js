@@ -122,8 +122,8 @@ async function install() {
     );
   } catch {
     // Not a big issue: it just means the service worker will be activated with blank config, so private files won't
-    // be authorized until new config is received, which is undesirable if this service work replaced an already-functioning
-    // service worker that was correctly configured and was authorizing requests.
+    // be authorized until new config is received, which is undesirable if this service worker replaced an
+    // already-functioning service worker that was correctly configured and was authorizing requests.
     console.warn("[bytescale] Auth SW initialization timeout.");
   }
 
