@@ -416,9 +416,9 @@ The Bytescale JavaScript SDK automatically adds the `apiKey` from the constructo
 
 With API key auth, the requester has access to the resources available to the API key:
 
-- Secret API keys (`secret_***`) have access to all API endpoints.
+- Secret API keys (`secret_***`) can perform all API operations.
 
-- Public API keys (`public_***`) have access to file upload, file download, and file listing API endpoints. File overwrites, file deletes, and all other destructive operations cannot be performed using public API keys. File listing is also disabled by default (but can be changed in the API key's settings).
+- Public API keys (`public_***`) can perform file uploads and file downloads only. File overwrites, file deletes, and all other destructive operations cannot be performed using public API keys.
 
 Each Public API Key and Secret API Key can have its read/write access limited to a subset of files/folders.
 
