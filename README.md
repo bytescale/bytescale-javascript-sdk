@@ -428,7 +428,7 @@ JWTs are optional.
 
 With JWTs, the user can download private files directly via the URL, as authentication is performed implicitly via a session cookie _or_ via an `authorization` header if service workers are enabled (see the `serviceWorkerScript` param on the `AuthManager.beginAuthSession` method). This allows the browser to display private files in `<img>`, `<video>`, and other elements.
 
-With JWTs, the user can also perform API requests, such as file uploads, as these can be granted by the [JWT's payload](https://www.bytescale.com/docs/types/BytescaleJwt). The Bytescale JavaScript SDK will automatically inject the user's JWT into the `authorization-token` request header for all API requests, assuming the `AuthManager.beginAuthSession` method has been called.
+With JWTs, the user can also perform API requests, such as file deletions, as these can be granted by the [JWT's payload](https://www.bytescale.com/docs/types/BytescaleJwt). The Bytescale JavaScript SDK will automatically inject the user's JWT into the `authorization-token` request header for all API requests, assuming the `AuthManager.beginAuthSession` method has been called.
 
 [Learn more about the `AuthManager` and JWTs »](https://www.bytescale.com/docs/auth)
 
