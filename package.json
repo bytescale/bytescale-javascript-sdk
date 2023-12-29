@@ -29,7 +29,7 @@
           "default": "./dist/worker/esm/main.mjs"
         }
       },
-      "browser": {
+      "default": {
         "require": {
           "types": "./dist/types/index.d.ts",
           "default": "./dist/browser/cjs/main.js"
@@ -38,9 +38,7 @@
           "types": "./dist/types/index.d.ts",
           "default": "./dist/browser/esm/main.mjs"
         }
-      },
-      "types": "./dist/types/index.d.ts",
-      "default": "./dist/browser/cjs/main.js"
+      }
     }
   },
   "homepage": "https://www.bytescale.com/docs/sdks/javascript",
