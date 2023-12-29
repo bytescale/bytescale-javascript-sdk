@@ -1,12 +1,10 @@
 <h1 align="center">
-  <a href="https://www.bytescale.com/upload-js">
-    <img alt="Upload.js" width="315" height="93" src="https://raw.githubusercontent.com/bytescale/upload-js/main/.github/assets/logo.svg">
-  </a>
+  Migrated to: <a href="https://www.npmjs.com/package/@bytescale/sdk">@bytescale/sdk</a>
 </h1>
 <p align="center"><b>JavaScript File Upload Library</b><br/>(With Integrated Cloud Storage)</p>
 <br/>
 <p align="center">
-  <a href="https://github.com/bytescale/upload-js/">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/">
     <img src="https://img.shields.io/badge/gzipped-6%20kb-4ba0f6" />
   </a>
 
@@ -14,7 +12,7 @@
     <img src="https://img.shields.io/badge/upload--js-npm-4ba0f6" />
   </a>
 
-  <a href="https://github.com/bytescale/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/actions/workflows/ci.yml">
     <img src="https://img.shields.io/badge/build-passing-4ba0f6" />
   </a>
 
@@ -27,7 +25,7 @@
     <img src="https://img.shields.io/badge/TypeScript-included-4ba0f6" />
   </a>
 
-  <a href="https://github.com/bytescale/upload-js/actions/workflows/ci.yml">
+  <a href="https://github.com/bytescale/bytescale-javascript-sdk/actions/workflows/ci.yml">
     <img src="https://img.shields.io/npms-io/maintenance-score/upload-js?color=4ba0f6" />
   </a>
 
