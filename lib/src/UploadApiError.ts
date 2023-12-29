@@ -1,6 +1,6 @@
 import { ErrorResponse } from "@upload-io/upload-api-client-upload-js";
 
-export class UploadError extends Error {
+export class UploadApiError extends Error {
   public readonly errorCode: string;
   public readonly details: any | undefined;
 
