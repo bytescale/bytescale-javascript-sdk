@@ -21,6 +21,7 @@
         "require": "./dist/browser/cjs/main.js",
         "import": "./dist/browser/esm/main.mjs"
       },
+      "types": "./dist/types/index.d.ts",
       "default": "./dist/browser/cjs/main.js"
     }
   },
