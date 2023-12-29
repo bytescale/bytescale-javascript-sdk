@@ -422,7 +422,7 @@ export class Upload {
           if (summary.name !== null) {
             xhr.setRequestHeader(
               "content-disposition",
-              `attachment; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
+              `inline; filename="${encodeURIComponent(summary.name)}"; filename*=UTF-8''${encodeURIComponent(
                 summary.name
               )}`
             );
