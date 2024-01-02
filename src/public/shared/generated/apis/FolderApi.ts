@@ -95,7 +95,7 @@ export interface PutFolderOperationParams {
 
 export class FolderApi extends runtime.BaseAPI {
   /**
-   * Copies a folder asynchronously.  You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles```, ```includeOverriddenStorage``` and ```includeVirtualFolders``` set to match the values you\'re using here. Leave all other flags unset.
+   * Copies a folder asynchronously.  You can use ListFolder to preview the operation using the `dryRun` parameter.
    */
   async copyFolder(params: CopyFolderOperationParams): Promise<AsyncResponse> {
     const query: any = {};
@@ -123,7 +123,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Copies multiple folders asynchronously.  You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles```, ```includeOverriddenStorage``` and ```includeVirtualFolders``` set to match the values you\'re using here. Leave all other flags unset.
+   * Copies multiple folders asynchronously.  You can use ListFolder to preview the operation using the `dryRun` parameter.
    */
   async copyFolderBatch(params: CopyFolderBatchOperationParams): Promise<AsyncResponse> {
     const query: any = {};
@@ -151,7 +151,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes a folder asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles``` and ```includeVirtualFolders``` set to match the values you\'re using here. Leave all other flags unset.
+   * Deletes a folder asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation using the `dryRun` parameter.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFolder(params: DeleteFolderOperationParams): Promise<AsyncResponse> {
     const query: any = {};
@@ -179,7 +179,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes multiple folders asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles``` and ```includeVirtualFolders``` set to match the values you\'re using here. Leave all other flags unset.
+   * Deletes multiple folders asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation using the `dryRun` parameter.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFolderBatch(params: DeleteFolderBatchOperationParams): Promise<AsyncResponse> {
     const query: any = {};
@@ -207,7 +207,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Gets the full details (e.g. permission, storage layer, etc.) for a folder.  Returns an empty object if no settings have been configured for this folder.
+   * Gets the full details (e.g. permission, storage layer, etc.) for a folder.  Returns an empty object if no settings have been configured for this folder.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async getFolderDetails(params: GetFolderDetailsParams): Promise<FolderDetails> {
     const query: any = {};
@@ -236,7 +236,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the folder\'s contents.  The result may be paginated: subsequent pages can be requested by passing the ```cursor``` from the response into the ```cursor``` request parameter.  Pagination is complete when the response includes `isPaginationComplete=true`.
+   * Lists the folder\'s contents.  The result may be paginated: subsequent pages can be requested by passing the ```cursor``` from the response into the next request.  Pagination is complete when the response includes `isPaginationComplete=true`.
    */
   async listFolder(params: ListFolderParams): Promise<ListFolderResponse> {
     const query: any = {};
@@ -297,7 +297,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates or updates the folder specified by the `folderPath`.  If the folder\'s ancestors do not exist, they will be created automatically (with empty FolderSettings).  Note: you don\'t need to create folders before uploading files to them.
+   * Creates or updates the folder specified by the `folderPath`.  If the folder\'s ancestors do not exist, they will be created automatically (with empty FolderSettings).  Note: you don\'t need to create folders before uploading files to them.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async putFolder(params: PutFolderOperationParams): Promise<FolderDetails> {
     const query: any = {};

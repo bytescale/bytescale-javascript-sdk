@@ -262,7 +262,7 @@ export class FileApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes a file synchronously.
+   * Deletes a file synchronously.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFile(params: DeleteFileParams): Promise<void> {
     const query: any = {};
@@ -291,7 +291,7 @@ export class FileApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes multiple files asynchronously.
+   * Deletes multiple files asynchronously.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFileBatch(params: DeleteFileBatchOperationParams): Promise<AsyncResponse> {
     const query: any = {};

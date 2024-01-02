@@ -18,7 +18,9 @@ export type AccountJobStatus =
  * @export
  */
 export type AccountJobType =
-  | "ProcessFileJob"
+  | "ProcessVideoJob"
+  | "ProcessAudioJob"
+  | "AntivirusJob"
   | "DeleteFolderBatchJob"
   | "DeleteFileBatchJob"
   | "CopyFolderBatchJob"
@@ -250,12 +252,6 @@ export interface CopyFileBatchRequest {
  */
 export interface CopyFileRequest {
   /**
-   *
-   * @type {TagCondition}
-   * @memberof CopyFileRequest
-   */
-  condition?: TagCondition;
-  /**
    * Absolute path to a file. Begins with a `/`.
    * @type {string}
    * @memberof CopyFileRequest
@@ -301,12 +297,6 @@ export interface CopyFolderBatchRequest {
  */
 export interface CopyFolderRequest {
   /**
-   *
-   * @type {TagCondition}
-   * @memberof CopyFolderRequest
-   */
-  condition?: TagCondition;
-  /**
    * If `true` then copies files.
    *
    * Default: true
@@ -315,7 +305,13 @@ export interface CopyFolderRequest {
    */
   copyFiles?: boolean;
   /**
-   * If `true` then copies files from folders that have overridden storage settings, else skips them. The current folder is treated the same: if it has overridden storage settings, then its files will only be copied if this flag is `true`, else they will be skipped.
+   * If `true` then copies files from folders that have overridden storage settings, else skips them.
+   *
+   * If the `source` folder overrides its storage settings, then its files will only be copied if this flag is `true`.
+   *
+   * If the `source` folder inherits its storage settings, then its files will be copied regardless of this flag.
+   *
+   * In all cases, files will only be copied if `copyFiles` is also set to `true`.
    *
    * You can ignore this setting if your account does not use folders with overridden storage settings, such as custom AWS S3 buckets.
    *
@@ -452,7 +448,7 @@ export interface DeleteFolderBatchRequest {
  *
  * If the folder has overridden storage settings, then no files will be deleted.
  *
- * You can use ListFolder to preview the operation: set `dryRun=true` with ```recursive```, ```includeFiles``` and ```includeVirtualFolders``` set to match the values you're using here. Leave all other flags unset.
+ * You can use ListFolder to preview the operation using the `dryRun` parameter.
  * @export
  * @interface DeleteFolderRequest
  */
@@ -616,7 +612,7 @@ export interface DynamicFilePath {
   folderPathVariablesEnabled?: boolean;
 }
 /**
- * Response body for all error responses.
+ * Response body for client-side and server-side errors.
  * @export
  * @interface ErrorResponse
  */
@@ -1959,180 +1955,6 @@ export type StorageLayerUpdate =
   | R2Storage
   | S3Storage
   | WebStorage;
-/**
- * @type TagCondition
- * Expresses a condition that matches files by their tags.
- * @export
- */
-export type TagCondition =
-  | TagConditionAll
-  | TagConditionAnd
-  | TagConditionAny
-  | TagConditionEquals
-  | TagConditionNot
-  | TagConditionOr;
-/**
- *
- * @export
- * @interface TagConditionAll
- */
-export interface TagConditionAll {
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof TagConditionAll
-   */
-  all: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionAll
-   */
-  type: TagConditionAllTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionAllTypeEnum = "All";
-
-/**
- *
- * @export
- * @interface TagConditionAnd
- */
-export interface TagConditionAnd {
-  /**
-   *
-   * @type {TagCondition}
-   * @memberof TagConditionAnd
-   */
-  left: TagCondition;
-  /**
-   *
-   * @type {TagCondition}
-   * @memberof TagConditionAnd
-   */
-  right: TagCondition;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionAnd
-   */
-  type: TagConditionAndTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionAndTypeEnum = "And";
-
-/**
- *
- * @export
- * @interface TagConditionAny
- */
-export interface TagConditionAny {
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof TagConditionAny
-   */
-  any: Array<string>;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionAny
-   */
-  type: TagConditionAnyTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionAnyTypeEnum = "Any";
-
-/**
- *
- * @export
- * @interface TagConditionEquals
- */
-export interface TagConditionEquals {
-  /**
-   * File tag scope, e.g. for a transformation definition, a CDN download access token, or an API key's tag whitelist.
-   * @type {string}
-   * @memberof TagConditionEquals
-   */
-  equals: string;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionEquals
-   */
-  type: TagConditionEqualsTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionEqualsTypeEnum = "Equals";
-
-/**
- *
- * @export
- * @interface TagConditionNot
- */
-export interface TagConditionNot {
-  /**
-   *
-   * @type {TagCondition}
-   * @memberof TagConditionNot
-   */
-  condition: TagCondition;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionNot
-   */
-  type: TagConditionNotTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionNotTypeEnum = "Not";
-
-/**
- *
- * @export
- * @interface TagConditionOr
- */
-export interface TagConditionOr {
-  /**
-   *
-   * @type {TagCondition}
-   * @memberof TagConditionOr
-   */
-  left: TagCondition;
-  /**
-   *
-   * @type {TagCondition}
-   * @memberof TagConditionOr
-   */
-  right: TagCondition;
-  /**
-   *
-   * @type {string}
-   * @memberof TagConditionOr
-   */
-  type: TagConditionOrTypeEnum;
-}
-
-/**
- * @export
- */
-export type TagConditionOrTypeEnum = "Or";
-
 /**
  * This data type specifies no update is to be performed.
  * @export
