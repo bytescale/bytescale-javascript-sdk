@@ -2,6 +2,7 @@
 /* eslint-disable */
 import { ErrorResponse } from "./models";
 import { AuthSessionState } from "../../../private/AuthSessionState";
+import { ConsoleUtils } from "../../../private/ConsoleUtils";
 
 /**
  * @bytescale/api
@@ -39,6 +40,11 @@ export interface BytescaleApiClientConfig {
    * The base URL of the Bytescale CDN. (Excludes trailing "/".)
    */
   cdnUrl?: string;
+
+  /**
+   * Enables additional debug information.
+   */
+  debug?: boolean;
 
   /**
    * Headers to include in all API requests.
@@ -115,7 +121,7 @@ export class BaseAPI {
   static async fetch(
     url: string,
     init: RequestInit,
-    config: Pick<BytescaleApiClientConfig, "fetchApi"> & { isBytescaleApi: boolean }
+    config: Pick<BytescaleApiClientConfig, "fetchApi" | "debug"> & { isBytescaleApi: boolean }
   ): Promise<Response> {
     let response: Response;
     try {
@@ -148,14 +154,23 @@ export class BaseAPI {
     }
 
     if (config.isBytescaleApi) {
-      let jsonError = undefined;
+      let errorText = undefined;
+      let errorJson = undefined;
       try {
-        jsonError = await response.json();
+        errorText = await response.text();
+        errorJson = JSON.parse(errorText);
       } catch (_e) {
         // Error will be thrown below.
       }
-      if (typeof jsonError?.error?.code === "string") {
-        throw new BytescaleApiError(jsonError as ErrorResponse);
+      if (typeof errorJson?.error?.code === "string") {
+        throw new BytescaleApiError(errorJson as ErrorResponse);
+      }
+
+      if (config.debug === true) {
+        ConsoleUtils.debug("Error response header:");
+        response.headers.forEach((headerValue, headerKey) => ConsoleUtils.debug(`${headerKey}: ${headerValue}`));
+        ConsoleUtils.debug("Error response body:");
+        ConsoleUtils.debug(errorText ?? "<empty>");
       }
 
       // HTTP-level errors from intermediary services (e.g. AWS or the user's own infrastructure/proxies). On the browser,
