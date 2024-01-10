@@ -54,7 +54,7 @@ export class UrlBuilder {
   }
 
   private static getBaseUrl(params: UrlBuilderParams, prefix: string): string {
-    const cdnUrl = BytescaleApiClientConfigUtils.defaultCdnUrl;
+    const cdnUrl = params.options?.cdnUrl ?? BytescaleApiClientConfigUtils.defaultCdnUrl;
     return `${cdnUrl}/${params.accountId}/${prefix}${params.filePath}`;
   }
 

@@ -59,6 +59,11 @@ export interface UrlBuilderOptionsBase {
   cacheTtl?: number;
 
   /**
+   * The base URL of the Bytescale CDN. (Excludes trailing "/".)
+   */
+  cdnUrl?: string;
+
+  /**
    * Forces the browser to display a download prompt for the file, instead of displaying the file in the browser.
    *
    * When set to true, the Bytescale CDN will add a 'content-disposition: attachment' header to the HTTP response.
