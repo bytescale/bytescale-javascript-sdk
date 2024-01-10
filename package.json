@@ -1,6 +1,6 @@
 {
   "name": "@bytescale/sdk",
-  "version": "3.23.1",
+  "version": "3.24.0",
   "description": "Bytescale JavaScript SDK",
   "author": "Bytescale <hello@bytescale.com> (https://www.bytescale.com)",
   "license": "MIT",
