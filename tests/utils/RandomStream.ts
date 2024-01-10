@@ -15,10 +15,21 @@ import * as Path from "path";
 function createRandomStream(sizeInBytes: number): NodeJS.ReadableStream {
   const dictionary = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".split("");
 
+  // Ensure the chunk size is small enough to cause enough entropy (as we pick a new character for reach chunk).
+  const minRandomBlocks = 10;
+  const maxChunkSize = Math.min(64 * 1024, Math.ceil(sizeInBytes / minRandomBlocks));
+
   let producedSize = 0;
   let iteration = 0;
   return new Readable({
-    read(readSize) {
+    read(requestedReadSize) {
+      const maxRequestedReadSize = Math.min(requestedReadSize, maxChunkSize);
+
+      // This ensures streams of the same size are unique, else they would have the same contents, assuming chunk size is the same.
+      // We use 0.8-1 to prevent really small chunks, which may create inefficiencies.
+      const randomness = randomBetween(0.8, 1);
+
+      let readSize = Math.ceil(maxRequestedReadSize * randomness);
       let shouldEnd = false;
 
       if (producedSize + readSize >= sizeInBytes) {
@@ -46,6 +57,10 @@ function createRandomStream(sizeInBytes: number): NodeJS.ReadableStream {
       }
     }
   });
+}
+
+function randomBetween(min: number, max: number): number {
+  return Math.random() * (max - min) + min;
 }
 
 async function writeToDisk(reader: NodeJS.ReadableStream, path: string): Promise<void> {
