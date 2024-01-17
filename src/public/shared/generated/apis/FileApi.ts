@@ -125,6 +125,17 @@ export interface ProcessFileParams {
   cache?: boolean;
 
   /**
+   * Only serve transformations from the cache; do not perform new transformations on cache miss.
+   *
+   * If `true`, then if the transformation result does not exist in the cache, a 404 will be returned. No transformations will be performed.
+   *
+   * If `false`, then if the transformation result does not exist in the cache, a new transformation will be performed to produce the result.
+   *
+   * Default: `false`
+   */
+  cacheOnly?: boolean;
+
+  /**
    * Specifies whether to cache the transformed result in the Bytescale CDN perma-cache.
    *
    * Perma-caching works by storing your file permanently, or until a manual cache purge is performed.
@@ -401,6 +412,10 @@ export class FileApi extends runtime.BaseAPI {
 
     if (params.cache !== undefined) {
       query["cache"] = params.cache;
+    }
+
+    if (params.cacheOnly !== undefined) {
+      query["cache_only"] = params.cacheOnly;
     }
 
     if (params.cachePerm !== undefined) {

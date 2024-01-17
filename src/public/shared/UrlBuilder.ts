@@ -1,6 +1,8 @@
 import {
   KeyValuePair,
+  NonDeprecatedCommonQueryParams,
   UrlBuilderOptions,
+  UrlBuilderOptionsTransformationOnly,
   UrlBuilderParams,
   UrlBuilderTransformationApiOptions,
   UrlBuilderTransformationOptions
@@ -59,24 +61,47 @@ export class UrlBuilder {
   }
 
   private static getCommonTransformationQueryParams(trans: UrlBuilderTransformationOptions): KeyValuePair[] {
-    return this.makeQueryParams(["cachePermanently", "artifact"], {
-      cachePermanently: "cache_perm"
-    })(trans);
+    return this.makeQueryParams<keyof UrlBuilderOptionsTransformationOnly>(
+      {
+        cacheOnly: null,
+        cachePermanently: null,
+        // Keep this as the last param: this is the convention for transformation URLs (although not required).
+        artifact: null
+      },
+      {
+        cacheOnly: "cache_only",
+        cachePermanently: "cache_perm"
+      }
+    )(trans);
   }
 
   private static getCommonQueryParams(params: UrlBuilderOptions): KeyValuePair[] {
-    return this.makeQueryParams(["cache", "cacheTtl", "version", "forceDownloadPrompt"], {
-      cacheTtl: "cache_ttl",
-      forceDownloadPrompt: "download"
-    })(params);
+    return this.makeQueryParams<keyof NonDeprecatedCommonQueryParams>(
+      {
+        cache: null,
+        cacheTtl: null,
+        version: null,
+        forceDownloadPrompt: null
+      },
+      {
+        cacheTtl: "cache_ttl",
+        forceDownloadPrompt: "download"
+      }
+    )(params);
   }
 
+  /**
+   * Masks the querystring params per the 'keys' array.
+   *
+   * Order sensitive: querystring params will appear per the order of the 'keys' array.
+   */
   private static makeQueryParams<T extends string>(
-    keys: T[],
+    keyPrototype: Record<T, null>,
     keyOverrides: Partial<Record<T, string>>
   ): (data: Partial<Record<T, string | number | boolean>>) => KeyValuePair[] {
     return data => {
       const result: KeyValuePair[] = [];
+      const keys = Object.keys(keyPrototype) as T[];
       keys.forEach(key => {
         const value = data[key];
         if (value !== undefined) {

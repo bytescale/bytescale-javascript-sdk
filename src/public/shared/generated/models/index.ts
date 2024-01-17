@@ -305,15 +305,10 @@ export interface CopyFolderRequest {
    */
   copyFiles?: boolean;
   /**
-   * If `true` then copies files from folders that have overridden storage settings, else skips them.
    *
-   * If the `source` folder overrides its storage settings, then its files will only be copied if this flag is `true`.
+   * If `false` then if a file's parent folder has overridden storage settings, the file won't be copied.
    *
-   * If the `source` folder inherits its storage settings, then its files will be copied regardless of this flag.
-   *
-   * In all cases, files will only be copied if `copyFiles` is also set to `true`.
-   *
-   * You can ignore this setting if your account does not use folders with overridden storage settings, such as custom AWS S3 buckets.
+   * If you don't use folders with custom storage settings (like AWS S3 buckets), you don't need to worry about this setting.
    *
    * Conditional: `copyVirtualFolders` and `copyOverriddenStorage` cannot both be `true`.
    *
@@ -446,9 +441,9 @@ export interface DeleteFolderBatchRequest {
 /**
  * Request body for DeleteFolder.
  *
- * If the folder has overridden storage settings, then no files will be deleted.
- *
  * You can use ListFolder to preview the operation using the `dryRun` parameter.
+ *
+ * *When deleting a folder with external storage:* if the folder at `folderPath` has overridden storage settings (like an AWS S3 bucket), no files will be deleted, regardless of the parameters you pass. Only the mapping will be removed. If the folder at `folderPath` has inherited storage settings but includes subfolders with overridden storage settings, files in those subfolders won't be deleted, regardless of the parameters you pass. In summary, files in folders with overridden storage are never deleted, unless you directly delete a subfolder of such a folder.
  * @export
  * @interface DeleteFolderRequest
  */

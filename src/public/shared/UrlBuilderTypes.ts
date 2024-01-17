@@ -36,12 +36,14 @@ export type UrlBuilderTransformationApiOptions =
   | UrlBuilderOptionsAudio
   | UrlBuilderOptionsArchive;
 
-export interface UrlBuilderOptionsBase {
+export interface UrlBuilderOptionsBase extends NonDeprecatedCommonQueryParams, DeprecatedCommonQueryParams {
   /**
-   * @deprecated This field has no effect: the 'auth' querystring parameter is no-longer required by the Bytescale CDN. You may remove this field from your code.
+   * The base URL of the Bytescale CDN. (Excludes trailing "/".)
    */
-  auth?: boolean;
+  cdnUrl?: string;
+}
 
+export interface NonDeprecatedCommonQueryParams {
   /**
    * Specifies whether to use caching for this request, or to always re-request the file.
    *
@@ -57,11 +59,6 @@ export interface UrlBuilderOptionsBase {
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
   cacheTtl?: number;
-
-  /**
-   * The base URL of the Bytescale CDN. (Excludes trailing "/".)
-   */
-  cdnUrl?: string;
 
   /**
    * Forces the browser to display a download prompt for the file, instead of displaying the file in the browser.
@@ -80,6 +77,13 @@ export interface UrlBuilderOptionsBase {
    * You only need to provide and update this value if/when you overwrite your file.
    */
   version?: string;
+}
+
+export interface DeprecatedCommonQueryParams {
+  /**
+   * @deprecated This field has no effect: the 'auth' querystring parameter is no-longer required by the Bytescale CDN. You may remove this field from your code.
+   */
+  auth?: boolean;
 }
 
 export interface UrlBuilderOptionsRaw extends UrlBuilderOptionsBase {
@@ -154,7 +158,9 @@ export interface UrlBuilderOptionsTransformationApi<T> extends UrlBuilderOptions
   transformationParams?: T | T[];
 }
 
-export interface UrlBuilderOptionsTransformation extends UrlBuilderOptionsBase {
+export type UrlBuilderOptionsTransformation = UrlBuilderOptionsTransformationOnly & UrlBuilderOptionsBase;
+
+export interface UrlBuilderOptionsTransformationOnly {
   /**
    * The transformation artifact to download.
    *
@@ -165,6 +171,17 @@ export interface UrlBuilderOptionsTransformation extends UrlBuilderOptionsBase {
    * Default: "/"
    */
   artifact?: string;
+
+  /**
+   * Only serve transformations from the cache; do not perform new transformations on cache miss.
+   *
+   * If true, then if the transformation result does not exist in the cache, a 404 will be returned. No transformations will be performed.
+   *
+   * If false, then if the transformation result does not exist in the cache, a new transformation will be performed to produce the result.
+   *
+   * Default: false
+   */
+  cacheOnly?: boolean;
 
   /**
    * Specifies whether to permanently cache the transformed result in the Bytescale CDN.

@@ -151,7 +151,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes a folder asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation using the `dryRun` parameter.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
+   * Deletes a folder asynchronously.  You can use ListFolder to preview the operation using the `dryRun` parameter.  *When deleting a folder with external storage:* if the folder at `folderPath` has overridden storage settings (like an AWS S3 bucket), no files will be deleted, regardless of the parameters you pass. Only the mapping will be removed. If the folder at `folderPath` has inherited storage settings but includes subfolders with overridden storage settings, files in those subfolders won\'t be deleted, regardless of the parameters you pass. In summary, files in folders with overridden storage are never deleted, unless you directly delete a subfolder of such a folder.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFolder(params: DeleteFolderOperationParams): Promise<AsyncResponse> {
     const query: any = {};
@@ -179,7 +179,7 @@ export class FolderApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes multiple folders asynchronously.  If the folder has overridden storage settings, then no files will be deleted.  You can use ListFolder to preview the operation using the `dryRun` parameter.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
+   * Deletes multiple folders asynchronously.  You can use ListFolder to preview the operation using the `dryRun` parameter.  *When deleting a folder with external storage:* if the folder at `folderPath` has overridden storage settings (like an AWS S3 bucket), no files will be deleted, regardless of the parameters you pass. Only the mapping will be removed. If the folder at `folderPath` has inherited storage settings but includes subfolders with overridden storage settings, files in those subfolders won\'t be deleted, regardless of the parameters you pass. In summary, files in folders with overridden storage are never deleted, unless you directly delete a subfolder of such a folder.  Requires a `secret_*` API key. Alternatively, you can use a `public_*` API key and JWT-based auth.
    */
   async deleteFolderBatch(params: DeleteFolderBatchOperationParams): Promise<AsyncResponse> {
     const query: any = {};
