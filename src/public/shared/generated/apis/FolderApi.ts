@@ -35,6 +35,10 @@ import type {
   PutFolderRequest
 } from "../models";
 
+// Omitted by generator (so we add manually).
+// @ts-ignore
+import type { ProcessFileTransformationParamsParameter } from "../models";
+
 export interface CopyFolderOperationParams {
   accountId: string;
 

@@ -33,6 +33,10 @@ import type {
   UploadPartList
 } from "../models";
 
+// Omitted by generator (so we add manually).
+// @ts-ignore
+import type { ProcessFileTransformationParamsParameter } from "../models";
+
 export interface BeginMultipartUploadOperationParams {
   accountId: string;
 

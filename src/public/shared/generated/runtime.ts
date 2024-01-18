@@ -327,6 +327,7 @@ export function querystring(params: HTTPQuery): string {
 
 function querystringSingleKey(key: string, value: string | number | null | undefined | boolean | HTTPQuery): string {
   if (value instanceof Object) {
+    // Matches 'array' or 'object' (which we want).
     return querystring(value as HTTPQuery);
   }
   return `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`;

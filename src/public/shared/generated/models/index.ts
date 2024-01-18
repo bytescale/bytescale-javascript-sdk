@@ -1642,11 +1642,19 @@ export interface ProcessFileAndSaveResponseSync {
 export type ProcessFileAndSaveResponseSyncAsyncEnum = false;
 
 /**
- * @type ProcessFileTransformationParamsParameterValue
+ * @type ProcessFileTransformationParamsParameter
  *
  * @export
  */
-export type ProcessFileTransformationParamsParameterValue = boolean | number | string;
+export type ProcessFileTransformationParamsParameter =
+  | Array<{ [key: string]: ProcessFileTransformationParamsParameterOneOfValue }>
+  | { [key: string]: ProcessFileTransformationParamsParameterOneOfValue };
+/**
+ * @type ProcessFileTransformationParamsParameterOneOfValue
+ *
+ * @export
+ */
+export type ProcessFileTransformationParamsParameterOneOfValue = boolean | number | string;
 /**
  * Permissions applied to anonymous users who attempt to download files from a folder.
  *

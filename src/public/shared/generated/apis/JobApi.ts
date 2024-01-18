@@ -25,6 +25,10 @@ import type {
   ListRecentJobsResponse
 } from "../models";
 
+// Omitted by generator (so we add manually).
+// @ts-ignore
+import type { ProcessFileTransformationParamsParameter } from "../models";
+
 export interface CancelJobParams {
   accountId: string;
 
