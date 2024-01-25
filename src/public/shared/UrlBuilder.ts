@@ -57,7 +57,8 @@ export class UrlBuilder {
 
   private static getBaseUrl(params: UrlBuilderParams, prefix: string): string {
     const cdnUrl = params.options?.cdnUrl ?? BytescaleApiClientConfigUtils.defaultCdnUrl;
-    return `${cdnUrl}/${params.accountId}/${prefix}${params.filePath}`;
+    const filePathEncoded = encodeURIComponent(params.filePath).replace(/%2F/g, "/");
+    return `${cdnUrl}/${params.accountId}/${prefix}${filePathEncoded}`;
   }
 
   private static getCommonTransformationQueryParams(trans: UrlBuilderTransformationOptions): KeyValuePair[] {
