@@ -66,7 +66,12 @@ export class UrlBuilder {
       {
         cacheOnly: null,
         cachePermanently: null,
-        // Keep this as the last param: this is the convention for transformation URLs (although not required).
+        // Keep this as the last param: this is required for certain transformations, such as async HLS jobs. For example,
+        // given an artifact '!f=hls-h264&artifact=/video.m3u8' that returns a master M3U8 playlist containing relative
+        // links to child M3U8 playlists (e.g. 'child1.m3u8'), when the child URLs inside the master M3U8 file are resolved
+        // by the browser, the 'child1.m3u8' path essentially replaces everything after the '/' on the master M3U8 URL.
+        // Thus, if query params existed after the 'artifact' param, they would be wiped out, causing the child M3U8
+        // playlist to suddenly reference a different transformation.
         artifact: null
       },
       {

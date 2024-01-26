@@ -337,8 +337,20 @@ export interface RequestOpts {
   body?: HTTPBody;
 }
 
+function moveElementToEnd<T>(array: T[], element: T): T[] {
+  return [...array.filter(x => x !== element), ...array.filter(x => x === element)];
+}
+
 export function querystring(params: HTTPQuery): string {
-  return Object.keys(params)
+  // The 'artifact' param must be the last param for certain transformations, such as async HLS jobs. For example,
+  // given an artifact '!f=hls-h264&artifact=/video.m3u8' that returns a master M3U8 playlist containing relative
+  // links to child M3U8 playlists (e.g. 'child1.m3u8'), when the child URLs inside the master M3U8 file are resolved
+  // by the browser, the 'child1.m3u8' path essentially replaces everything after the '/' on the master M3U8 URL.
+  // Thus, if query params existed after the 'artifact' param, they would be wiped out, causing the child M3U8
+  // playlist to suddenly reference a different transformation.
+  const keysReordered = moveElementToEnd(Object.keys(params), "artifact");
+
+  return keysReordered
     .map(key => querystringSingleKey(key, params[key]))
     .filter(part => part.length > 0)
     .join("&");
