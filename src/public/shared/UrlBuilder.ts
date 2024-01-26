@@ -7,7 +7,7 @@ import {
   UrlBuilderTransformationApiOptions,
   UrlBuilderTransformationOptions
 } from "./UrlBuilderTypes";
-import { BytescaleApiClientConfigUtils } from "./generated";
+import { BytescaleApiClientConfigUtils, encodeBytescaleQuerystringKVP } from "./generated";
 import { isDefinedEntry } from "../../private/TypeUtils";
 
 export class UrlBuilder {
@@ -131,8 +131,6 @@ export class UrlBuilder {
     if (params.length === 0) {
       return baseUrl;
     }
-    return `${baseUrl}?${params
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-      .join("&")}`;
+    return `${baseUrl}?${params.map(([key, value]) => encodeBytescaleQuerystringKVP(key, value)).join("&")}`;
   }
 }

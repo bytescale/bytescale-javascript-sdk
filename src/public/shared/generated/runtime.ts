@@ -349,7 +349,21 @@ function querystringSingleKey(key: string, value: string | number | null | undef
     // Matches 'array' or 'object' (which we want).
     return querystring(value as HTTPQuery);
   }
-  return `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`;
+  return encodeBytescaleQuerystringKVP(key, String(value));
+}
+
+/**
+ * Handles artifacts specially as these must use "/" instead of "%2F" in order for relative paths within the artifact's
+ * contents to work (assumes user has replaced "?" with "!"). For example, M3U8 artifacts that contain relative URLs to
+ * other M3U8s and/or media segments will only work if the user replaces "?" with "!" in the URL _and_ the artifact
+ * query param value has been written using "/" instead of "%2F", as this then means the URLs become relative to the
+ * artifact, as opposed to the file path.
+ */
+export function encodeBytescaleQuerystringKVP(key: string, value: string) {
+  if (key === "a" || key === "artifact") {
+    return `${key}=${encodeURIComponent(value).replace(/%2F/g, "/")}`;
+  }
+  return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
 export interface ApiResponse<T> {
