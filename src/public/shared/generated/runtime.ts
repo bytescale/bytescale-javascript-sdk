@@ -175,8 +175,10 @@ export class BaseAPI {
 
       // HTTP-level errors from intermediary services (e.g. AWS or the user's own infrastructure/proxies). On the browser,
       // this error is unlikely to be triggered since these errors will masqurade as CORS errors (see above) but in Node.js
-      // this error will appear from any intermediary service failure.
-      throw new Error(`Unable to connect to the Bytescale API (${response.status}): please try again.`);
+      // this error will appear from any intermediary service failure. Also occurs when calling ProcessFile for an
+      // asynchronous media job, where the transformation is initiated using the primary artifact: in this instance,
+      // a 404 JSON response is returned containing the transformation job until it completes.
+      throw new BytescaleGenericError(response, errorText, errorJson);
     }
 
     throw new Error(`Failure status code (${response.status}) received for request: ${init.method ?? "GET"} ${url}`);
@@ -281,6 +283,23 @@ export class CancelledError extends Error {
   }
 }
 
+/**
+ * Thrown when the Bytescale API cannot be reached or when an error is returned that cannot be parsed as a JSON error response.
+ */
+export class BytescaleGenericError extends Error {
+  override name: "BytescaleGenericError" = "BytescaleGenericError";
+  constructor(
+    public readonly response: Response,
+    public readonly responseText: string | undefined,
+    public readonly responseJson: object | undefined
+  ) {
+    super(`Unable to connect to the Bytescale API (${response.status}): please try again.`);
+  }
+}
+
+/**
+ * Thrown when the Bytescale API returns a JSON error response.
+ */
 export class BytescaleApiError extends Error {
   override name: "BytescaleApiError" = "BytescaleApiError";
   public readonly errorCode: string;
