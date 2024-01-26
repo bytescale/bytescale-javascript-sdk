@@ -49,7 +49,7 @@ describe("UrlBuilder", () => {
       filePath: "/example.jpg",
       options: { transformation: "preset", transformationPreset: "thumbnail", artifact: "/foo" }
     });
-    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?artifact=/foo";
     expect(actual).toEqual(expected);
   });
 
@@ -59,7 +59,7 @@ describe("UrlBuilder", () => {
       filePath: "/example.jpg",
       options: { transformation: "preset", transformationPreset: "thumbnail", artifact: "/foo" }
     });
-    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?artifact=/foo";
     expect(actual).toEqual(expected);
   });
 
@@ -74,7 +74,7 @@ describe("UrlBuilder", () => {
         cachePermanently: false
       }
     });
-    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?cache_perm=false&artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/thumbnail/example.jpg?cache_perm=false&artifact=/foo";
     expect(actual).toEqual(expected);
   });
 
@@ -121,7 +121,7 @@ describe("UrlBuilder", () => {
         auth: true
       }
     });
-    const expected = "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&version=50&cache_perm=auto&artifact=%2Ffoo";
+    const expected = "https://upcdn.io/1234abc/image/example.jpg?w=42&h=50&version=50&cache_perm=auto&artifact=/foo";
     expect(actual).toEqual(expected);
   });
 
