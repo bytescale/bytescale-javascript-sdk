@@ -1479,6 +1479,12 @@ export interface ProcessFileAndSaveRequest {
   destination?: FilePathDefinition;
   /**
    *
+   * @type {TransformationParams}
+   * @memberof ProcessFileAndSaveRequest
+   */
+  extendedParams?: TransformationParams;
+  /**
+   *
    * @type {CopyableFileDataFileMetadata}
    * @memberof ProcessFileAndSaveRequest
    */
@@ -1641,20 +1647,6 @@ export interface ProcessFileAndSaveResponseSync {
  */
 export type ProcessFileAndSaveResponseSyncAsyncEnum = false;
 
-/**
- * @type ProcessFileTransformationParamsParameter
- *
- * @export
- */
-export type ProcessFileTransformationParamsParameter =
-  | Array<{ [key: string]: ProcessFileTransformationParamsParameterOneOfValue }>
-  | { [key: string]: ProcessFileTransformationParamsParameterOneOfValue };
-/**
- * @type ProcessFileTransformationParamsParameterOneOfValue
- *
- * @export
- */
-export type ProcessFileTransformationParamsParameterOneOfValue = boolean | number | string;
 /**
  * Permissions applied to anonymous users who attempt to download files from a folder.
  *
@@ -1958,6 +1950,48 @@ export type StorageLayerUpdate =
   | R2Storage
   | S3Storage
   | WebStorage;
+/**
+ * @type TransformationParamValue
+ * A single transformation parameter provided to a Bytescale File Processing API.
+ *
+ * See TransformationParams for more information.
+ * @export
+ */
+export type TransformationParamValue = boolean | number | string;
+/**
+ * @type TransformationParams
+ * Transformation parameters provided to a Bytescale File Processing API.
+ *
+ * *Array support:*
+ *
+ * Arrays are specified by repeating the same parameter name multiple times on the querystring.
+ *
+ * For example, the following querystring declares a `file` parameter as an array containing two values (`/file1.txt` and `/file2.txt`):
+ *
+ * ```?file=/file1.txt&file=/file2.txt```
+ *
+ * The Bytescale SDKs and the ProcessFileAndSave request body (the `extendedParams` field) also support arrays of transformation parameters. These are specified by providing an array of objects as the field value instead of an object, for example:
+ *
+ * ```transformationParams: [{ file: "/file1.txt" }, { file: "/file2.txt" }]```
+ *
+ * This structure allows parameter groups to be retained, which is important for certain transformations. For example, the Video Processing API allows developers to specify multiple clusters of `w`, `h` and `q` parameters when specifying the Adaptive Bitrate (ABR) variants in an HTTP Live Streaming (HLS) output video.
+ *
+ * *Parameters are order sensitive:*
+ *
+ * The order of the parameters may be important. Please refer to the documentation of each File Processing API for more information.
+ *
+ * *Maximum URL length:*
+ *
+ * Bytescale URLs have a maximum total length of 1000 bytes (excluding the hostname and protocol).
+ *
+ * To provide a longer list of parameters to a Bytescale File Processing API, you must use ProcessFileAndSave (POST) instead of ProcessFile (GET). This allows you to specify parameters via the ProcessFileAndSave HTTP request body (via the `extendedParams` field) instead of via the querystring.
+ *
+ * The `extendedParams` field supports up to 400KB of transformation parameter data.
+ * @export
+ */
+export type TransformationParams =
+  | Array<{ [key: string]: TransformationParamValue }>
+  | { [key: string]: TransformationParamValue };
 /**
  * This data type specifies no update is to be performed.
  * @export

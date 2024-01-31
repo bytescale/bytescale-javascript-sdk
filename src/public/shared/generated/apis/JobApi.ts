@@ -27,7 +27,7 @@ import type {
 
 // Omitted by generator (so we add manually).
 // @ts-ignore
-import type { ProcessFileTransformationParamsParameter } from "../models";
+import type { TransformationParams } from "../models";
 
 export interface CancelJobParams {
   accountId: string;

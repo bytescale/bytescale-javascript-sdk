@@ -37,7 +37,7 @@ import type {
 
 // Omitted by generator (so we add manually).
 // @ts-ignore
-import type { ProcessFileTransformationParamsParameter } from "../models";
+import type { TransformationParams } from "../models";
 
 export interface CopyFileOperationParams {
   accountId: string;
@@ -175,7 +175,7 @@ export interface ProcessFileParams {
    * - https://www.bytescale.com/docs/audio-processing-api
    * - https://www.bytescale.com/docs/archive-processing-api
    */
-  transformationParams?: ProcessFileTransformationParamsParameter;
+  transformationParams?: TransformationParams;
 
   /**
    * Add this parameter and increment its value to force the file to be reprocessed.
@@ -214,7 +214,7 @@ export interface ProcessFileAndSaveOperationParams {
    * - https://www.bytescale.com/docs/audio-processing-api
    * - https://www.bytescale.com/docs/archive-processing-api
    */
-  transformationParams?: ProcessFileTransformationParamsParameter;
+  transformationParams?: TransformationParams;
 }
 
 export class FileApi extends runtime.BaseAPI {
