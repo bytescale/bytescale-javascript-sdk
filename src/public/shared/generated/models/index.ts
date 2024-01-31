@@ -542,9 +542,11 @@ export interface DigitalOceanStorageCredentials {
   spacesAccessKey: string;
 }
 /**
- * An object containing a `fileName` and/or `folderPath`.
+ * An object containing a `fileName` and/or `folderPath` field.
  *
- * Both fields are optional: omitted fields will use the API key's default values, which are configured per API key via the Bytescale Dashboard.
+ * The `folderPath` may be relative or absolute; paths are relative to the API key's default folder (configured per API key in the Bytescale Dashboard).
+ *
+ * If a field is omitted, the API key's default values will be used for that field. These are configured per API key via the Bytescale Dashboard.
  *
  * Supports path variables.
  * @export
@@ -1984,7 +1986,7 @@ export type TransformationParamValue = boolean | number | string;
  *
  * Bytescale URLs have a maximum total length of 1000 bytes (excluding the hostname and protocol).
  *
- * To provide a longer list of parameters to a Bytescale File Processing API, you must use ProcessFileAndSave (POST) instead of ProcessFile (GET). This allows you to specify parameters via the ProcessFileAndSave HTTP request body (via the `extendedParams` field) instead of via the querystring.
+ * To provide a longer parameter list to a Bytescale File Processing API, you must use ProcessFileAndSave (POST) instead of ProcessFile (GET). This allows you to specify parameters via the ProcessFileAndSave HTTP request body (via the `extendedParams` field).
  *
  * The `extendedParams` field supports up to 400KB of transformation parameter data.
  * @export
