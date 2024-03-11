@@ -234,7 +234,7 @@ export interface BeginMultipartUploadResponseUploadParts {
  */
 export interface CompleteUploadPartRequest {
   /**
-   * File ETag.
+   * The file's ETag. An ETag (or entity tag) is an identifier for a specific version of a file.
    * @type {string}
    * @memberof CompleteUploadPartRequest
    */
@@ -675,6 +675,12 @@ export interface FileDetails {
    * @memberof FileDetails
    */
   accountId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileDetails
+   */
+  etag: string | null;
   /**
    * The file metadata specified in the original upload request as a JSON object.
    * @type {{ [key: string]: any; }}
