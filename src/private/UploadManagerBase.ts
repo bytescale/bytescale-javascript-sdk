@@ -3,7 +3,7 @@ import {
   BytescaleApiClientConfig,
   BytescaleApiClientConfigUtils,
   CancelledError,
-  FileDetails,
+  CompleteMultipartUploadResponse,
   UploadApi,
   UploadPart
 } from "../public/shared/generated";
@@ -13,6 +13,7 @@ import { PreUploadInfo } from "./model/PreUploadInfo";
 import { UploadSourceBlob } from "./model/UploadSourceProcessed";
 import { PutUploadPartResult } from "./model/PutUploadPartResult";
 import { AddCancellationHandler } from "./model/AddCancellationHandler";
+import { UploadResult } from "./model/UploadResult";
 import { UploadManagerParams, UploadProgress, UploadSource } from "../public/shared/CommonTypes";
 
 /**
@@ -30,7 +31,7 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     this.accountId = BytescaleApiClientConfigUtils.getAccountId(config);
   }
 
-  async upload(request: UploadManagerParams): Promise<FileDetails> {
+  async upload(request: UploadManagerParams): Promise<UploadResult> {
     this.assertNotCancelled(request);
 
     const source = this.processUploadSource(request.data);
@@ -50,8 +51,9 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     const { cancel, addCancellationHandler } = this.makeCancellationMethods();
 
     const intervalHandle = setInterval(this.onIntervalTick(request, cancel), this.intervalMs);
+    let uploadedParts: CompleteMultipartUploadResponse[];
     try {
-      await this.mapAsync(
+      uploadedParts = await this.mapAsync(
         parts,
         preUploadInfo.maxConcurrentUploadParts,
         async part =>
@@ -62,7 +64,11 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
       clearInterval(intervalHandle);
     }
 
-    return uploadInfo.file;
+    const etag = uploadedParts.flatMap(x => (x.status === "Completed" ? [x.etag] : []))[0];
+    return {
+      ...uploadInfo.file,
+      etag // The 'etag' in the original 'uploadInfo.file' will be null, so we set it to the final etag value here.
+    };
   }
 
   protected getBlobInfo({ value: { name, size, type } }: UploadSourceBlob): Partial<PreUploadInfo> & { size: number } {
@@ -168,13 +174,13 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     uploadInfo: BeginMultipartUploadResponse,
     onProgress: OnPartProgress,
     addCancellationHandler: AddCancellationHandler
-  ): Promise<void> {
+  ): Promise<CompleteMultipartUploadResponse> {
     this.assertNotCancelled(request);
     const part = await this.getUploadPart(partIndex, uploadInfo);
     this.assertNotCancelled(request);
     const etag = await this.putUploadPart(part, source, onProgress, addCancellationHandler);
     this.assertNotCancelled(request);
-    await this.uploadApi.completeUploadPart({
+    return await this.uploadApi.completeUploadPart({
       accountId: this.accountId,
       uploadId: uploadInfo.uploadId,
       uploadPartIndex: partIndex,
@@ -237,17 +243,19 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     };
   }
 
-  private async mapAsync<T>(items: T[], concurrency: number, callback: (item: T) => Promise<void>): Promise<void> {
+  private async mapAsync<T, T2>(items: T[], concurrency: number, callback: (item: T) => Promise<T2>): Promise<T2[]> {
+    const result: T2[] = [];
     const workQueue = [...items];
     await Promise.all(
       [...Array(concurrency).keys()].map(async () => {
         while (workQueue.length > 0) {
           const work = workQueue.shift(); // IMPORTANT: use 'shift' instead of 'pop' to ensure 'items' are processed in order when 'concurrency = 1'.
           if (work !== undefined) {
-            await callback(work);
+            result.push(await callback(work));
           }
         }
       })
     );
+    return result;
   }
 }
