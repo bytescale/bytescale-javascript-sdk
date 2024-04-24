@@ -1,4 +1,5 @@
 .openapi-generator-ignore
+apis/CacheApi.ts
 apis/FileApi.ts
 apis/FolderApi.ts
 apis/JobApi.ts

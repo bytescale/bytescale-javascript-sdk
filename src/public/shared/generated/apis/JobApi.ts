@@ -125,7 +125,7 @@ export class JobApi extends runtime.BaseAPI {
   }
 
   /**
-   * Lists the most recently issued background jobs.  Requires a `secret_*` API key.
+   * Lists the 10 most recently created jobs for the specified job type(s).  Requires a `secret_*` API key.
    */
   async listRecentJobs(params: ListRecentJobsParams): Promise<ListRecentJobsResponse> {
     const query: any = {};

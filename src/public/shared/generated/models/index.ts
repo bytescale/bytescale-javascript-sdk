@@ -22,6 +22,7 @@ export type AccountJobType =
   | "ProcessVideoJob"
   | "ProcessAudioJob"
   | "AntivirusJob"
+  | "ResetCacheJob"
   | "DeleteFolderBatchJob"
   | "DeleteFileBatchJob"
   | "CopyFolderBatchJob"
@@ -117,6 +118,12 @@ export interface BasicUploadResponse {
    * @memberof BasicUploadResponse
    */
   accountId: string;
+  /**
+   * The file's ETag, short for "entity tag", reflects the file's version and changes whenever the file is modified.
+   * @type {string}
+   * @memberof BasicUploadResponse
+   */
+  etag: string;
   /**
    * Absolute path to a file. Begins with a `/`.
    * @type {string}
@@ -228,13 +235,65 @@ export interface BeginMultipartUploadResponseUploadParts {
   count: number;
 }
 /**
+ * @type CompleteMultipartUploadResponse
+ * Response body for CompleteUploadPart.
+ * @export
+ */
+export type CompleteMultipartUploadResponse =
+  | CompleteMultipartUploadResponseCompleted
+  | CompleteMultipartUploadResponsePending;
+/**
+ * Response body for CompleteUploadPart when the final upload part is marked as completed.
+ * @export
+ * @interface CompleteMultipartUploadResponseCompleted
+ */
+export interface CompleteMultipartUploadResponseCompleted {
+  /**
+   * The file's ETag, short for "entity tag", reflects the file's version and changes whenever the file is modified.
+   * @type {string}
+   * @memberof CompleteMultipartUploadResponseCompleted
+   */
+  etag: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteMultipartUploadResponseCompleted
+   */
+  status: CompleteMultipartUploadResponseCompletedStatusEnum;
+}
+
+/**
+ * @export
+ */
+export type CompleteMultipartUploadResponseCompletedStatusEnum = "Completed";
+
+/**
+ * Response body for CompleteUploadPart when additional upload parts still need to be marked as completed.
+ * @export
+ * @interface CompleteMultipartUploadResponsePending
+ */
+export interface CompleteMultipartUploadResponsePending {
+  /**
+   *
+   * @type {string}
+   * @memberof CompleteMultipartUploadResponsePending
+   */
+  status: CompleteMultipartUploadResponsePendingStatusEnum;
+}
+
+/**
+ * @export
+ */
+export type CompleteMultipartUploadResponsePendingStatusEnum = "Pending";
+
+/**
  * Request body for CompleteUploadPart.
  * @export
  * @interface CompleteUploadPartRequest
  */
 export interface CompleteUploadPartRequest {
   /**
-   * The file's ETag. An ETag (or entity tag) is an identifier for a specific version of a file.
+   * The file's ETag, short for "entity tag", reflects the file's version and changes whenever the file is modified.
    * @type {string}
    * @memberof CompleteUploadPartRequest
    */
@@ -338,7 +397,7 @@ export interface CopyFolderRequest {
    */
   copyOverriddenStorage?: boolean;
   /**
-   * If `true` then copies virtual folder settings at the current path and below, else only files will be copied.
+   * If `true` then copies virtual folders at the current path and below, else only files will be copied.
    *
    * Virtual folders are folders that have been created using the PutFolder operation.
    *
@@ -362,9 +421,9 @@ export interface CopyFolderRequest {
    */
   metadata?: CopyableFileDataFileMetadata;
   /**
-   * If `true` then copies files and virtual folders that are descendants of the `source` folder.
+   * If `true` then copies files and folders that are descendants of the `source` folder.
    *
-   * If `false` then only copies files that are direct children of the `source` folder, and does not copy descendant virtual folders (children or otherwise).
+   * If `false` then only copies files that are direct children of the `source` folder, and does not copy descendant folders (children or otherwise).
    *
    * Default: true
    * @type {boolean}
@@ -1869,6 +1928,50 @@ export interface R2StorageCredentials {
    * @memberof R2StorageCredentials
    */
   r2AccessKey: string;
+}
+/**
+ * Request body for ResetCache.
+ *
+ * You can choose to reset the edge cache, or permanent cache, or both caches.
+ *
+ * *Warning:* Resetting the permanent cache (by setting ```resetPermanentCache: true```) may lead to a significant increase in processing time if numerous file transformations need to be re-performed upon their next request.
+ *
+ * *Recommended:* Prevent cache resets by adding a ```?v=<etag>``` querystring parameter to your URLs. This ensures your URLs change when your files change, eliminating the need for cache resets. The `etag` field is returned by GetFileDetails and all upload operations.
+ *
+ * *Example patterns:*
+ *
+ * - ```"/*"```
+ * - ```"/raw/example.jpg"```
+ * - ```"/image/example.jpg"```
+ * - ```"/image/customers/abc/*"```
+ *
+ * You may only use ```*``` at the end of the pattern. You must not include your account ID prefix in the pattern.
+ * @export
+ * @interface ResetCacheRequest
+ */
+export interface ResetCacheRequest {
+  /**
+   * The URL pattern to reset the cache for, excluding the account ID, but including the delivery method prefix (e.g. "raw", "image", etc.).
+   *
+   * May end with a `*` to indicate that all files with this prefix are to be removed from the cache.
+   *
+   * Specify `/*` to reset your entire cache.
+   * @type {string}
+   * @memberof ResetCacheRequest
+   */
+  pattern: string;
+  /**
+   * If `true` then resets the edge cache for the location(s) specified by `pattern`.
+   * @type {boolean}
+   * @memberof ResetCacheRequest
+   */
+  resetEdgeCache: boolean;
+  /**
+   * If `true` then resets the permanent cache for the location(s) specified by `pattern`.
+   * @type {boolean}
+   * @memberof ResetCacheRequest
+   */
+  resetPermanentCache: boolean;
 }
 /**
  * Storage layer used for storing files in custom S3 buckets, as opposed to Bytescale's built-in storage.

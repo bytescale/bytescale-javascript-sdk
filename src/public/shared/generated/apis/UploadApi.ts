@@ -22,6 +22,8 @@ import type {
   // @ts-ignore
   BeginMultipartUploadResponse,
   // @ts-ignore
+  CompleteMultipartUploadResponse,
+  // @ts-ignore
   CompleteUploadPartRequest,
   // @ts-ignore
   ErrorResponse,
@@ -111,7 +113,7 @@ export class UploadApi extends runtime.BaseAPI {
   /**
    * Marks an upload part as uploaded.  You must call this endpoint after you have successfully issued a `PUT` request to the `uploadUrl` on the corresponding UploadPart.
    */
-  async completeUploadPart(params: CompleteUploadPartOperationParams): Promise<void> {
+  async completeUploadPart(params: CompleteUploadPartOperationParams): Promise<CompleteMultipartUploadResponse> {
     const query: any = {};
     const headers: runtime.HTTPHeaders = {};
 
@@ -144,7 +146,7 @@ export class UploadApi extends runtime.BaseAPI {
       [][0]
     );
 
-    return await new runtime.VoidApiResponse(response).value();
+    return await new runtime.JSONApiResponse<CompleteMultipartUploadResponse>(response).value();
   }
 
   /**

@@ -109,13 +109,6 @@ export interface ProcessFileParams {
   transformation: string;
 
   /**
-   * Some transformations output multiple files, called artifacts.
-   *
-   * You can download each individual transformation artifact by specifying its path with this parameter
-   */
-  artifact?: string;
-
-  /**
    * Specifies whether to cache the transformed result.
    *
    * If set to `false` the transformation will be executed on every request.
@@ -125,6 +118,13 @@ export interface ProcessFileParams {
    * Default: true
    */
   cache?: boolean;
+
+  /**
+   * Some transformations output multiple files, called artifacts.
+   *
+   * You can download each individual transformation artifact by specifying its path with this parameter
+   */
+  artifact?: string;
 
   /**
    * Only serve transformations from the cache; do not perform new transformations on cache miss.
@@ -337,7 +337,7 @@ export class FileApi extends runtime.BaseAPI {
   async downloadFile(params: DownloadFileParams): Promise<runtime.BinaryResult> {
     const query: any = {};
     if (params.cache !== undefined) {
-      query["cache"] = params.cache;
+      query["Cache"] = params.cache;
     }
 
     if (params.cacheTtl !== undefined) {
@@ -408,12 +408,12 @@ export class FileApi extends runtime.BaseAPI {
    */
   async processFile(params: ProcessFileParams): Promise<runtime.BinaryResult> {
     const query: any = {};
-    if (params.artifact !== undefined) {
-      query["artifact"] = params.artifact;
+    if (params.cache !== undefined) {
+      query["Cache"] = params.cache;
     }
 
-    if (params.cache !== undefined) {
-      query["cache"] = params.cache;
+    if (params.artifact !== undefined) {
+      query["artifact"] = params.artifact;
     }
 
     if (params.cacheOnly !== undefined) {
