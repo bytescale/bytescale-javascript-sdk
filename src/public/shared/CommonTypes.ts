@@ -1,4 +1,4 @@
-import { BeginMultipartUploadRequest } from "./generated";
+import { BeginMultipartUploadRequest, FileDetails } from "./generated";
 
 /**
  * Workaround for tsc aliases, where we cannot export implementation-less modules in our dists.
@@ -22,6 +22,13 @@ export interface UploadProgress {
   bytesTotal: number;
   progress: number;
 }
+
+export type UploadResult = Omit<FileDetails, "etag"> & {
+  /**
+   * The file's ETag, short for "entity tag", reflects the file's version and changes whenever the file is modified.
+   */
+  etag: string;
+};
 
 export type UploadSource = NodeJS.ReadableStream | BlobLike | Buffer | string;
 

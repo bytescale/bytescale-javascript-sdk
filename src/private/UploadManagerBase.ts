@@ -13,8 +13,7 @@ import { PreUploadInfo } from "./model/PreUploadInfo";
 import { UploadSourceBlob } from "./model/UploadSourceProcessed";
 import { PutUploadPartResult } from "./model/PutUploadPartResult";
 import { AddCancellationHandler } from "./model/AddCancellationHandler";
-import { UploadResult } from "./model/UploadResult";
-import { UploadManagerParams, UploadProgress, UploadSource } from "../public/shared/CommonTypes";
+import { UploadManagerParams, UploadProgress, UploadSource, UploadResult } from "../public/shared/CommonTypes";
 
 /**
  * Methods common to UploadManagerNode and UploadManagerBrowser.
