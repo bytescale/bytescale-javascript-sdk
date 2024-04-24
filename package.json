@@ -1,6 +1,6 @@
 {
   "name": "@bytescale/sdk",
-  "version": "3.35.0",
+  "version": "3.34.0",
   "description": "Bytescale JavaScript SDK",
   "author": "Bytescale <hello@bytescale.com> (https://www.bytescale.com)",
   "license": "MIT",
@@ -60,7 +60,6 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules npx jest --runInBand --silent=false --verbose=false",
     "prepack": "npm run clean && webpack && tsc-alias && rm dist/types/index.node.d.ts && rm dist/types/index.worker.d.ts && mv dist/types/index.browser.d.ts dist/types/index.d.ts",
     "postpack": "[ ! -f bytescale-sdk-*.tgz ] || mv bytescale-sdk-*.tgz bytescale-sdk.tgz",
-    "prepare": "husky install",
     "prepack:cdn": "npm run clean && webpack --config webpack.config.cdn.js && find dist -name \"*.ts\" -type f -delete && for f in dist/*.js; do cp -- \"$f\" \"${f%.js}\"; done",
     "publish:executeIfReleaseCommit": "bash -c 'COMMIT=$(git log -1 --pretty=%B) && [ \"${COMMIT:0:8}\" != \"Release \" ] || npm run publish:execute'",
     "publish:execute": "npm run publish:cdn && npm publish && npm run publish:createGitHubRelease",
