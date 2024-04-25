@@ -811,7 +811,7 @@ export interface FileDetails {
    */
   accountId: string;
   /**
-   *
+   * The file's ETag, short for "entity tag", reflects the file's version and changes whenever the file is modified.
    * @type {string}
    * @memberof FileDetails
    */
