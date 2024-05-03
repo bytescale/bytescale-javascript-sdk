@@ -34,7 +34,8 @@ export type UrlBuilderTransformationApiOptions =
   | UrlBuilderOptionsImage
   | UrlBuilderOptionsVideo
   | UrlBuilderOptionsAudio
-  | UrlBuilderOptionsArchive;
+  | UrlBuilderOptionsArchive
+  | UrlBuilderOptionsAntivirus;
 
 export interface UrlBuilderOptionsBase extends NonDeprecatedCommonQueryParams, DeprecatedCommonQueryParams {
   /**
@@ -115,6 +116,15 @@ export interface UrlBuilderOptionsAudio extends UrlBuilderOptionsTransformationA
    * https://www.bytescale.com/docs/audio-processing-api
    */
   transformation: "audio";
+}
+
+export interface UrlBuilderOptionsAntivirus extends UrlBuilderOptionsTransformationApi<ParameterGroup> {
+  /**
+   * Set to "antivirus" to use Bytescale's Antivirus API:
+   *
+   * https://www.bytescale.com/docs/antivirus-api
+   */
+  transformation: "antivirus";
 }
 
 export interface UrlBuilderOptionsArchive extends UrlBuilderOptionsTransformationApi<ParameterGroup> {
