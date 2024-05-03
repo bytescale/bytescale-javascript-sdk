@@ -74,7 +74,7 @@ self.addEventListener("fetch", function (event) {
         if (url.startsWith(urlPrefix) && event.request.method.toUpperCase() === "GET") {
           const newHeaders = new Headers(event.request.headers);
           for (const { key, value } of headers) {
-            newHeaders.append(key, value);
+            newHeaders.set(key, value); // With 'append' we have seen the 'authorization' header double-up, so use set.
           }
           const newRequest = new Request(event.request, {
             mode: "cors", // Required for adding custom HTTP headers.
