@@ -546,8 +546,7 @@ UrlBuilder.url({
   accountId: "1234abc",
   filePath: "/example.zip",
   options: {
-    transformation: "antivirus",
-    artifact: "/document.docx"
+    transformation: "antivirus"
   }
 });
 ```
