@@ -62,6 +62,13 @@ export interface NonDeprecatedCommonQueryParams {
   cacheTtl?: number;
 
   /**
+   * Specifies the maximum amount of time, in seconds, that 404 responses will be cached in the Bytescale CDN's edge cache.
+   *
+   * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
+   */
+  cacheTtlNotFound?: number;
+
+  /**
    * Forces the browser to display a download prompt for the file, instead of displaying the file in the browser.
    *
    * When set to true, the Bytescale CDN will add a 'content-disposition: attachment' header to the HTTP response.
