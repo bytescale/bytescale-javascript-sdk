@@ -83,6 +83,13 @@ export interface DownloadFileParams {
   cacheTtl?: number;
 
   /**
+   * Specifies the maximum amount of time, in seconds, that 404 responses will be cached in the Bytescale CDN's edge cache.
+   *
+   * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
+   */
+  cacheTtlNotFound?: number;
+
+  /**
    * Downloads the latest version of your file (if you have overwritten it) when added to the URL with a unique value.
    *
    *   The value of the `version` parameter can be anything, e.g. an incremental number, a timestamp, etc.
@@ -164,6 +171,13 @@ export interface ProcessFileParams {
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
   cacheTtl?: number;
+
+  /**
+   * Specifies the maximum amount of time, in seconds, that 404 responses will be cached in the Bytescale CDN's edge cache.
+   *
+   * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
+   */
+  cacheTtlNotFound?: number;
 
   /**
    * Parameters to submit to the File Processing API (e.g. the Image Processing API).
@@ -344,6 +358,10 @@ export class FileApi extends runtime.BaseAPI {
       query["cache_ttl"] = params.cacheTtl;
     }
 
+    if (params.cacheTtlNotFound !== undefined) {
+      query["cache_ttl_not_found"] = params.cacheTtlNotFound;
+    }
+
     if (params.version !== undefined) {
       query["version"] = params.version;
     }
@@ -426,6 +444,10 @@ export class FileApi extends runtime.BaseAPI {
 
     if (params.cacheTtl !== undefined) {
       query["cache_ttl"] = params.cacheTtl;
+    }
+
+    if (params.cacheTtlNotFound !== undefined) {
+      query["cache_ttl_not_found"] = params.cacheTtlNotFound;
     }
 
     if (params.transformationParams !== undefined) {

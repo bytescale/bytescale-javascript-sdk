@@ -1936,7 +1936,7 @@ export interface R2StorageCredentials {
  *
  * *Warning:* Resetting the permanent cache (by setting ```resetPermanentCache: true```) may lead to a significant increase in processing time if numerous file transformations need to be re-performed upon their next request.
  *
- * *Recommended:* Prevent cache resets by adding a ```?v=<etag>``` querystring parameter to your URLs. This ensures your URLs change when your files change, eliminating the need for cache resets. The `etag` field is returned by GetFileDetails and all upload operations.
+ * *Recommended:* Prevent cache resets by adding a ```?v=<etag>``` querystring parameter to your URLs. This ensures your URLs change when your files change, eliminating the need for cache resets. The `etag` field is returned by GetFileDetails and all upload operations, and can be saved to your database.
  *
  * *Example patterns:*
  *
