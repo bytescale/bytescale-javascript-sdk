@@ -538,7 +538,7 @@ UrlBuilder.url({
 
 #### Antivirus
 
-To scan the file `example.zip` for viruses:
+To scan the file `example.zip` for viruses, use the following:
 
 ```javascript
 // Returns: "https://upcdn.io/1234abc/antivirus/example.zip"
