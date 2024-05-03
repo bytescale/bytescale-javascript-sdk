@@ -74,7 +74,14 @@ self.addEventListener("fetch", function (event) {
         if (url.startsWith(urlPrefix) && event.request.method.toUpperCase() === "GET") {
           const newHeaders = new Headers(event.request.headers);
           for (const { key, value } of headers) {
-            newHeaders.set(key, value); // With 'append' we have seen the 'authorization' header double-up, so use set.
+            // Preserve existing headers in the request. This is crucial for 'fetch' requests that might already include
+            // an "Authorization" header, enabling access to certain resources. For instance, the Bytescale Dashboard
+            // uses an explicit "Authorization" header in a 'fetch' request to allow account admins to download private
+            // files. In these scenarios, it's important not to replace these headers with the global JWT managed by the
+            // AuthManager.
+            if (!newHeaders.has(key)) {
+              newHeaders.set(key, value);
+            }
           }
           const newRequest = new Request(event.request, {
             mode: "cors", // Required for adding custom HTTP headers.
