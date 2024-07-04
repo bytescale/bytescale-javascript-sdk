@@ -130,10 +130,17 @@ export class ServiceWorkerUtils<TMessage> {
   }
 
   private async getActiveServiceWorker(serviceWorkerScope: string): Promise<ServiceWorker | undefined> {
+    // Existing active Service Workers will not receive 'fetch' events in sessions that start with a hard reload, so
+    // we must unregister them and register a new one. (See: https://github.com/mswjs/msw/issues/98#issuecomment-612118211)
+    const isHardReload = navigator.serviceWorker.controller === null;
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (const registration of registrations) {
       if (registration.active !== null && registration.scope === serviceWorkerScope) {
-        return registration.active;
+        if (isHardReload) {
+          await registration.unregister();
+        } else {
+          return registration.active;
+        }
       }
     }
 
