@@ -1,10 +1,12 @@
 export type ServiceWorkerConfig = ServiceWorkerConfigUninitialized | ServiceWorkerConfigInitialized;
 
 export interface ServiceWorkerConfigUninitialized {
-  serviceWorkerScope: undefined;
   serviceWorkerScript: string;
+  type: "Uninitialized";
 }
+
 export interface ServiceWorkerConfigInitialized {
-  serviceWorkerScope: string;
+  serviceWorkerScope: string | undefined; // Scope can still be undefined even when initialized.
   serviceWorkerScript: string;
+  type: "Initialized";
 }

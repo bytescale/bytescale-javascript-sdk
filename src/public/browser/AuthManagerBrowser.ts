@@ -45,7 +45,7 @@ class AuthManagerImpl implements AuthManagerInterface {
           params.serviceWorkerScript !== undefined && this.serviceWorkerUtils.canUseServiceWorkers()
             ? {
                 serviceWorkerScript: params.serviceWorkerScript,
-                serviceWorkerScope: undefined
+                type: "Uninitialized"
               }
             : undefined
       };
