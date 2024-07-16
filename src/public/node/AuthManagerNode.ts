@@ -13,6 +13,10 @@ class AuthManagerImpl implements AuthManagerInterface {
   isAuthSessionActive(): boolean {
     return false;
   }
+
+  isAuthSessionReady(): boolean {
+    return false;
+  }
 }
 
 /**

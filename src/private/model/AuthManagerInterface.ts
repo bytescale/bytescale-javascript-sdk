@@ -112,4 +112,9 @@ export interface AuthManagerInterface {
    * Checks if an authenticated Bytescale API and Bytescale CDN session is active.
    */
   isAuthSessionActive: () => boolean;
+
+  /**
+   * Checks if an authenticated Bytescale API and Bytescale CDN session is active and ready to authenticate HTTP requests.
+   */
+  isAuthSessionReady: () => boolean;
 }

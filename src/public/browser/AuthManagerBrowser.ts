@@ -27,6 +27,10 @@ class AuthManagerImpl implements AuthManagerInterface {
     return AuthSessionState.getSession() !== undefined;
   }
 
+  isAuthSessionReady(): boolean {
+    return AuthSessionState.getSession()?.accessToken !== undefined;
+  }
+
   async beginAuthSession(params: BeginAuthSessionParams): Promise<void> {
     const session = await this.authSessionMutex.safe(async () => {
       // We check both 'session' and 'sessionDisposing' here, as we don't want to call 'beginAuthSession' until the session is fully disposed.
@@ -120,6 +124,11 @@ class AuthManagerImpl implements AuthManagerInterface {
             session.authServiceWorker,
             this.serviceWorkerScriptFieldName
           );
+
+          // Allow time for the service worker to receive and process the message. Since this is asynchronous and not
+          // synchronized, we need to wait for a sufficient amount of time to ensure the service worker is ready to
+          // authenticate requests, so that after 'beginAuthSession' completes, users can start making requests.
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
@@ -131,6 +140,7 @@ class AuthManagerImpl implements AuthManagerInterface {
         // There's no need to print a warning for this: it's OK to silently request the JWT before it expires. Also, this is 24 days in this case!
         timeout = Math.min(timeout, this.maxJwtTtlSeconds);
 
+        // Set this at the end, as it's also used to signal 'isAuthSessionReady', so must be set after configuring the Service Worker, etc.
         session.accessToken = setTokenResult.accessToken;
       } catch (e) {
         // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
