@@ -148,6 +148,8 @@ class AuthManagerImpl implements AuthManagerInterface {
         // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
         ConsoleUtils.warn(`Unable to refresh JWT access token: ${e as string}`);
       } finally {
+        // 'setTimeout' can be paused (e.g., during hibernation), risking JWT expiration before it triggers. We use a
+        // scheduler to check wall-clock time every second and execute the callback at the scheduled time (below).
         session.accessTokenRefreshHandle = this.scheduler.schedule(expires, () => {
           this.refreshAccessToken(session).then(
             () => {},

@@ -1,5 +1,13 @@
 import { ConsoleUtils } from "./ConsoleUtils";
 
+/**
+ * -------------------------
+ * Q: Why not use 'setTimeout'?
+ * -------------------------
+ * A: setTimeout can be paused (e.g., during hibernation), risking JWT expiration before it triggers.
+ *    We therefore use a scheduler to check wall-clock time every second and execute the callback at the scheduled time.
+ * -------------------------
+ */
 export class Scheduler {
   private callbacks: { [handle: number]: { callback: () => void; epoch: number } } = {};
   private nextId: number = 0;
