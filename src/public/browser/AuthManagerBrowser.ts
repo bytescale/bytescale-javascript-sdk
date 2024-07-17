@@ -7,6 +7,7 @@ import { SetAccessTokenRequestDto } from "../../private/dtos/SetAccessTokenReque
 import { SetAccessTokenResponseDto } from "../../private/dtos/SetAccessTokenResponseDto";
 import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
 import { ServiceWorkerUtils } from "../../private/ServiceWorkerUtils";
+import { Scheduler } from "../../private/Scheduler";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -15,9 +16,9 @@ class AuthManagerImpl implements AuthManagerInterface {
   private readonly contentTypeJson = "application/json";
   private readonly contentTypeText = "text/plain";
   private readonly minJwtTtlSeconds = 10;
-  private readonly maxJwtTtlSeconds = 2147483; // Max value for window.setTimeout is 2147483647ms -- if we go over this, the timeout fires immediately.
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly refreshBeforeExpirySeconds = 20;
+  private readonly scheduler = new Scheduler();
 
   constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils<AuthSwSetConfigDto>) {
     this.authSessionMutex = AuthSessionState.getMutex();
@@ -74,7 +75,7 @@ class AuthManagerImpl implements AuthManagerInterface {
       session.isActive = false;
 
       if (session.accessTokenRefreshHandle !== undefined) {
-        clearTimeout(session.accessTokenRefreshHandle);
+        this.scheduler.unschedule(session.accessTokenRefreshHandle);
       }
 
       await this.deleteAccessToken(session.params);
@@ -96,7 +97,9 @@ class AuthManagerImpl implements AuthManagerInterface {
         return;
       }
 
-      let timeout = this.retryAuthAfterErrorSeconds;
+      const secondsFromNow = (seconds: number): number => Date.now() + seconds * 1000;
+
+      let expires = secondsFromNow(this.retryAuthAfterErrorSeconds);
 
       try {
         const jwt = await this.getAccessToken(session.params, await session.params.authHeaders());
@@ -116,7 +119,7 @@ class AuthManagerImpl implements AuthManagerInterface {
               config: [
                 {
                   headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
-                  expires: Date.now() + setTokenResult.ttlSeconds * 1000,
+                  expires: secondsFromNow(setTokenResult.ttlSeconds),
                   urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
                 }
               ]
@@ -132,13 +135,12 @@ class AuthManagerImpl implements AuthManagerInterface {
         }
 
         const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
-        timeout = Math.max(desiredTtl, this.minJwtTtlSeconds);
-        if (desiredTtl !== timeout) {
-          ConsoleUtils.warn(`JWT expiration is too short: waiting for ${timeout} seconds before refreshing.`);
+        const actualTtl = Math.max(desiredTtl, this.minJwtTtlSeconds);
+        if (desiredTtl !== actualTtl) {
+          ConsoleUtils.warn(`JWT expiration is too short: waiting for ${actualTtl} seconds before refreshing.`);
         }
 
-        // There's no need to print a warning for this: it's OK to silently request the JWT before it expires. Also, this is 24 days in this case!
-        timeout = Math.min(timeout, this.maxJwtTtlSeconds);
+        expires = secondsFromNow(actualTtl);
 
         // Set this at the end, as it's also used to signal 'isAuthSessionReady', so must be set after configuring the Service Worker, etc.
         session.accessToken = setTokenResult.accessToken;
@@ -146,13 +148,13 @@ class AuthManagerImpl implements AuthManagerInterface {
         // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
         ConsoleUtils.warn(`Unable to refresh JWT access token: ${e as string}`);
       } finally {
-        session.accessTokenRefreshHandle = window.setTimeout(() => {
+        session.accessTokenRefreshHandle = this.scheduler.schedule(expires, () => {
           this.refreshAccessToken(session).then(
             () => {},
             // Should not occur, as this method shouldn't throw errors.
             e => ConsoleUtils.error(`Unexpected error when refreshing JWT access token: ${e as string}`)
           );
-        }, timeout * 1000);
+        });
       }
     });
   }
