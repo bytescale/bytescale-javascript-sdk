@@ -87,7 +87,7 @@ export interface DownloadFileParams {
    *
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
-  cacheTtlNotFound?: number;
+  cacheTtl404?: number;
 
   /**
    * Downloads the latest version of your file (if you have overwritten it) when added to the URL with a unique value.
@@ -177,7 +177,7 @@ export interface ProcessFileParams {
    *
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
-  cacheTtlNotFound?: number;
+  cacheTtl404?: number;
 
   /**
    * Parameters to submit to the File Processing API (e.g. the Image Processing API).
@@ -358,8 +358,8 @@ export class FileApi extends runtime.BaseAPI {
       query["cache_ttl"] = params.cacheTtl;
     }
 
-    if (params.cacheTtlNotFound !== undefined) {
-      query["cache_ttl_not_found"] = params.cacheTtlNotFound;
+    if (params.cacheTtl404 !== undefined) {
+      query["cache_ttl_404"] = params.cacheTtl404;
     }
 
     if (params.version !== undefined) {
@@ -446,8 +446,8 @@ export class FileApi extends runtime.BaseAPI {
       query["cache_ttl"] = params.cacheTtl;
     }
 
-    if (params.cacheTtlNotFound !== undefined) {
-      query["cache_ttl_not_found"] = params.cacheTtlNotFound;
+    if (params.cacheTtl404 !== undefined) {
+      query["cache_ttl_404"] = params.cacheTtl404;
     }
 
     if (params.transformationParams !== undefined) {

@@ -66,7 +66,7 @@ export interface NonDeprecatedCommonQueryParams {
    *
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
-  cacheTtlNotFound?: number;
+  cacheTtl404?: number;
 
   /**
    * Forces the browser to display a download prompt for the file, instead of displaying the file in the browser.

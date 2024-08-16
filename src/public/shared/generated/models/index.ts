@@ -397,9 +397,9 @@ export interface CopyFolderRequest {
    */
   copyOverriddenStorage?: boolean;
   /**
-   * If `true` then copies virtual folders at the current path and below, else only files will be copied.
+   * If `true` then copies virtual folders at the current path and below (virtual folders are folders created using the PutFolder operation).
    *
-   * Virtual folders are folders that have been created using the PutFolder operation.
+   * If `false` then virtual folders will not be copied, meaning no folder settings will be copied to the destination, but the files of any virtual folders will still be copied if `copyFiles` is set to `true`.
    *
    * Conditional: `copyVirtualFolders` and `copyOverriddenStorage` cannot both be `true`.
    *
@@ -586,7 +586,7 @@ export interface DeleteFolderBatchRequest {
  *
  * You can use ListFolder to preview the operation using the `dryRun` parameter.
  *
- * *When deleting a folder with external storage:* if the folder at `folderPath` has overridden storage settings (like an AWS S3 bucket), no files will be deleted, regardless of the parameters you pass. Only the mapping will be removed. If the folder at `folderPath` has inherited storage settings but includes subfolders with overridden storage settings, files in those subfolders won't be deleted, regardless of the parameters you pass. In summary, files in folders with overridden storage are never deleted, unless you directly delete a subfolder of such a folder.
+ * *External storage:* external files are only deleted when you directly delete a file or subfolder of a folder that has external storage configured. If you delete the folder itself, only the mapping is removed.
  * @export
  * @interface DeleteFolderRequest
  */
@@ -600,7 +600,7 @@ export interface DeleteFolderRequest {
    */
   deleteFiles?: boolean;
   /**
-   * If `true` then deletes folder settings.
+   * If `true` then deletes virtual folders (virtual folders are folders created using the PutFolder operation).
    *
    * Default: true
    * @type {boolean}
@@ -940,7 +940,7 @@ export interface FileSummary {
 export type FileSummaryTypeEnum = "File";
 
 /**
- *
+ * Full details of a given folder.
  * @export
  * @interface FolderDetails
  */

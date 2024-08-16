@@ -86,13 +86,13 @@ export class UrlBuilder {
       {
         cache: null,
         cacheTtl: null,
-        cacheTtlNotFound: null,
+        cacheTtl404: null,
         version: null,
         forceDownloadPrompt: null
       },
       {
         cacheTtl: "cache_ttl",
-        cacheTtlNotFound: "cache_ttl_not_found",
+        cacheTtl404: "cache_ttl_404",
         forceDownloadPrompt: "download"
       }
     )(params);
