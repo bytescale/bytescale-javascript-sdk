@@ -92,7 +92,7 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     part: UploadPart,
     contentLength: number,
     source: TSource,
-    onProgress: (bytesSentDelta: number) => void,
+    onProgress: (totalBytesTransferred: number) => void,
     addCancellationHandler: AddCancellationHandler
   ): Promise<PutUploadPartResult>;
 

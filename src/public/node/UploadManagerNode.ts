@@ -9,6 +9,7 @@ import { AddCancellationHandler } from "../../private/model/AddCancellationHandl
 import { StreamUtils } from "../../private/StreamUtils";
 import { BlobLike, UploadManagerParams, UploadSource } from "../shared/CommonTypes";
 import { UploadManagerFetchUtils } from "../../private/UploadManagerFetchUtils";
+import { ProgressStream } from "./ProgressStream";
 
 type UploadManagerNodeInit =
   | undefined
@@ -96,27 +97,17 @@ export class UploadManager extends UploadManagerBase<UploadSourceProcessedNode, 
     part: UploadPart,
     contentLength: number,
     source: UploadSourceProcessedNode,
-    onProgress: (bytesSentDelta: number) => void,
+    onProgress: (totalBytesTransferred: number) => void,
     addCancellationHandler: AddCancellationHandler
   ): Promise<{ etag: string | undefined; status: number }> {
-    // Report progress:
-    let hasWarned = false;
-    let bytesSent = 0;
-    const stream = await this.sliceDataForRequest(source, part);
-    const streamWithProgress = stream.on("data", (data: Partial<Buffer>) => {
-      if (data.byteLength !== undefined) {
-        bytesSent += data.byteLength;
-        onProgress(bytesSent);
-      } else if (!hasWarned) {
-        hasWarned = true;
-        console.warn("Expected stream to contain buffers, but it did not, so upload progress won't be reported.");
-      }
-    });
+    const inputStream = await this.sliceDataForRequest(source, part);
+    const progressStream = new ProgressStream({ onProgress });
+    inputStream.pipe(progressStream);
 
     return await UploadManagerFetchUtils.doPutUploadPart(
       this.config,
       part,
-      this.coerceRequestBody(streamWithProgress),
+      this.coerceRequestBody(progressStream),
       contentLength,
       addCancellationHandler
     );
