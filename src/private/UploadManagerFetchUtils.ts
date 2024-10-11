@@ -26,6 +26,7 @@ export class UploadManagerFetchUtils {
       headers,
       body: content,
       signal,
+      duplex: "half",
       cache: "no-store" // Required for Next.js's Fetch implementation, which caches POST/PUT requests by default.
     });
 

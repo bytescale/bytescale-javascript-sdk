@@ -135,7 +135,12 @@ export class BaseAPI {
         //
         // However, this is probably a good idea, even for all GET requests, as if the user is refreshing a JWT
         // or downloading a file via 'FileApi.downloadFile', then they'll likely want the latest.
-        cache: "no-store"
+        cache: "no-store",
+
+        // Node does not support full duplex, so default fetch implementations will fail with "RequestInit: duplex option is required when sending a body"
+        // unless the following is set.
+        // https://github.com/nodejs/node/issues/46221#issuecomment-1383246036
+        duplex: "half"
       });
     } catch (e) {
       // Network-level errors, CORS errors, or HTTP-level errors from intermediary services (e.g. AWS or the user's own infrastructure/proxies).
@@ -313,7 +318,7 @@ export class BytescaleApiError extends Error {
   }
 }
 
-export type FetchAPI = WindowOrWorkerGlobalScope["fetch"];
+export type FetchAPI = (input: RequestInfo | URL, init?: RequestInit & { duplex: "half" }) => Promise<Response>;
 
 export type Json = any;
 export type HTTPMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
