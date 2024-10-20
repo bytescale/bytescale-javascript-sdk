@@ -126,6 +126,12 @@ export interface AzureReadOnlyStorage {
    * @memberof AzureReadOnlyStorage
    */
   type: AzureReadOnlyStorageTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof AzureReadOnlyStorage
+   */
+  useAbsolutePaths: boolean;
 }
 
 /**
@@ -1444,6 +1450,12 @@ export interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredent
    * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
    */
   azureStorage: PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
+   */
+  useAbsolutePaths: boolean;
 }
 
 /**
@@ -1464,6 +1476,12 @@ export interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredent
    */
   containerName: string;
   /**
+   * Azure Storage BLOB name.
+   * @type {string}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
+   */
+  blobNamePrefix: string;
+  /**
    * Azure Storage account name.
    * @type {string}
    * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
@@ -1483,12 +1501,6 @@ export interface PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentia
    */
   type: PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsTypeEnum;
   /**
-   *
-   * @type {PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsBucket}
-   * @memberof PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
-   */
-  bucket: PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsBucket;
-  /**
    * If `true` then writes S3 objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
    *
    * If `false` then writes S3 objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
@@ -1496,6 +1508,12 @@ export interface PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentia
    * @memberof PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
    */
   useAbsolutePaths: boolean;
+  /**
+   *
+   * @type {PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsBucket}
+   * @memberof PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
+   */
+  bucket: PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsBucket;
 }
 
 /**
@@ -1541,12 +1559,6 @@ export interface PickGoogleStorageExcludeKeyofGoogleStorageCredentials {
    */
   type: PickGoogleStorageExcludeKeyofGoogleStorageCredentialsTypeEnum;
   /**
-   *
-   * @type {PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket}
-   * @memberof PickGoogleStorageExcludeKeyofGoogleStorageCredentials
-   */
-  bucket: PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket;
-  /**
    * If `true` then writes Google Storage objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
    *
    * If `false` then writes Google Storage objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
@@ -1554,6 +1566,12 @@ export interface PickGoogleStorageExcludeKeyofGoogleStorageCredentials {
    * @memberof PickGoogleStorageExcludeKeyofGoogleStorageCredentials
    */
   useAbsolutePaths: boolean;
+  /**
+   *
+   * @type {PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket}
+   * @memberof PickGoogleStorageExcludeKeyofGoogleStorageCredentials
+   */
+  bucket: PickGoogleStorageExcludeKeyofGoogleStorageCredentialsBucket;
 }
 
 /**
@@ -1593,12 +1611,6 @@ export interface PickR2StorageExcludeKeyofR2StorageCredentials {
    */
   type: PickR2StorageExcludeKeyofR2StorageCredentialsTypeEnum;
   /**
-   *
-   * @type {PickR2StorageExcludeKeyofR2StorageCredentialsBucket}
-   * @memberof PickR2StorageExcludeKeyofR2StorageCredentials
-   */
-  bucket: PickR2StorageExcludeKeyofR2StorageCredentialsBucket;
-  /**
    * If `true` then writes Google Storage objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
    *
    * If `false` then writes Google Storage objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
@@ -1606,6 +1618,12 @@ export interface PickR2StorageExcludeKeyofR2StorageCredentials {
    * @memberof PickR2StorageExcludeKeyofR2StorageCredentials
    */
   useAbsolutePaths: boolean;
+  /**
+   *
+   * @type {PickR2StorageExcludeKeyofR2StorageCredentialsBucket}
+   * @memberof PickR2StorageExcludeKeyofR2StorageCredentials
+   */
+  bucket: PickR2StorageExcludeKeyofR2StorageCredentialsBucket;
   /**
    * Cloudflare Account ID.
    * @type {string}
@@ -1651,12 +1669,6 @@ export interface PickS3StorageExcludeKeyofS3StorageCredentials {
    */
   type: PickS3StorageExcludeKeyofS3StorageCredentialsTypeEnum;
   /**
-   *
-   * @type {PickS3StorageExcludeKeyofS3StorageCredentialsBucket}
-   * @memberof PickS3StorageExcludeKeyofS3StorageCredentials
-   */
-  bucket: PickS3StorageExcludeKeyofS3StorageCredentialsBucket;
-  /**
    * If `true` then writes S3 objects with full `filePath` as key, prefixed with the `objectKeyPrefix`.
    *
    * If `false` then writes S3 objects using a relative `filePath` in relation to folder's path, prefixed with the `objectKeyPrefix`.
@@ -1664,6 +1676,12 @@ export interface PickS3StorageExcludeKeyofS3StorageCredentials {
    * @memberof PickS3StorageExcludeKeyofS3StorageCredentials
    */
   useAbsolutePaths: boolean;
+  /**
+   *
+   * @type {PickS3StorageExcludeKeyofS3StorageCredentialsBucket}
+   * @memberof PickS3StorageExcludeKeyofS3StorageCredentials
+   */
+  bucket: PickS3StorageExcludeKeyofS3StorageCredentialsBucket;
   /**
    * Enables S3 transfer acceleration, providing improved file upload speeds for larger files.
    *
