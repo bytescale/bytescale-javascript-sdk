@@ -103,6 +103,50 @@ export type AwsRegion =
   | "me-central-1"
   | "sa-east-1";
 /**
+ *
+ * @export
+ * @interface AzureReadOnlyStorage
+ */
+export interface AzureReadOnlyStorage {
+  /**
+   *
+   * @type {PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage}
+   * @memberof AzureReadOnlyStorage
+   */
+  azureStorage: PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage;
+  /**
+   *
+   * @type {AzureReadOnlyStorageCredentials}
+   * @memberof AzureReadOnlyStorage
+   */
+  credentials: AzureReadOnlyStorageCredentials;
+  /**
+   *
+   * @type {string}
+   * @memberof AzureReadOnlyStorage
+   */
+  type: AzureReadOnlyStorageTypeEnum;
+}
+
+/**
+ * @export
+ */
+export type AzureReadOnlyStorageTypeEnum = "AzureReadOnly";
+
+/**
+ *
+ * @export
+ * @interface AzureReadOnlyStorageCredentials
+ */
+export interface AzureReadOnlyStorageCredentials {
+  /**
+   * Query string without the leading "?" character.
+   * @type {string}
+   * @memberof AzureReadOnlyStorageCredentials
+   */
+  sasToken: string;
+}
+/**
  * Response body for BasicUpload.
  * @export
  * @interface BasicUploadResponse
@@ -1385,6 +1429,50 @@ export type PathPermissionScope = "Children" | "Grandchildren+" | "This";
 /**
  * From T, pick a set of properties whose keys are in the union K
  * @export
+ * @interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
+ */
+export interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials {
+  /**
+   *
+   * @type {string}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
+   */
+  type: PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsTypeEnum;
+  /**
+   *
+   * @type {PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
+   */
+  azureStorage: PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage;
+}
+
+/**
+ * @export
+ */
+export type PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsTypeEnum = "AzureReadOnly";
+
+/**
+ *
+ * @export
+ * @interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
+ */
+export interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage {
+  /**
+   * Azure Storage container name.
+   * @type {string}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
+   */
+  containerName: string;
+  /**
+   * Azure Storage account name.
+   * @type {string}
+   * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
+   */
+  accountName: string;
+}
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ * @export
  * @interface PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
  */
 export interface PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials {
@@ -2126,6 +2214,7 @@ export type SpecifiedFieldValueEmptiableStorageLayerUpdateSetEnum = true;
 export type StorageLayerSummary =
   | InternalStorageV1
   | InternalStorageV2
+  | PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
   | PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
   | PickGoogleStorageExcludeKeyofGoogleStorageCredentials
   | PickR2StorageExcludeKeyofR2StorageCredentials
@@ -2139,6 +2228,7 @@ export type StorageLayerSummary =
  * @export
  */
 export type StorageLayerUpdate =
+  | AzureReadOnlyStorage
   | DigitalOceanStorage
   | GoogleStorage
   | InternalStorageV2
@@ -2363,6 +2453,12 @@ export interface UploadPartRange {
  * @interface WebStorage
  */
 export interface WebStorage {
+  /**
+   * Query string without the leading "?" character.
+   * @type {string}
+   * @memberof WebStorage
+   */
+  appendQueryString?: string;
   /**
    * URL for an http(s) resource.
    * @type {string}
