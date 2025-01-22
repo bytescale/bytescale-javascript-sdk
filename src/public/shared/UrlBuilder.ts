@@ -57,7 +57,11 @@ export class UrlBuilder {
 
   private static getBaseUrl(params: UrlBuilderParams, prefix: string): string {
     const cdnUrl = params.options?.cdnUrl ?? BytescaleApiClientConfigUtils.defaultCdnUrl;
-    const filePathEncoded = encodeURIComponent(params.filePath).replace(/%2F/g, "/");
+    // To convert a Bytescale File Path into a Bytescale File URL:
+    // a) Call encodeURIComponent() on the file path. (This allows file paths to contain ANY character.)
+    // b) Replace all occurrences of "%2F" with "/". (Allows file paths to appear as hierarchical paths on the URL.)
+    // c) Replace all occurrences of "!" with "%21". (Prevents file paths with "!" inside being treated as "query bangs".)
+    const filePathEncoded = encodeURIComponent(params.filePath).replace(/%2F/g, "/").replace(/!/g, "%21");
     return `${cdnUrl}/${params.accountId}/${prefix}${filePathEncoded}`;
   }
 

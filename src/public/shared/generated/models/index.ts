@@ -1319,6 +1319,12 @@ export type JobSummaryJobDocsEnum = "https://www.bytescale.com/docs/job-api/GetJ
  */
 export interface JobSummaryError {
   /**
+   * Time the error occurred (UTC ISO 8601).
+   * @type {string}
+   * @memberof JobSummaryError
+   */
+  timestamp: string;
+  /**
    * Human-readable error message.
    * @type {string}
    * @memberof JobSummaryError
@@ -1476,7 +1482,7 @@ export interface PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredent
    */
   containerName: string;
   /**
-   * Azure Storage BLOB name.
+   * Azure Storage BLOB name prefix.
    * @type {string}
    * @memberof PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentialsAzureStorage
    */
