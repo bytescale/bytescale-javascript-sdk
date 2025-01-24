@@ -2490,6 +2490,12 @@ export interface WebStorage {
    */
   baseUrl?: string;
   /**
+   *
+   * @type {WebStorageQueryStringForwarding}
+   * @memberof WebStorage
+   */
+  queryStringForwarding?: WebStorageQueryStringForwarding;
+  /**
    * The type of this storage layer.
    * @type {string}
    * @memberof WebStorage
@@ -2502,6 +2508,57 @@ export interface WebStorage {
  */
 export type WebStorageTypeEnum = "Web";
 
+/**
+ * This object is used for the value of the `queryStringForwarding` field on the `WebStorage` object, and defines how user-provided query strings are forwarded to the HTTP origin. If left unset, no user-provided query strings will be forwarded to the HTTP origin.
+ *
+ * *Instructions:*
+ * - To *block all* query string parameters: use `"Whitelist"` with an empty `parameters` array (default if unset).
+ * - To *allow all* query string parameters: use `"Blacklist"` with an empty `parameters` array.
+ * - To *allow some* query string parameters: use either `"Blacklist"` or `"Whitelist"` with one or more `parameters`.
+ * @export
+ * @interface WebStorageQueryStringForwarding
+ */
+export interface WebStorageQueryStringForwarding {
+  /**
+   * Determines which parameters to forward based on the `type` field:
+   *
+   * If `"Whitelist"` is set in the `type` field:
+   * - Only parameters in this array will be forwarded.
+   * - An empty array prevents all parameters from being forwarded.
+   *
+   * If `"Blacklist"` is set in the `type` field:
+   * - Only parameters in this array will be blocked.
+   * - An empty array allows all parameters to be forwarded.
+   * @type {Array<WebStorageQueryStringParam>}
+   * @memberof WebStorageQueryStringForwarding
+   */
+  parameters: Array<WebStorageQueryStringParam>;
+  /**
+   * Determines whether the `parameters` array is interpreted as a blacklist or a whitelist.
+   * @type {string}
+   * @memberof WebStorageQueryStringForwarding
+   */
+  type: WebStorageQueryStringForwardingTypeEnum;
+}
+
+/**
+ * @export
+ */
+export type WebStorageQueryStringForwardingTypeEnum = "Whitelist" | "Blacklist";
+
+/**
+ * Matches exactly one query string parameter. The value of the `name` field must be URL encoded.
+ * @export
+ * @interface WebStorageQueryStringParam
+ */
+export interface WebStorageQueryStringParam {
+  /**
+   * Query string parameter name. Must be URL-encoded.
+   * @type {string}
+   * @memberof WebStorageQueryStringParam
+   */
+  name: string;
+}
 /**
  *
  * @export
