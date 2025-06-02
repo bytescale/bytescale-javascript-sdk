@@ -90,6 +90,17 @@ export interface DownloadFileParams {
   cacheTtl404?: number;
 
   /**
+   * Expires the URL at the given Unix epoch timestamp.
+   *
+   * The value can be provided in either milliseconds or seconds since January 1, 1970, 00:00:00 UTC.
+   *
+   * Must less than 7 days in the future.
+   *
+   * See: Secure URLs
+   */
+  exp?: number;
+
+  /**
    * Downloads the latest version of your file (if you have overwritten it) when added to the URL with a unique value.
    *
    *   The value of the `version` parameter can be anything, e.g. an incremental number, a timestamp, etc.
@@ -116,6 +127,19 @@ export interface ProcessFileParams {
   transformation: string;
 
   /**
+   * Each File Processing API requires additional query string parameters to specify the desired transformation behavior.
+   *
+   * For details, refer to the relevant documentation:
+   *
+   * - https://www.bytescale.com/docs/image-processing-api
+   * - https://www.bytescale.com/docs/video-processing-api
+   * - https://www.bytescale.com/docs/audio-processing-api
+   * - https://www.bytescale.com/docs/archive-processing-api
+   * - https://www.bytescale.com/docs/antivirus-api
+   */
+  transformationParams?: TransformationParams;
+
+  /**
    * Some transformations output multiple files, called artifacts.
    *
    * You can download each individual transformation artifact by specifying its path with this parameter
@@ -127,7 +151,7 @@ export interface ProcessFileParams {
    *
    * If set to `false` the transformation will be executed on every request.
    *
-   * *Recommendation:* instead of disabling the cache, a more performant solution is to use the `version` parameter and to increment it each time you require an updated result.
+   * *Recommendation:* instead of disabling the cache, a more performant solution is to use the `version` or `v` parameter and to increment it each time you require an updated result.
    *
    * Default: true
    */
@@ -151,7 +175,7 @@ export interface ProcessFileParams {
    *
    * When `cache=false` this parameter is automatically set to `false`.
    *
-   * When `cache_perm=auto` the perma-cache will only be used for files that take more than 1000ms to process.
+   * When `cache-perm=auto` the perma-cache will only be used for files that take more than 500ms to process.
    *
    * When the perma-cache is used, approximately 200ms of latency is added to the initial request. Thereafter, files will be served from the Bytescale CDN's edge cache or perma-cache, so will have minimal latency.
    *
@@ -166,7 +190,7 @@ export interface ProcessFileParams {
    *
    * If the file is not perma-cached, then the file will be reprocessed on edge cache misses.
    *
-   * For more information on perma-caching, see: `cache_perm`
+   * For more information on perma-caching, see: `cache-perm`
    *
    * Default: Please refer to your account's default cache settings in the Bytescale Dashboard.
    */
@@ -180,16 +204,15 @@ export interface ProcessFileParams {
   cacheTtl404?: number;
 
   /**
-   * Parameters to submit to the File Processing API (e.g. the Image Processing API).
+   * Expires the URL at the given Unix epoch timestamp.
    *
-   * Please see the documentation for each File Processing API to determine which values can appear here:
+   * The value can be provided in either milliseconds or seconds since January 1, 1970, 00:00:00 UTC.
    *
-   * - https://www.bytescale.com/docs/image-processing-api
-   * - https://www.bytescale.com/docs/video-processing-api
-   * - https://www.bytescale.com/docs/audio-processing-api
-   * - https://www.bytescale.com/docs/archive-processing-api
+   * Must less than 7 days in the future.
+   *
+   * See: Secure URLs
    */
-  transformationParams?: TransformationParams;
+  exp?: number;
 
   /**
    * Add this parameter and increment its value to force the file to be reprocessed.
@@ -219,14 +242,15 @@ export interface ProcessFileAndSaveOperationParams {
   processFileAndSaveRequest: ProcessFileAndSaveRequest;
 
   /**
-   * Parameters to submit to the File Processing API (e.g. the Image Processing API).
+   * Each File Processing API requires additional query string parameters to specify the desired transformation behavior.
    *
-   * Please see the documentation for each File Processing API to determine which values can appear here:
+   * For details, refer to the relevant documentation:
    *
    * - https://www.bytescale.com/docs/image-processing-api
    * - https://www.bytescale.com/docs/video-processing-api
    * - https://www.bytescale.com/docs/audio-processing-api
    * - https://www.bytescale.com/docs/archive-processing-api
+   * - https://www.bytescale.com/docs/antivirus-api
    */
   transformationParams?: TransformationParams;
 }
@@ -246,7 +270,7 @@ export class FileApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/files/copy`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
@@ -274,7 +298,7 @@ export class FileApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/files/copy/batch`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
@@ -304,7 +328,7 @@ export class FileApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/files`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "DELETE",
         headers,
@@ -331,7 +355,7 @@ export class FileApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/files/batch`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "DELETE",
         headers,
@@ -355,11 +379,15 @@ export class FileApi extends runtime.BaseAPI {
     }
 
     if (params.cacheTtl !== undefined) {
-      query["cache_ttl"] = params.cacheTtl;
+      query["cache-ttl"] = params.cacheTtl;
     }
 
     if (params.cacheTtl404 !== undefined) {
-      query["cache_ttl_404"] = params.cacheTtl404;
+      query["cache-ttl-404"] = params.cacheTtl404;
+    }
+
+    if (params.exp !== undefined) {
+      query["exp"] = params.exp;
     }
 
     if (params.version !== undefined) {
@@ -374,12 +402,12 @@ export class FileApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"filePath"}}`,
             // @ts-ignore
-            this.encodeParam("filePath", params.filePath)
+            this.encodePathParam("filePath", params.filePath)
           ),
         method: "GET",
         headers,
@@ -408,7 +436,7 @@ export class FileApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/files/details`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "GET",
         headers,
@@ -426,6 +454,10 @@ export class FileApi extends runtime.BaseAPI {
    */
   async processFile(params: ProcessFileParams): Promise<runtime.BinaryResult> {
     const query: any = {};
+    if (params.transformationParams !== undefined) {
+      query["&lt;transformation-params&gt;"] = params.transformationParams;
+    }
+
     if (params.artifact !== undefined) {
       query["artifact"] = params.artifact;
     }
@@ -435,23 +467,23 @@ export class FileApi extends runtime.BaseAPI {
     }
 
     if (params.cacheOnly !== undefined) {
-      query["cache_only"] = params.cacheOnly;
+      query["cache-only"] = params.cacheOnly;
     }
 
     if (params.cachePerm !== undefined) {
-      query["cache_perm"] = params.cachePerm;
+      query["cache-perm"] = params.cachePerm;
     }
 
     if (params.cacheTtl !== undefined) {
-      query["cache_ttl"] = params.cacheTtl;
+      query["cache-ttl"] = params.cacheTtl;
     }
 
     if (params.cacheTtl404 !== undefined) {
-      query["cache_ttl_404"] = params.cacheTtl404;
+      query["cache-ttl-404"] = params.cacheTtl404;
     }
 
-    if (params.transformationParams !== undefined) {
-      query["transformationParams"] = params.transformationParams;
+    if (params.exp !== undefined) {
+      query["exp"] = params.exp;
     }
 
     if (params.version !== undefined) {
@@ -466,17 +498,17 @@ export class FileApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"filePath"}}`,
             // @ts-ignore
-            this.encodeParam("filePath", params.filePath)
+            this.encodePathParam("filePath", params.filePath)
           )
           .replace(
             `{${"transformation"}}`,
             // @ts-ignore
-            this.encodeParam("transformation", params.transformation)
+            this.encodePathParam("transformation", params.transformation)
           ),
         method: "GET",
         headers,
@@ -495,7 +527,7 @@ export class FileApi extends runtime.BaseAPI {
   async processFileAndSave(params: ProcessFileAndSaveOperationParams): Promise<ProcessFileAndSaveResponse> {
     const query: any = {};
     if (params.transformationParams !== undefined) {
-      query["transformationParams"] = params.transformationParams;
+      query["&lt;transformation-params&gt;"] = params.transformationParams;
     }
 
     const headers: runtime.HTTPHeaders = {};
@@ -508,17 +540,17 @@ export class FileApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"filePath"}}`,
             // @ts-ignore
-            this.encodeParam("filePath", params.filePath)
+            this.encodePathParam("filePath", params.filePath)
           )
           .replace(
             `{${"transformation"}}`,
             // @ts-ignore
-            this.encodeParam("transformation", params.transformation)
+            this.encodePathParam("transformation", params.transformation)
           ),
         method: "POST",
         headers,

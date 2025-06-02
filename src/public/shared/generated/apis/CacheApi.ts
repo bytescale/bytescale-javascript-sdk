@@ -48,7 +48,7 @@ export class CacheApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/cache/reset`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,

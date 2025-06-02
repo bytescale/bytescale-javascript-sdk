@@ -112,7 +112,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders/copy`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
@@ -140,7 +140,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders/copy/batch`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
@@ -168,7 +168,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "DELETE",
         headers,
@@ -196,7 +196,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders/batch`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "DELETE",
         headers,
@@ -226,7 +226,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "GET",
         headers,
@@ -287,7 +287,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders/list`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "GET",
         headers,
@@ -314,7 +314,7 @@ export class FolderApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/folders`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "PUT",
         headers,

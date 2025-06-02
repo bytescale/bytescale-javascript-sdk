@@ -3,6 +3,7 @@
 import { ErrorResponse } from "./models";
 import { AuthSessionState } from "../../../private/AuthSessionState";
 import { ConsoleUtils } from "../../../private/ConsoleUtils";
+import { FilePathUtils } from "../../../private/FilePathUtils";
 
 /**
  * @bytescale/api
@@ -217,14 +218,13 @@ export class BaseAPI {
     return BaseAPI.fetch(url, init, { ...this.config, isBytescaleApi: true });
   }
 
-  protected encodeParam(paramName: string, paramValue: string): string {
+  protected encodePathParam(paramName: string, paramValue: string): string {
     if (paramName === "filePath") {
       if (!paramValue.startsWith("/")) {
         // Non-obvious errors are returned by the Bytescale CDN if forward slashes are omitted, so catch it client-side:
         throw new Error("The 'filePath' parameter must begin with a '/' character.");
       }
-      // We must not encode the filePath param (as slashes are valid).
-      return paramValue;
+      return FilePathUtils.encodeFilePath(paramValue);
     }
 
     return encodeURIComponent(paramValue);

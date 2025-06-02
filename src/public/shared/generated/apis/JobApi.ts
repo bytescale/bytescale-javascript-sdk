@@ -65,17 +65,17 @@ export class JobApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"jobId"}}`,
             // @ts-ignore
-            this.encodeParam("jobId", params.jobId)
+            this.encodePathParam("jobId", params.jobId)
           )
           .replace(
             `{${"jobType"}}`,
             // @ts-ignore
-            this.encodeParam("jobType", params.jobType)
+            this.encodePathParam("jobType", params.jobType)
           ),
         method: "DELETE",
         headers,
@@ -101,17 +101,17 @@ export class JobApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"jobId"}}`,
             // @ts-ignore
-            this.encodeParam("jobId", params.jobId)
+            this.encodePathParam("jobId", params.jobId)
           )
           .replace(
             `{${"jobType"}}`,
             // @ts-ignore
-            this.encodeParam("jobType", params.jobType)
+            this.encodePathParam("jobType", params.jobType)
           ),
         method: "GET",
         headers,
@@ -140,7 +140,7 @@ export class JobApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/jobs`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "GET",
         headers,

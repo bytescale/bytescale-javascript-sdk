@@ -96,7 +96,7 @@ export class UploadApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/uploads`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
@@ -125,17 +125,17 @@ export class UploadApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"uploadId"}}`,
             // @ts-ignore
-            this.encodeParam("uploadId", params.uploadId)
+            this.encodePathParam("uploadId", params.uploadId)
           )
           .replace(
             `{${"uploadPartIndex"}}`,
             // @ts-ignore
-            this.encodeParam("uploadPartIndex", params.uploadPartIndex)
+            this.encodePathParam("uploadPartIndex", params.uploadPartIndex)
           ),
         method: "PUT",
         headers,
@@ -162,17 +162,17 @@ export class UploadApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"uploadId"}}`,
             // @ts-ignore
-            this.encodeParam("uploadId", params.uploadId)
+            this.encodePathParam("uploadId", params.uploadId)
           )
           .replace(
             `{${"uploadPartIndex"}}`,
             // @ts-ignore
-            this.encodeParam("uploadPartIndex", params.uploadPartIndex)
+            this.encodePathParam("uploadPartIndex", params.uploadPartIndex)
           ),
         method: "GET",
         headers,
@@ -198,12 +198,12 @@ export class UploadApi extends runtime.BaseAPI {
           .replace(
             `{${"accountId"}}`,
             // @ts-ignore
-            this.encodeParam("accountId", params.accountId)
+            this.encodePathParam("accountId", params.accountId)
           )
           .replace(
             `{${"uploadId"}}`,
             // @ts-ignore
-            this.encodeParam("uploadId", params.uploadId)
+            this.encodePathParam("uploadId", params.uploadId)
           ),
         method: "GET",
         headers,
@@ -230,7 +230,7 @@ export class UploadApi extends runtime.BaseAPI {
         path: `/v2/accounts/{accountId}/uploads/url`.replace(
           `{${"accountId"}}`,
           // @ts-ignore
-          this.encodeParam("accountId", params.accountId)
+          this.encodePathParam("accountId", params.accountId)
         ),
         method: "POST",
         headers,
