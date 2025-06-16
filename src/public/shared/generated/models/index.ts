@@ -1124,6 +1124,62 @@ export interface FolderSummary {
 export type FolderSummaryTypeEnum = "Folder";
 
 /**
+ *
+ * @export
+ * @interface GenericS3Storage
+ */
+export interface GenericS3Storage {
+  /**
+   *
+   * @type {PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket}
+   * @memberof GenericS3Storage
+   */
+  bucket: PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket;
+  /**
+   *
+   * @type {GenericS3StorageCredentials}
+   * @memberof GenericS3Storage
+   */
+  credentials: GenericS3StorageCredentials;
+  /**
+   *
+   * @type {string}
+   * @memberof GenericS3Storage
+   */
+  type: GenericS3StorageTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof GenericS3Storage
+   */
+  useAbsolutePaths: boolean;
+}
+
+/**
+ * @export
+ */
+export type GenericS3StorageTypeEnum = "GenericS3";
+
+/**
+ *
+ * @export
+ * @interface GenericS3StorageCredentials
+ */
+export interface GenericS3StorageCredentials {
+  /**
+   * AWS Secret Access Key.
+   * @type {string}
+   * @memberof GenericS3StorageCredentials
+   */
+  secretKey: string;
+  /**
+   * AWS Access Key.
+   * @type {string}
+   * @memberof GenericS3StorageCredentials
+   */
+  accessKey: string;
+}
+/**
  * Storage layer used for storing files in Google Storage, as opposed to Bytescale's built-in storage.
  *
  * This is a read/write storage layer.
@@ -1551,6 +1607,82 @@ export interface PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentia
    * @memberof PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentialsBucket
    */
   bucketName: string;
+}
+/**
+ * From T, pick a set of properties whose keys are in the union K
+ * @export
+ * @interface PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials
+ */
+export interface PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials {
+  /**
+   *
+   * @type {string}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials
+   */
+  type: PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsTypeEnum;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials
+   */
+  useAbsolutePaths: boolean;
+  /**
+   *
+   * @type {PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials
+   */
+  bucket: PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket;
+}
+
+/**
+ * @export
+ */
+export type PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsTypeEnum = "GenericS3";
+
+/**
+ *
+ * @export
+ * @interface PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+ */
+export interface PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket {
+  /**
+   *
+   * @type {Array<S3OperationName>}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  unsupportedOperations: Array<S3OperationName>;
+  /**
+   * AWS S3 Object Key.
+   * @type {string}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  objectKeyPrefix: string;
+  /**
+   * Controls how URLs are constructed when making HTTP requests to the S3-compatible API hosted at `bucketEndpoint`.
+   * - If `true` then `bucketName` will be added to the URL path.
+   * - If `false` then `bucketName` will be added as a subdomain of `bucketEndpoint`, assuming `bucketName` does not contain '.' and is DNS-compatible.
+   * @type {boolean}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  forcePathStyle: boolean;
+  /**
+   * Generic S3 Region.
+   * @type {string}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  bucketRegion: string;
+  /**
+   * AWS S3 Bucket Name.
+   * @type {string}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  bucketName: string;
+  /**
+   * URL for an http(s) resource.
+   * @type {string}
+   * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
+   */
+  bucketEndpoint: string;
 }
 /**
  * From T, pick a set of properties whose keys are in the union K
@@ -2086,6 +2218,11 @@ export interface ResetCacheRequest {
   resetPermanentCache: boolean;
 }
 /**
+ *
+ * @export
+ */
+export type S3OperationName = "DeleteObjects";
+/**
  * Storage layer used for storing files in custom S3 buckets, as opposed to Bytescale's built-in storage.
  *
  * This is a read/write storage layer.
@@ -2240,6 +2377,7 @@ export type StorageLayerSummary =
   | InternalStorageV2
   | PickAzureReadOnlyStorageExcludeKeyofAzureReadOnlyStorageCredentials
   | PickDigitalOceanStorageExcludeKeyofDigitalOceanStorageCredentials
+  | PickGenericS3StorageExcludeKeyofGenericS3StorageCredentials
   | PickGoogleStorageExcludeKeyofGoogleStorageCredentials
   | PickR2StorageExcludeKeyofR2StorageCredentials
   | PickS3StorageExcludeKeyofS3StorageCredentials
@@ -2254,6 +2392,7 @@ export type StorageLayerSummary =
 export type StorageLayerUpdate =
   | AzureReadOnlyStorage
   | DigitalOceanStorage
+  | GenericS3Storage
   | GoogleStorage
   | InternalStorageV2
   | R2Storage

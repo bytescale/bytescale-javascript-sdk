@@ -96,7 +96,7 @@ export interface DownloadFileParams {
    *
    * Must less than 7 days in the future.
    *
-   * See: Secure URLs
+   * See: Expiring URLs
    */
   exp?: number;
 
@@ -210,7 +210,7 @@ export interface ProcessFileParams {
    *
    * Must less than 7 days in the future.
    *
-   * See: Secure URLs
+   * See: Expiring URLs
    */
   exp?: number;
 
