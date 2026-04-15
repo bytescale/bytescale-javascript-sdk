@@ -26,18 +26,16 @@ import type {
   // @ts-ignore
   DeleteFileBatchRequest,
   // @ts-ignore
-  ErrorResponse,
-  // @ts-ignore
   FileDetails,
   // @ts-ignore
   ProcessFileAndSaveRequest,
   // @ts-ignore
-  ProcessFileAndSaveResponse
+  ProcessFileAndSaveResponse,
+  // @ts-ignore
+  TransformationParams,
+  // @ts-ignore
+  DownloadFileExpParameter
 } from "../models";
-
-// Omitted by generator (so we add manually).
-// @ts-ignore
-import type { TransformationParams } from "../models";
 
 export interface CopyFileOperationParams {
   accountId: string;
@@ -90,15 +88,17 @@ export interface DownloadFileParams {
   cacheTtl404?: number;
 
   /**
-   * Expires the URL at the given Unix epoch timestamp.
+   * Expires the URL at the given time.
    *
-   * The value can be provided in either milliseconds or seconds since January 1, 1970, 00:00:00 UTC.
+   * Accepted values:
    *
-   * Must less than 7 days in the future.
+   * - An `integer` (in milliseconds or seconds since January 1, 1970, 00:00:00 UTC)
+   *
+   * - The literal string `inf` to indicate that the URL should never expire (the default)
    *
    * See: Expiring URLs
    */
-  exp?: number;
+  exp?: DownloadFileExpParameter;
 
   /**
    * Downloads the latest version of your file (if you have overwritten it) when added to the URL with a unique value.
@@ -204,15 +204,17 @@ export interface ProcessFileParams {
   cacheTtl404?: number;
 
   /**
-   * Expires the URL at the given Unix epoch timestamp.
+   * Expires the URL at the given time.
    *
-   * The value can be provided in either milliseconds or seconds since January 1, 1970, 00:00:00 UTC.
+   * Accepted values:
    *
-   * Must less than 7 days in the future.
+   * - An `integer` (in milliseconds or seconds since January 1, 1970, 00:00:00 UTC)
+   *
+   * - The literal string `inf` to indicate that the URL should never expire (the default)
    *
    * See: Expiring URLs
    */
-  exp?: number;
+  exp?: DownloadFileExpParameter;
 
   /**
    * Add this parameter and increment its value to force the file to be reprocessed.

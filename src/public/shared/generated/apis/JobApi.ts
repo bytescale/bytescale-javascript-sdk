@@ -18,16 +18,10 @@ import type {
   // @ts-ignore
   AccountJobType,
   // @ts-ignore
-  ErrorResponse,
-  // @ts-ignore
   JobSummary,
   // @ts-ignore
   ListRecentJobsResponse
 } from "../models";
-
-// Omitted by generator (so we add manually).
-// @ts-ignore
-import type { TransformationParams } from "../models";
 
 export interface CancelJobParams {
   accountId: string;

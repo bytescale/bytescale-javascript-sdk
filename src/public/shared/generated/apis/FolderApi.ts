@@ -26,18 +26,12 @@ import type {
   // @ts-ignore
   DeleteFolderRequest,
   // @ts-ignore
-  ErrorResponse,
-  // @ts-ignore
   FolderDetails,
   // @ts-ignore
   ListFolderResponse,
   // @ts-ignore
   PutFolderRequest
 } from "../models";
-
-// Omitted by generator (so we add manually).
-// @ts-ignore
-import type { TransformationParams } from "../models";
 
 export interface CopyFolderOperationParams {
   accountId: string;

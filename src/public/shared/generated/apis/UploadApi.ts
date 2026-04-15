@@ -26,18 +26,12 @@ import type {
   // @ts-ignore
   CompleteUploadPartRequest,
   // @ts-ignore
-  ErrorResponse,
-  // @ts-ignore
   UploadFromUrlRequest,
   // @ts-ignore
   UploadPart,
   // @ts-ignore
   UploadPartList
 } from "../models";
-
-// Omitted by generator (so we add manually).
-// @ts-ignore
-import type { TransformationParams } from "../models";
 
 export interface BeginMultipartUploadOperationParams {
   accountId: string;

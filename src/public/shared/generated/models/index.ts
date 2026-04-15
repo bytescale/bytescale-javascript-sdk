@@ -500,9 +500,9 @@ export interface CopyFolderRequest {
  */
 export interface CopyableFileDataFileMetadata {
   /**
-   * If `true` then merges `value` with the settings from the original file, giving precedence to `value`.
+   * If `true` then merges `value` with the original data, giving precedence to `value`.
    *
-   * If `false` then uses `value` as-is, ignoring the settings from the original file.
+   * If `false` then uses `value` as-is, ignoring the original data.
    *
    * Default: false
    * @type {boolean}
@@ -523,9 +523,9 @@ export interface CopyableFileDataFileMetadata {
  */
 export interface CopyableFileDataFileTagNameArray {
   /**
-   * If `true` then merges `value` with the settings from the original file, giving precedence to `value`.
+   * If `true` then merges `value` with the original data, giving precedence to `value`.
    *
-   * If `false` then uses `value` as-is, ignoring the settings from the original file.
+   * If `false` then uses `value` as-is, ignoring the original data.
    *
    * Default: false
    * @type {boolean}
@@ -548,9 +548,9 @@ export interface CopyableFileDataFileTagNameArray {
  */
 export interface CopyableFileDataForArtifactsFileMetadata {
   /**
-   * If `true` then merges `value` with the settings from the original file, giving precedence to `value`.
+   * If `true` then merges `value` with the original data, giving precedence to `value`.
    *
-   * If `false` then uses `value` as-is, ignoring the settings from the original file.
+   * If `false` then uses `value` as-is, ignoring the original data.
    *
    * Default: false
    * @type {boolean}
@@ -579,9 +579,9 @@ export interface CopyableFileDataForArtifactsFileMetadata {
  */
 export interface CopyableFileDataForArtifactsFileTagNameArray {
   /**
-   * If `true` then merges `value` with the settings from the original file, giving precedence to `value`.
+   * If `true` then merges `value` with the original data, giving precedence to `value`.
    *
-   * If `false` then uses `value` as-is, ignoring the settings from the original file.
+   * If `false` then uses `value` as-is, ignoring the original data.
    *
    * Default: false
    * @type {boolean}
@@ -734,6 +734,17 @@ export interface DigitalOceanStorageCredentials {
    */
   spacesAccessKey: string;
 }
+/**
+ * @type DownloadFileExpParameter
+ *
+ * @export
+ */
+export type DownloadFileExpParameter = DownloadFileExpParameterOneOf | number;
+/**
+ *
+ * @export
+ */
+export type DownloadFileExpParameterOneOf = "inf";
 /**
  * An object containing a `fileName` and/or `folderPath` field.
  *
@@ -903,11 +914,11 @@ export interface FileDetails {
    */
   fileUrl: string;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof FileDetails
    */
-  lastModified: number;
+  lastModified: OpaqueNumberEpochMillis;
   /**
    * Size in bytes.
    * @type {number}
@@ -965,11 +976,11 @@ export interface FileSummary {
    */
   fileUrl: string;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof FileSummary
    */
-  lastModified: number;
+  lastModified: OpaqueNumberEpochMillis;
   /**
    * Size in bytes.
    * @type {number}
@@ -1332,11 +1343,11 @@ export interface JobSummary {
    */
   accountId: string;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof JobSummary
    */
-  created: number;
+  created: OpaqueNumberEpochMillis;
   /**
    *
    * @type {JobSummaryError}
@@ -1344,11 +1355,11 @@ export interface JobSummary {
    */
   error: JobSummaryError | null;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof JobSummary
    */
-  lastUpdated: number;
+  lastUpdated: OpaqueNumberEpochMillis;
   /**
    *
    * @type {AccountJobStatus}
@@ -1458,6 +1469,44 @@ export type MultipartUploadProtocol = "1.0" | "1.1";
  * @export
  */
 export type ObjectSummary = FileSummary | FolderSummary;
+/**
+ * Easily create opaque types ie. types that are subset of their original types (ex: positive numbers, uppercased string)
+ * @export
+ * @interface OpaqueNumberEpochMillis
+ */
+export interface OpaqueNumberEpochMillis {
+  /**
+   *
+   * @type {string}
+   * @memberof OpaqueNumberEpochMillis
+   */
+  tYPE: OpaqueNumberEpochMillisTYPEEnum;
+}
+
+/**
+ * @export
+ */
+export type OpaqueNumberEpochMillisTYPEEnum = "EpochMillis";
+
+/**
+ *
+ * @export
+ * @interface OpaqueNumberEpochMillisAllOf
+ */
+export interface OpaqueNumberEpochMillisAllOf {
+  /**
+   *
+   * @type {string}
+   * @memberof OpaqueNumberEpochMillisAllOf
+   */
+  tYPE: OpaqueNumberEpochMillisAllOfTYPEEnum;
+}
+
+/**
+ * @export
+ */
+export type OpaqueNumberEpochMillisAllOfTYPEEnum = "EpochMillis";
+
 /**
  * Specifies the folder settings to use when creating or updating a folder.
  * @export
@@ -1660,7 +1709,7 @@ export interface PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBuck
   /**
    * Controls how URLs are constructed when making HTTP requests to the S3-compatible API hosted at `bucketEndpoint`.
    * - If `true` then `bucketName` will be added to the URL path.
-   * - If `false` then `bucketName` will be added as a subdomain of `bucketEndpoint`, assuming `bucketName` does not contain '.' and is DNS-compatible.
+   * - If `false` then `bucketName` will be added as a subdomain of `bucketEndpoint`, assuming `bucketName` does not contain '.' and is DNS-compatible, else it will be added to the URL path.
    * @type {boolean}
    * @memberof PickGenericS3StorageExcludeKeyofGenericS3StorageCredentialsBucket
    */
@@ -1942,11 +1991,11 @@ export interface ProcessFileAndSaveResponseAsync {
    */
   accountId: string;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof ProcessFileAndSaveResponseAsync
    */
-  created: number;
+  created: OpaqueNumberEpochMillis;
   /**
    *
    * @type {JobSummaryError}
@@ -1954,11 +2003,11 @@ export interface ProcessFileAndSaveResponseAsync {
    */
   error: JobSummaryError | null;
   /**
-   * Epoch milliseconds (since midnight 1 January 1970, UTC).
-   * @type {number}
+   *
+   * @type {OpaqueNumberEpochMillis}
    * @memberof ProcessFileAndSaveResponseAsync
    */
-  lastUpdated: number;
+  lastUpdated: OpaqueNumberEpochMillis;
   /**
    *
    * @type {AccountJobStatus}
@@ -2523,6 +2572,14 @@ export interface UploadFromUrlRequest {
    * @memberof UploadFromUrlRequest
    */
   tags?: Array<string>;
+  /**
+   * The maximum time (in milliseconds) the entire operation is allowed to run before being aborted.
+   *
+   * The default value is `30000` (30 seconds).
+   * @type {number}
+   * @memberof UploadFromUrlRequest
+   */
+  timeout?: number;
   /**
    * Source URL to upload.
    * @type {string}

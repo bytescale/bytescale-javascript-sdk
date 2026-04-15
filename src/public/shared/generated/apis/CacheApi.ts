@@ -18,14 +18,8 @@ import type {
   // @ts-ignore
   AsyncResponse,
   // @ts-ignore
-  ErrorResponse,
-  // @ts-ignore
   ResetCacheRequest
 } from "../models";
-
-// Omitted by generator (so we add manually).
-// @ts-ignore
-import type { TransformationParams } from "../models";
 
 export interface ResetCacheOperationParams {
   accountId: string;
