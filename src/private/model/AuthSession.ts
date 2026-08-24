@@ -6,5 +6,6 @@ export interface AuthSession {
   accessTokenRefreshHandle: number | undefined;
   authServiceWorker: ServiceWorkerConfig | undefined;
   isActive: boolean;
+  isReady?: boolean; // Optional because AuthSessionState is shared with older SDK versions.
   params: BeginAuthSessionParams;
 }

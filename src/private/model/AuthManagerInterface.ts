@@ -1,6 +1,9 @@
 import { BytescaleApiClientConfig } from "../../public/shared";
+import { AuthSwConfigEntryDto } from "../dtos/AuthSwConfigEntryDto";
 
-export interface BeginAuthSessionParams {
+export type BeginAuthSessionParams = BeginAuthSessionParamsV1 | BeginAuthSessionParamsV2;
+
+export interface BeginAuthSessionParamsV1 {
   /**
    * The account ID to authorize requests for.
    */
@@ -78,9 +81,30 @@ export interface BeginAuthSessionParams {
   sourceUrlPrefixes?: string[];
 }
 
+export interface BeginAuthSessionParamsV2 {
+  /**
+   * Returns the complete replacement service-worker authorization config. Called when the session begins and again
+   * 20 seconds before the earliest configured expiry. Entries without an expiry do not trigger a refresh.
+   *
+   * IMPORTANT: do not call 'AuthManager.beginAuthSession' or 'AuthManager.endAuthSession' inside this callback, as this will cause a deadlock.
+   */
+  getServiceWorkerConfig: () => Promise<AuthSwConfigEntryDto[]>;
+
+  /**
+   * The path to the service worker JavaScript file hosted at the root of your website.
+   *
+   * Unlike V1 sessions, V2 sessions require service-worker support and do not create an SDK API access token or use
+   * CDN cookies as a fallback.
+   */
+  serviceWorkerScript: string;
+}
+
 export interface AuthManagerInterface {
   /**
    * Begins a JWT auth session with the Bytescale API and Bytescale CDN.
+   *
+   * V1 sessions fetch and refresh a JWT using the supplied auth endpoint. V2 sessions instead refresh the complete
+   * service-worker configuration using `getServiceWorkerConfig`.
    *
    * Specifically, calling this method will cause the SDK to periodically acquire a JWT from your JWT endpoint. The SDK will then automatically include this JWT in all subsequent Bytescale API requests (via the 'authorization-token' request header) and also in all Bytescale CDN download requests (via a session cookie, or an 'authorization' header if service workers are being used).
    *
