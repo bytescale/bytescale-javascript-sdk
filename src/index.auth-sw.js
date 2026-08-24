@@ -99,10 +99,12 @@ function interceptRequest(event, config) {
   if (config !== undefined) {
     // Config is an array to support multiple different accounts within a single website, if needed.
     for (const { expires, urlPrefix, headers, sourceUrlPrefixes } of config) {
-      const makeNewRequest = () => {
+      const makeNewRequest = overwrite => {
         const newHeaders = new Headers(event.request.headers);
         for (const { key, value } of headers) {
-          newHeaders.set(key, value);
+          if (overwrite || !newHeaders.has(key)) {
+            newHeaders.set(key, value);
+          }
         }
         return new Request(event.request, {
           mode: "cors", // Required for adding custom HTTP headers.
@@ -135,11 +137,16 @@ function interceptRequest(event, config) {
               if (sourceUrl === undefined || !sourceUrlPrefixes.some(prefix => sourceUrl.startsWith(prefix))) {
                 return undefined;
               }
-              return makeNewRequest();
+
+              // Overwrite existing auth headers that may have been set by other broad-match authorizers (i.e. AuthManager
+              // instances that were configured without any sourceUrlPrefixes specified).
+              return makeNewRequest(true);
             });
           }
 
-          return makeNewRequest();
+          // Do not overwrite existing auth headers, as this is a broad-match authorizer (i.e. AuthManager was run
+          // without any 'sourceUrlPrefixes' specified), so give priority to AuthManagers where sourceUrlPrefixes is specified.
+          return makeNewRequest(false);
         }
       }
     }
