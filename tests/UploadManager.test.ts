@@ -7,10 +7,10 @@ import { promises as fsAsync } from "fs";
 import { prepareTempDirectory } from "./utils/TempUtils";
 import * as Path from "path";
 
-if (process.env.BYTESCALE_SECRET_API_KEY === undefined) {
+if (process.env.BYTESCALE_SECRET_API_KEY === undefined || process.env.BYTESCALE_SECRET_API_KEY.trim().length === 0) {
   throw new Error("Expected env var: BYTESCALE_SECRET_API_KEY");
 }
-if (process.env.BYTESCALE_ACCOUNT_ID === undefined) {
+if (process.env.BYTESCALE_ACCOUNT_ID === undefined || process.env.BYTESCALE_ACCOUNT_ID.trim().length === 0) {
   throw new Error("Expected env var: BYTESCALE_ACCOUNT_ID");
 }
 const accountId = process.env.BYTESCALE_ACCOUNT_ID;
