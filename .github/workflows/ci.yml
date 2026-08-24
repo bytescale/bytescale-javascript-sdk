@@ -31,7 +31,7 @@ jobs:
       - name: "Tests"
         run: npm test
         env:
-          BYTESCALE_ACCOUNT_ID: ${{ secrets.BYTESCALE_ACCOUNT_ID }}
+          BYTESCALE_ACCOUNT_ID: ${{ vars.BYTESCALE_ACCOUNT_ID }}
           BYTESCALE_SECRET_API_KEY: ${{ secrets.BYTESCALE_SECRET_API_KEY }}
       - name: "Publish"
         if: github.ref == 'refs/heads/main'
