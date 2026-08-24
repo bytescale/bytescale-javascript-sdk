@@ -10,8 +10,11 @@
  * - https://www.bytescale.com/docs/types/BeginAuthSessionParams#serviceWorkerScript
  */
 let transientCache; // [{urlPrefix, headers, expires?}] (See: AuthSwConfigDto)
+const maxSourceUrlCacheEntries = 1000;
 const persistentCacheName = "bytescale-sw-config";
 const persistentCacheKey = "config";
+const sourceScopedUrlPrefixMarker = "!bytescale-source-scoped!";
+const sourceUrlsByClientId = new Map();
 
 console.log(`[bytescale] Auth SW Registered`);
 
@@ -52,7 +55,14 @@ self.addEventListener("fetch", function (event) {
   // Called in almost all cases.
   const interceptSync = config => {
     const newRequest = interceptRequest(event, config);
-    if (newRequest !== undefined) {
+    if (newRequest instanceof Promise) {
+      event.respondWith(
+        newRequest.then(
+          request => handleRequestErrors(request ?? event.request),
+          () => handleRequestErrors(event.request)
+        )
+      );
+    } else if (newRequest !== undefined) {
       event.respondWith(handleRequestErrors(newRequest));
     }
   };
@@ -60,7 +70,11 @@ self.addEventListener("fetch", function (event) {
   // Slower and intercepts all requests (while still only rewriting the relevant requests).
   // Called only for the initial request after this Service Worker is restarted after going idle (e.g. after 30s on Firefox/Windows).
   const interceptAsync = async () =>
-    await handleRequestErrors(interceptRequest(event, await getConfig()) ?? event.request);
+    await handleRequestErrors(
+      (await withTimeout(getConfig())
+        .then(config => interceptRequest(event, config))
+        .catch(() => undefined)) ?? event.request
+    );
 
   // Makes it clearer to developers that the request failed for normal reasons (not reasons caused by this script).
   const handleRequestErrors = async request => {
@@ -84,31 +98,84 @@ function interceptRequest(event, config) {
 
   if (config !== undefined) {
     // Config is an array to support multiple different accounts within a single website, if needed.
-    for (const { expires, urlPrefix, headers } of config) {
+    for (const { expires, urlPrefix, headers, sourceUrlPrefixes } of config) {
+      const makeNewRequest = () => {
+        const newHeaders = new Headers(event.request.headers);
+        for (const { key, value } of headers) {
+          newHeaders.set(key, value);
+        }
+        return new Request(event.request, {
+          mode: "cors", // Required for adding custom HTTP headers.
+          headers: newHeaders
+        });
+      };
+
       if (expires === undefined || expires > Date.now()) {
-        if (url.startsWith(urlPrefix) && event.request.method.toUpperCase() === "GET") {
-          const newHeaders = new Headers(event.request.headers);
-          for (const { key, value } of headers) {
-            // Preserve existing headers in the request. This is crucial for 'fetch' requests that might already
-            // include an "Authorization" header, enabling access to certain resources. For instance, the Bytescale
-            // Dashboard uses an explicit "Authorization" header in a 'fetch' request to allow account admins to
-            // download private files. In these scenarios, it's important not to replace these headers with the global
-            // JWT managed by the AuthManager.
-            if (!newHeaders.has(key)) {
-              newHeaders.set(key, value);
+        const isSourceScoped = sourceUrlPrefixes !== undefined;
+
+        // AuthManager adds the 'sourceScopedUrlPrefixMarker' prefix to the 'urlPrefix' when 'sourceUrlPrefixes' is provided,
+        // as this prevents old versions of the service worker (that don't support 'sourceUrlPrefixes') from intercepting the requests,
+        // since it would end up intercepting ALL requests, whereas the user's intention is to intercept only source-filtered requests.
+        const actualUrlPrefix = isSourceScoped
+          ? urlPrefix.startsWith(sourceScopedUrlPrefixMarker)
+            ? urlPrefix.substring(sourceScopedUrlPrefixMarker.length)
+            : undefined
+          : urlPrefix;
+
+        if (
+          actualUrlPrefix !== undefined &&
+          url.startsWith(actualUrlPrefix) &&
+          event.request.method.toUpperCase() === "GET"
+        ) {
+          if (isSourceScoped) {
+            if (!Array.isArray(sourceUrlPrefixes) || sourceUrlPrefixes.length === 0) {
+              return undefined;
             }
+            return getSourceUrl(event.clientId).then(sourceUrl => {
+              if (sourceUrl === undefined || !sourceUrlPrefixes.some(prefix => sourceUrl.startsWith(prefix))) {
+                return undefined;
+              }
+              return makeNewRequest();
+            });
           }
 
-          return new Request(event.request, {
-            mode: "cors", // Required for adding custom HTTP headers.
-            headers: newHeaders
-          });
+          return makeNewRequest();
         }
       }
     }
   }
 
   return undefined;
+}
+
+function getSourceUrl(clientId) {
+  if (typeof clientId !== "string" || clientId.length === 0) {
+    return Promise.resolve(undefined);
+  }
+  const cached = sourceUrlsByClientId.get(clientId);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const lookup = withTimeout(self.clients.get(clientId))
+    .then(client =>
+      client !== undefined &&
+      client !== null &&
+      client.type === "window" &&
+      typeof client.url === "string" &&
+      client.url.length > 0
+        ? client.url
+        : undefined
+    )
+    .catch(() => undefined);
+  sourceUrlsByClientId.set(clientId, lookup);
+  if (sourceUrlsByClientId.size > maxSourceUrlCacheEntries) {
+    sourceUrlsByClientId.delete(sourceUrlsByClientId.keys().next().value);
+  }
+  return lookup;
+}
+
+function withTimeout(promise) {
+  return Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(undefined), 250))]);
 }
 
 async function getConfig() {

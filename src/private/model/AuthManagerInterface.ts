@@ -69,6 +69,13 @@ export interface BeginAuthSessionParams {
    * script must be hosted on your website's domain in the root directory.
    */
   serviceWorkerScript?: string;
+
+  /**
+   * Restricts service-worker authorization to pages and iframes whose URL starts with one of these prefixes.
+   * An empty array matches no clients. Omit this field to preserve the existing service-worker behavior.
+   * Applies only with `serviceWorkerScript`; History API changes do not update the matched client URL.
+   */
+  sourceUrlPrefixes?: string[];
 }
 
 export interface AuthManagerInterface {

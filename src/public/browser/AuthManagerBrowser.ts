@@ -19,6 +19,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   private readonly retryAuthAfterErrorSeconds = 5;
   private readonly refreshBeforeExpirySeconds = 20;
   private readonly scheduler = new Scheduler();
+  private readonly sourceScopedUrlPrefixMarker = "!bytescale-source-scoped!";
 
   constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils<AuthSwSetConfigDto>) {
     this.authSessionMutex = AuthSessionState.getMutex();
@@ -120,7 +121,10 @@ class AuthManagerImpl implements AuthManagerInterface {
                 {
                   headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
                   expires: secondsFromNow(setTokenResult.ttlSeconds),
-                  urlPrefix: `${this.getCdnUrl(session.params)}/${session.params.accountId}/`
+                  sourceUrlPrefixes: session.params.sourceUrlPrefixes,
+                  urlPrefix: `${
+                    session.params.sourceUrlPrefixes === undefined ? "" : this.sourceScopedUrlPrefixMarker
+                  }${this.getCdnUrl(session.params)}/${session.params.accountId}/`
                 }
               ]
             },
