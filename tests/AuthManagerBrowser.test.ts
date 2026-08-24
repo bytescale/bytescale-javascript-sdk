@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { Response as NodeFetchResponse } from "node-fetch";
 import type { AuthSwConfigEntryDto, BeginAuthSessionParamsV1, BeginAuthSessionParamsV2 } from "../src/index.browser";
 
 interface AuthManagerApi {
@@ -10,7 +11,11 @@ interface AuthManagerApi {
 
 describe("AuthManager browser service-worker config", () => {
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  const originalFetch = Object.getOwnPropertyDescriptor(globalThis, "fetch");
   const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
+  const globalFetch = jest.fn(async (): Promise<Response> => {
+    throw new Error("This test must not use the global fetch API.");
+  });
   const postMessage = jest.fn((_message: unknown): void => {});
   const activeWorker = { postMessage, state: "activated" } as unknown as ServiceWorker;
   const registration = {
@@ -28,6 +33,7 @@ describe("AuthManager browser service-worker config", () => {
   let AuthManager: AuthManagerApi;
 
   beforeAll(async () => {
+    Object.defineProperty(globalThis, "fetch", { configurable: true, value: globalFetch });
     Object.defineProperty(globalThis, "window", { configurable: true, value: {} });
     Object.defineProperty(globalThis, "navigator", { configurable: true, value: navigatorValue });
     AuthManager = (await import("../src/public/browser/AuthManagerBrowser")).AuthManager;
@@ -35,6 +41,7 @@ describe("AuthManager browser service-worker config", () => {
 
   beforeEach(() => {
     navigatorValue.serviceWorker = serviceWorkerApi;
+    globalFetch.mockClear();
     postMessage.mockClear();
     serviceWorkerApi.getRegistrations.mockClear();
     serviceWorkerApi.register.mockClear();
@@ -42,6 +49,7 @@ describe("AuthManager browser service-worker config", () => {
 
   afterAll(() => {
     for (const [key, descriptor] of [
+      ["fetch", originalFetch],
       ["navigator", originalNavigator],
       ["window", originalWindow]
     ] as const) {
@@ -114,10 +122,6 @@ describe("AuthManager browser service-worker config", () => {
   });
 
   test("V2 clears service-worker config without calling access-token endpoints", async () => {
-    const fetchApi = jest.spyOn(globalThis, "fetch").mockImplementation(async (): Promise<Response> => {
-      throw new Error("V2 must not call an access-token endpoint.");
-    });
-
     await AuthManager.beginAuthSession({
       getServiceWorkerConfig: async () => [
         {
@@ -130,7 +134,7 @@ describe("AuthManager browser service-worker config", () => {
     });
     await AuthManager.endAuthSession();
 
-    expect(fetchApi).not.toHaveBeenCalled();
+    expect(globalFetch).not.toHaveBeenCalled();
     expect(postMessage.mock.calls[1][0]).toEqual({ config: [], type: "SET_BYTESCALE_AUTH_CONFIG" });
     expect(AuthManager.isAuthSessionActive()).toBe(false);
     expect(AuthManager.isAuthSessionReady()).toBe(false);
@@ -153,11 +157,15 @@ describe("AuthManager browser service-worker config", () => {
     const fetchApi = jest.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       switch (init?.method) {
         case "GET":
-          return new Response("jwt-a", { headers: { "Content-Type": "text/plain" } });
+          return new NodeFetchResponse("jwt-a", {
+            headers: { "Content-Type": "text/plain" }
+          }) as unknown as Response;
         case "PUT":
-          return new Response(JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 }));
+          return new NodeFetchResponse(
+            JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
+          ) as unknown as Response;
         case "DELETE":
-          return new Response(null, { status: 204 });
+          return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
         default:
           throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
       }
@@ -180,11 +188,15 @@ describe("AuthManager browser service-worker config", () => {
     const fetchApi = jest.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
       switch (init?.method) {
         case "GET":
-          return new Response("jwt-a", { headers: { "Content-Type": "text/plain" } });
+          return new NodeFetchResponse("jwt-a", {
+            headers: { "Content-Type": "text/plain" }
+          }) as unknown as Response;
         case "PUT":
-          return new Response(JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 }));
+          return new NodeFetchResponse(
+            JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
+          ) as unknown as Response;
         case "DELETE":
-          return new Response(null, { status: 204 });
+          return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
         default:
           throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
       }
