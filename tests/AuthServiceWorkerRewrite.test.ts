@@ -2,6 +2,8 @@ import { jest } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { runInNewContext } from "node:vm";
+import { Headers as NodeFetchHeaders, Request as NodeFetchRequest, Response as NodeFetchResponse } from "node-fetch";
+import type { RequestInit as NodeFetchRequestInit } from "node-fetch";
 import type { AuthSwConfigEntryDto, UrlRewriteRule } from "../src/index.browser";
 
 const workerSource = readFileSync(resolve(process.cwd(), "src/index.auth-sw.js"), "utf8");
@@ -23,7 +25,7 @@ describe("Auth service-worker URL rewriting", () => {
   });
 
   test("matches authentication against the rewritten URL and supports navigation requests", async () => {
-    const upstreamResponse = new Response("streamed-body", {
+    const upstreamResponse = new NodeFetchResponse("streamed-body", {
       headers: {
         "Accept-Ranges": "bytes",
         "Content-Disposition": 'attachment; filename="file.pdf"',
@@ -155,9 +157,9 @@ interface FetchOptions {
 }
 
 interface FetchResult {
-  outboundRequest: Request | undefined;
+  outboundRequest: TestRequest | undefined;
   responded: boolean;
-  response: Response | undefined;
+  response: NodeFetchResponse | undefined;
 }
 
 type WorkerEventListener = (event: unknown) => void;
@@ -169,12 +171,12 @@ class AuthServiceWorkerHarness {
   };
 
   private readonly fetchListener: WorkerEventListener;
-  private readonly fetchMock: jest.MockedFunction<(request: Request) => Promise<Response>>;
+  private readonly fetchMock: jest.MockedFunction<(request: TestRequest) => Promise<NodeFetchResponse>>;
 
-  constructor(private readonly upstreamResponse: Response = new Response("ok")) {
+  constructor(private readonly upstreamResponse: NodeFetchResponse = new NodeFetchResponse("ok")) {
     const listeners = new Map<string, WorkerEventListener>();
-    const cacheEntries = new Map<string, Response>();
-    this.fetchMock = jest.fn(async (_request: Request): Promise<Response> => this.upstreamResponse);
+    const cacheEntries = new Map<string, NodeFetchResponse>();
+    this.fetchMock = jest.fn(async (_request: TestRequest): Promise<NodeFetchResponse> => this.upstreamResponse);
 
     const self = {
       addEventListener: (type: string, listener: WorkerEventListener): void => {
@@ -187,8 +189,8 @@ class AuthServiceWorkerHarness {
       skipWaiting: async (): Promise<void> => {}
     };
     const cache = {
-      match: async (key: string): Promise<Response | undefined> => cacheEntries.get(key)?.clone(),
-      put: async (key: string, value: Response): Promise<void> => {
+      match: async (key: string): Promise<NodeFetchResponse | undefined> => cacheEntries.get(key)?.clone(),
+      put: async (key: string, value: NodeFetchResponse): Promise<void> => {
         cacheEntries.set(key, value.clone());
       }
     };
@@ -196,10 +198,10 @@ class AuthServiceWorkerHarness {
       caches: { open: async (): Promise<typeof cache> => cache },
       console: { error: jest.fn(), log: jest.fn() },
       fetch: this.fetchMock,
-      Headers,
+      Headers: NodeFetchHeaders,
       Promise,
-      Request,
-      Response,
+      Request: TestRequest,
+      Response: NodeFetchResponse,
       self,
       setTimeout
     };
@@ -222,16 +224,16 @@ class AuthServiceWorkerHarness {
   }
 
   async dispatchFetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
-    const request = new Request(url, { headers: options.headers });
+    const request = new TestRequest(url, { headers: options.headers as NodeFetchRequestInit["headers"] });
     if (options.navigation === true) {
       Object.defineProperty(request, "mode", { configurable: true, value: "navigate" });
     }
 
-    let responsePromise: Promise<Response> | undefined;
+    let responsePromise: Promise<NodeFetchResponse> | undefined;
     this.fetchListener({
       clientId: "",
       request,
-      respondWith: (response: Response | Promise<Response>): void => {
+      respondWith: (response: NodeFetchResponse | Promise<NodeFetchResponse>): void => {
         responsePromise = Promise.resolve(response);
       }
     });
@@ -242,6 +244,15 @@ class AuthServiceWorkerHarness {
       responded: responsePromise !== undefined,
       response
     };
+  }
+}
+
+class TestRequest extends NodeFetchRequest {
+  readonly mode: RequestMode;
+
+  constructor(input: string | NodeFetchRequest, init: NodeFetchRequestInit & { mode?: RequestMode } = {}) {
+    super(input, init);
+    this.mode = init.mode ?? (input instanceof TestRequest ? input.mode : "cors");
   }
 }
 
