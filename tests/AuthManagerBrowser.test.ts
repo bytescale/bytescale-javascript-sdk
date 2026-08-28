@@ -4,7 +4,8 @@ import { AuthSessionState } from "../src/private/AuthSessionState";
 import type {
   AuthManagerServiceWorkerConfig,
   AuthSwConfigEntryDto,
-  BeginAuthSessionParams
+  BeginAuthSessionParams,
+  UrlRewriteRule
 } from "../src/index.browser";
 
 type FetchApi = NonNullable<NonNullable<BeginAuthSessionParams["options"]>["fetchApi"]>;
@@ -130,10 +131,17 @@ describe("AuthManager browser service-worker config", () => {
         urlPrefix: "https://upcdn.io/account-c/"
       }
     ];
+    const urlRewriteRules: UrlRewriteRule[] = [
+      {
+        fromUrlPrefix: "https://app.example.com/__authenticated-download/",
+        toUrlPrefix: "https://upcdn.io/account-b/"
+      }
+    ];
     const serviceWorkerConfig = jest.fn(
       async (): Promise<AuthManagerServiceWorkerConfig> => ({
         additionalConfig,
-        sourceUrlPrefixes: ["https://app.example.com/"]
+        sourceUrlPrefixes: ["https://app.example.com/"],
+        urlRewriteRules
       })
     );
 
@@ -159,7 +167,8 @@ describe("AuthManager browser service-worker config", () => {
         },
         additionalConfig[1]
       ],
-      type: "SET_BYTESCALE_AUTH_CONFIG"
+      type: "SET_BYTESCALE_AUTH_CONFIG",
+      urlRewriteRules
     });
     expect(additionalConfig[0].urlPrefix).toBe("https://upcdn.io/account-b/");
     expect(AuthSessionState.getSession()?.accessToken).toBe("access-a");
@@ -184,11 +193,23 @@ describe("AuthManager browser service-worker config", () => {
       .fn<() => Promise<AuthManagerServiceWorkerConfig>>()
       .mockResolvedValueOnce({
         additionalConfig: initialAdditionalConfig,
-        sourceUrlPrefixes: ["https://app.example.com/initial/"]
+        sourceUrlPrefixes: ["https://app.example.com/initial/"],
+        urlRewriteRules: [
+          {
+            fromUrlPrefix: "https://app.example.com/download/",
+            toUrlPrefix: "https://upcdn.io/account-b/"
+          }
+        ]
       })
       .mockResolvedValueOnce({
         additionalConfig: [],
-        sourceUrlPrefixes: ["https://app.example.com/refreshed/"]
+        sourceUrlPrefixes: ["https://app.example.com/refreshed/"],
+        urlRewriteRules: [
+          {
+            fromUrlPrefix: "https://app.example.com/download/",
+            toUrlPrefix: "https://upcdn.io/account-c/"
+          }
+        ]
       });
 
     await AuthManager.beginAuthSession({
@@ -208,7 +229,13 @@ describe("AuthManager browser service-worker config", () => {
           urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
         }
       ],
-      type: "SET_BYTESCALE_AUTH_CONFIG"
+      type: "SET_BYTESCALE_AUTH_CONFIG",
+      urlRewriteRules: [
+        {
+          fromUrlPrefix: "https://app.example.com/download/",
+          toUrlPrefix: "https://upcdn.io/account-c/"
+        }
+      ]
     });
     expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
     expect(AuthManager.isAuthSessionReady()).toBe(true);
@@ -225,7 +252,13 @@ describe("AuthManager browser service-worker config", () => {
     ];
     const serviceWorkerConfig = jest.fn(
       async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig
+        additionalConfig,
+        urlRewriteRules: [
+          {
+            fromUrlPrefix: "https://app.example.com/download/",
+            toUrlPrefix: "https://upcdn.io/account-b/"
+          }
+        ]
       })
     );
 
@@ -254,8 +287,31 @@ describe("AuthManager browser service-worker config", () => {
         },
         additionalConfig[0]
       ],
-      type: "SET_BYTESCALE_AUTH_CONFIG"
+      type: "SET_BYTESCALE_AUTH_CONFIG",
+      urlRewriteRules: [
+        {
+          fromUrlPrefix: "https://app.example.com/download/",
+          toUrlPrefix: "https://upcdn.io/account-b/"
+        }
+      ]
     });
+  });
+
+  test("rejects malformed URL rewrite rules", async () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchApi = createPrimaryFetchApi();
+
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerConfig: async (): Promise<AuthManagerServiceWorkerConfig> => ({
+        additionalConfig: [],
+        urlRewriteRules: [{ fromUrlPrefix: "https://app.example.com/download/" }] as UrlRewriteRule[]
+      }),
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
+
+    expect(postMessage).not.toHaveBeenCalled();
+    expect(AuthManager.isAuthSessionReady()).toBe(false);
   });
 
   test("fails closed until the initial service-worker config callback succeeds", async () => {

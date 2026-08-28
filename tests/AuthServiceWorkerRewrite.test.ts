@@ -1,0 +1,265 @@
+import { jest } from "@jest/globals";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { runInNewContext } from "node:vm";
+import type { AuthSwConfigEntryDto, UrlRewriteRule } from "../src/index.browser";
+
+const workerSource = readFileSync(resolve(process.cwd(), "src/index.auth-sw.js"), "utf8");
+
+describe("Auth service-worker URL rewriting", () => {
+  test("preserves the remaining path, query string, and fragment", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    const rules = [rewriteRule("download/", "account-a/")];
+    await harness.setConfig([], rules);
+
+    const result = await harness.dispatchFetch(
+      "https://dashboard.example.com/download/path/to/file.pdf?download=true&version=2"
+    );
+
+    expect(result.outboundRequest?.url).toBe("https://upcdn.io/account-a/path/to/file.pdf?download=true&version=2");
+    expect(harness.getRewrittenUrl("https://dashboard.example.com/download/file.pdf?download=true#page=2", rules)).toBe(
+      "https://upcdn.io/account-a/file.pdf?download=true#page=2"
+    );
+  });
+
+  test("matches authentication against the rewritten URL and supports navigation requests", async () => {
+    const upstreamResponse = new Response("streamed-body", {
+      headers: {
+        "Accept-Ranges": "bytes",
+        "Content-Disposition": 'attachment; filename="file.pdf"',
+        "Content-Length": "13",
+        "Content-Range": "bytes 0-12/13",
+        "Content-Type": "application/pdf"
+      },
+      status: 206
+    });
+    const blob = jest.spyOn(upstreamResponse, "blob");
+    const arrayBuffer = jest.spyOn(upstreamResponse, "arrayBuffer");
+    const harness = new AuthServiceWorkerHarness(upstreamResponse);
+    await harness.setConfig([authConfig("account-a/", "token-a")], [rewriteRule("download/", "account-a/")]);
+
+    const result = await harness.dispatchFetch("https://dashboard.example.com/download/file.pdf", {
+      headers: {
+        "If-Modified-Since": "Wed, 21 Oct 2015 07:28:00 GMT",
+        "If-None-Match": '"etag"',
+        "If-Range": '"range-etag"',
+        "Range": "bytes=0-12"
+      },
+      navigation: true
+    });
+
+    expect(result.outboundRequest?.url).toBe("https://upcdn.io/account-a/file.pdf");
+    expect(result.outboundRequest?.mode).toBe("cors");
+    expect(result.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+    expect(result.outboundRequest?.headers.get("Range")).toBe("bytes=0-12");
+    expect(result.outboundRequest?.headers.get("If-Range")).toBe('"range-etag"');
+    expect(result.outboundRequest?.headers.get("If-None-Match")).toBe('"etag"');
+    expect(result.outboundRequest?.headers.get("If-Modified-Since")).toBe("Wed, 21 Oct 2015 07:28:00 GMT");
+    expect(result.response).toBe(upstreamResponse);
+    expect(result.response?.status).toBe(206);
+    expect(result.response?.headers.get("Content-Disposition")).toBe('attachment; filename="file.pdf"');
+    expect(result.response?.headers.get("Accept-Ranges")).toBe("bytes");
+    expect(blob).not.toHaveBeenCalled();
+    expect(arrayBuffer).not.toHaveBeenCalled();
+  });
+
+  test("selects different authentication configurations for different rewrite destinations", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig(
+      [authConfig("account-a/", "token-a"), authConfig("account-b/", "token-b")],
+      [rewriteRule("download-a/", "account-a/"), rewriteRule("download-b/", "account-b/")]
+    );
+
+    const first = await harness.dispatchFetch("https://dashboard.example.com/download-a/file.pdf");
+    const second = await harness.dispatchFetch("https://dashboard.example.com/download-b/file.pdf");
+
+    expect(first.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+    expect(second.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-b");
+  });
+
+  test("never selects a token from the original URL", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig(
+      [authConfigForUrl("https://dashboard.example.com/download/", "original-token")],
+      [rewriteRule("download/", "unconfigured-account/")]
+    );
+
+    const result = await harness.dispatchFetch("https://dashboard.example.com/download/file.pdf");
+
+    expect(result.outboundRequest?.url).toBe("https://upcdn.io/unconfigured-account/file.pdf");
+    expect(result.outboundRequest?.headers.has("Authorization")).toBe(false);
+  });
+
+  test("fetches rewritten requests even when no authentication configuration matches", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig([], [rewriteRule("download/", "public-account/")]);
+
+    const result = await harness.dispatchFetch("https://dashboard.example.com/download/public.pdf");
+
+    expect(result.responded).toBe(true);
+    expect(result.outboundRequest?.url).toBe("https://upcdn.io/public-account/public.pdf");
+    expect(result.outboundRequest?.headers.has("Authorization")).toBe(false);
+  });
+
+  test("uses only the first matching rewrite rule", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig(
+      [authConfig("account-a/", "token-a"), authConfig("account-b/", "token-b")],
+      [rewriteRule("download/", "account-a/"), rewriteRule("download/", "account-b/")]
+    );
+
+    const result = await harness.dispatchFetch("https://dashboard.example.com/download/file.pdf");
+
+    expect(result.outboundRequest?.url).toBe("https://upcdn.io/account-a/file.pdf");
+    expect(result.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+  });
+
+  test("does not recursively rewrite the rewritten URL", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig(
+      [authConfig("account-a/", "token-a")],
+      [
+        {
+          fromUrlPrefix: "https://dashboard.example.com/download/",
+          toUrlPrefix: "https://proxy.example.com/download/"
+        },
+        {
+          fromUrlPrefix: "https://proxy.example.com/download/",
+          toUrlPrefix: "https://upcdn.io/account-a/"
+        }
+      ]
+    );
+
+    const result = await harness.dispatchFetch("https://dashboard.example.com/download/file.pdf");
+
+    expect(result.outboundRequest?.url).toBe("https://proxy.example.com/download/file.pdf");
+    expect(result.outboundRequest?.headers.has("Authorization")).toBe(false);
+  });
+
+  test("retains existing behavior when no rewrite rule matches", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    await harness.setConfig([authConfig("account-a/", "token-a")], [rewriteRule("download/", "account-a/")]);
+
+    const authenticated = await harness.dispatchFetch("https://upcdn.io/account-a/file.pdf");
+    const untouched = await harness.dispatchFetch("https://dashboard.example.com/ordinary-page");
+
+    expect(authenticated.outboundRequest?.url).toBe("https://upcdn.io/account-a/file.pdf");
+    expect(authenticated.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+    expect(untouched.responded).toBe(false);
+  });
+});
+
+interface FetchOptions {
+  headers?: HeadersInit;
+  navigation?: boolean;
+}
+
+interface FetchResult {
+  outboundRequest: Request | undefined;
+  responded: boolean;
+  response: Response | undefined;
+}
+
+type WorkerEventListener = (event: unknown) => void;
+
+class AuthServiceWorkerHarness {
+  private readonly context: {
+    getRewrittenUrl: (url: string, rules: UrlRewriteRule[]) => string | undefined;
+    setConfig: (config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]) => Promise<void>;
+  };
+
+  private readonly fetchListener: WorkerEventListener;
+  private readonly fetchMock: jest.MockedFunction<(request: Request) => Promise<Response>>;
+
+  constructor(private readonly upstreamResponse: Response = new Response("ok")) {
+    const listeners = new Map<string, WorkerEventListener>();
+    const cacheEntries = new Map<string, Response>();
+    this.fetchMock = jest.fn(async (_request: Request): Promise<Response> => this.upstreamResponse);
+
+    const self = {
+      addEventListener: (type: string, listener: WorkerEventListener): void => {
+        listeners.set(type, listener);
+      },
+      clients: {
+        claim: async (): Promise<void> => {},
+        get: async (): Promise<undefined> => undefined
+      },
+      skipWaiting: async (): Promise<void> => {}
+    };
+    const cache = {
+      match: async (key: string): Promise<Response | undefined> => cacheEntries.get(key)?.clone(),
+      put: async (key: string, value: Response): Promise<void> => {
+        cacheEntries.set(key, value.clone());
+      }
+    };
+    const sandbox = {
+      caches: { open: async (): Promise<typeof cache> => cache },
+      console: { error: jest.fn(), log: jest.fn() },
+      fetch: this.fetchMock,
+      Headers,
+      Promise,
+      Request,
+      Response,
+      self,
+      setTimeout
+    };
+    runInNewContext(workerSource, sandbox);
+
+    this.context = sandbox as typeof sandbox & AuthServiceWorkerHarness["context"];
+    const fetchListener = listeners.get("fetch");
+    if (fetchListener === undefined) {
+      throw new Error("Auth service worker did not register a fetch listener.");
+    }
+    this.fetchListener = fetchListener;
+  }
+
+  async setConfig(config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]): Promise<void> {
+    await this.context.setConfig(config, rules);
+  }
+
+  getRewrittenUrl(url: string, rules: UrlRewriteRule[]): string | undefined {
+    return this.context.getRewrittenUrl(url, rules);
+  }
+
+  async dispatchFetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
+    const request = new Request(url, { headers: options.headers });
+    if (options.navigation === true) {
+      Object.defineProperty(request, "mode", { configurable: true, value: "navigate" });
+    }
+
+    let responsePromise: Promise<Response> | undefined;
+    this.fetchListener({
+      clientId: "",
+      request,
+      respondWith: (response: Response | Promise<Response>): void => {
+        responsePromise = Promise.resolve(response);
+      }
+    });
+
+    const response = await responsePromise;
+    return {
+      outboundRequest: this.fetchMock.mock.calls.at(-1)?.[0],
+      responded: responsePromise !== undefined,
+      response
+    };
+  }
+}
+
+function authConfig(accountPath: string, token: string): AuthSwConfigEntryDto {
+  return authConfigForUrl(`https://upcdn.io/${accountPath}`, token);
+}
+
+function authConfigForUrl(urlPrefix: string, token: string): AuthSwConfigEntryDto {
+  return {
+    expires: undefined,
+    headers: [{ key: "Authorization", value: `Bearer ${token}` }],
+    urlPrefix
+  };
+}
+
+function rewriteRule(fromPath: string, toPath: string): UrlRewriteRule {
+  return {
+    fromUrlPrefix: `https://dashboard.example.com/${fromPath}`,
+    toUrlPrefix: `https://upcdn.io/${toPath}`
+  };
+}

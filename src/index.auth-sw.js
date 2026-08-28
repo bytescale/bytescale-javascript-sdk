@@ -10,9 +10,11 @@
  * - https://www.bytescale.com/docs/types/BeginAuthSessionParams#serviceWorkerScript
  */
 let transientCache; // [{urlPrefix, headers, expires?}] (See: AuthSwConfigDto)
+let transientUrlRewriteRules;
 const maxSourceUrlCacheEntries = 1000;
 const persistentCacheName = "bytescale-sw-config";
 const persistentCacheKey = "config";
+const persistentUrlRewriteRulesCacheKey = "url-rewrite-rules";
 const sourceScopedUrlPrefixMarker = "!bytescale-source-scoped!";
 const sourceUrlsByClientId = new Map();
 
@@ -41,7 +43,7 @@ self.addEventListener("message", event => {
       // in the user's application, so while the user may sign out in one tab, they may remain signed in to another tab,
       // which may subsequently send a follow-up 'SET_CONFIG' which will resume auth.
       case "SET_BYTESCALE_AUTH_CONFIG":
-        setConfig(event.data.config).then(
+        setConfig(event.data.config, event.data.urlRewriteRules).then(
           () => {},
           e => console.error(`[bytescale] Auth SW failed to persist config.`, e)
         );
@@ -54,7 +56,7 @@ self.addEventListener("fetch", function (event) {
   // Faster and intercepts only the required requests.
   // Called in almost all cases.
   const interceptSync = config => {
-    const newRequest = interceptRequest(event, config);
+    const newRequest = interceptRequest(event, config, transientUrlRewriteRules);
     if (newRequest instanceof Promise) {
       event.respondWith(
         newRequest.then(
@@ -71,8 +73,8 @@ self.addEventListener("fetch", function (event) {
   // Called only for the initial request after this Service Worker is restarted after going idle (e.g. after 30s on Firefox/Windows).
   const interceptAsync = async () =>
     await handleRequestErrors(
-      (await withTimeout(getConfig())
-        .then(config => interceptRequest(event, config))
+      (await withTimeout(getState())
+        .then(state => (state === undefined ? undefined : interceptRequest(event, state.config, state.urlRewriteRules)))
         .catch(() => undefined)) ?? event.request
     );
 
@@ -86,15 +88,18 @@ self.addEventListener("fetch", function (event) {
   };
 
   // Optimization: avoids running async code (which necessitates intercepting all requests) when the config is already cached locally.
-  if (transientCache !== undefined) {
+  if (transientCache !== undefined && transientUrlRewriteRules !== undefined) {
     interceptSync(transientCache);
   } else {
     event.respondWith(interceptAsync());
   }
 });
 
-function interceptRequest(event, config) {
-  const url = event.request.url;
+function interceptRequest(event, config, urlRewriteRules) {
+  const rewrittenUrl = getRewrittenUrl(event.request.url, urlRewriteRules);
+  const url = rewrittenUrl === undefined ? event.request.url : rewrittenUrl;
+  const fallbackRequest =
+    rewrittenUrl === undefined ? undefined : createCorsRequest(event.request, rewrittenUrl, event.request.headers);
 
   if (config !== undefined) {
     // Config is an array to support multiple different accounts within a single website, if needed.
@@ -106,10 +111,7 @@ function interceptRequest(event, config) {
             newHeaders.set(key, value);
           }
         }
-        return new Request(event.request, {
-          mode: "cors", // Required for adding custom HTTP headers.
-          headers: newHeaders
-        });
+        return createCorsRequest(event.request, url, newHeaders);
       };
 
       if (expires === undefined || expires > Date.now()) {
@@ -131,11 +133,11 @@ function interceptRequest(event, config) {
         ) {
           if (isSourceScoped) {
             if (!Array.isArray(sourceUrlPrefixes) || sourceUrlPrefixes.length === 0) {
-              return undefined;
+              return fallbackRequest;
             }
             return getSourceUrl(event.clientId).then(sourceUrl => {
               if (sourceUrl === undefined || !sourceUrlPrefixes.some(prefix => sourceUrl.startsWith(prefix))) {
-                return undefined;
+                return fallbackRequest;
               }
 
               // Overwrite existing auth headers that may have been set by other broad-match authorizers (i.e. AuthManager
@@ -152,7 +154,51 @@ function interceptRequest(event, config) {
     }
   }
 
+  return fallbackRequest;
+}
+
+function getRewrittenUrl(url, urlRewriteRules) {
+  if (Array.isArray(urlRewriteRules)) {
+    for (const rule of urlRewriteRules) {
+      if (
+        rule !== null &&
+        typeof rule === "object" &&
+        typeof rule.fromUrlPrefix === "string" &&
+        typeof rule.toUrlPrefix === "string" &&
+        url.startsWith(rule.fromUrlPrefix)
+      ) {
+        return `${rule.toUrlPrefix}${url.substring(rule.fromUrlPrefix.length)}`;
+      }
+    }
+  }
   return undefined;
+}
+
+function createCorsRequest(originalRequest, url, headers) {
+  if (url === originalRequest.url) {
+    return new Request(originalRequest, {
+      mode: "cors", // Required for adding custom HTTP headers.
+      headers
+    });
+  }
+
+  const method = originalRequest.method.toUpperCase();
+  const requestInit = {
+    cache: originalRequest.cache,
+    credentials: originalRequest.credentials,
+    headers,
+    integrity: originalRequest.integrity,
+    keepalive: originalRequest.keepalive,
+    method: originalRequest.method,
+    mode: "cors",
+    redirect: originalRequest.redirect,
+    referrer: originalRequest.referrer,
+    referrerPolicy: originalRequest.referrerPolicy
+  };
+  if (method !== "GET" && method !== "HEAD") {
+    requestInit.body = originalRequest.body;
+  }
+  return new Request(url, requestInit);
 }
 
 function getSourceUrl(clientId) {
@@ -185,29 +231,35 @@ function withTimeout(promise) {
   return Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(undefined), 250))]);
 }
 
-async function getConfig() {
-  if (transientCache !== undefined) {
-    return transientCache;
+async function getState() {
+  if (transientCache !== undefined && transientUrlRewriteRules !== undefined) {
+    return { config: transientCache, urlRewriteRules: transientUrlRewriteRules };
   }
 
   const cache = await getCache();
-  const configResponse = await cache.match(persistentCacheKey);
-  if (configResponse !== undefined) {
-    const config = await configResponse.json();
-    transientCache = config;
-    return config;
-  }
+  const responses = await Promise.all([
+    cache.match(persistentCacheKey),
+    cache.match(persistentUrlRewriteRulesCacheKey)
+  ]);
+  const config = responses[0] === undefined ? [] : await responses[0].json();
+  const urlRewriteRules = responses[1] === undefined ? [] : await responses[1].json();
 
-  return undefined;
+  transientCache = Array.isArray(config) ? config : [];
+  transientUrlRewriteRules = Array.isArray(urlRewriteRules) ? urlRewriteRules : [];
+  return { config: transientCache, urlRewriteRules: transientUrlRewriteRules };
 }
 
-async function setConfig(config) {
+async function setConfig(config, urlRewriteRules) {
   // Ensures "fetch" events can start seeing the config immediately. Persistent config is only required for when this
   // service worker expires (after 30s on some browsers, like FireFox on Windows).
   transientCache = config;
+  transientUrlRewriteRules = Array.isArray(urlRewriteRules) ? urlRewriteRules : [];
 
   const cache = await getCache();
-  await cache.put(persistentCacheKey, new Response(JSON.stringify(config)));
+  await Promise.all([
+    cache.put(persistentCacheKey, new Response(JSON.stringify(config))),
+    cache.put(persistentUrlRewriteRulesCacheKey, new Response(JSON.stringify(transientUrlRewriteRules)))
+  ]);
 }
 
 function getCache() {

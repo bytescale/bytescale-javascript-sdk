@@ -1,7 +1,8 @@
 import {
   AuthManagerServiceWorkerConfig,
   AuthManagerInterface,
-  BeginAuthSessionParams
+  BeginAuthSessionParams,
+  UrlRewriteRule
 } from "../../private/model/AuthManagerInterface";
 import { AuthSessionState } from "../../private/AuthSessionState";
 import { ConsoleUtils } from "../../private/ConsoleUtils";
@@ -16,7 +17,11 @@ import { Scheduler } from "../../private/Scheduler";
 
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
-export type { AuthManagerServiceWorkerConfig, BeginAuthSessionParams } from "../../private/model/AuthManagerInterface";
+export type {
+  AuthManagerServiceWorkerConfig,
+  BeginAuthSessionParams,
+  UrlRewriteRule
+} from "../../private/model/AuthManagerInterface";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -217,10 +222,26 @@ class AuthManagerImpl implements AuthManagerInterface {
             "The 'sourceUrlPrefixes' field returned by 'serviceWorkerConfig' must be an array of strings."
           );
         }
+        if (
+          result.urlRewriteRules !== undefined &&
+          (!Array.isArray(result.urlRewriteRules) ||
+            !result.urlRewriteRules.every(
+              rule =>
+                rule !== null &&
+                typeof rule === "object" &&
+                typeof rule.fromUrlPrefix === "string" &&
+                typeof rule.toUrlPrefix === "string"
+            ))
+        ) {
+          throw new Error(
+            "The 'urlRewriteRules' field returned by 'serviceWorkerConfig' must be an array of URL rewrite rules."
+          );
+        }
 
         const config: AuthManagerServiceWorkerConfig = {
           additionalConfig: result.additionalConfig,
-          sourceUrlPrefixes: result.sourceUrlPrefixes
+          sourceUrlPrefixes: result.sourceUrlPrefixes,
+          urlRewriteRules: result.urlRewriteRules
         };
 
         if (session.primaryAuthSwConfig !== undefined) {
@@ -252,13 +273,17 @@ class AuthManagerImpl implements AuthManagerInterface {
     primaryConfig: AuthSwConfigDto[number],
     serviceWorkerConfig: AuthManagerServiceWorkerConfig | undefined
   ): Promise<void> {
-    await this.sendServiceWorkerConfig(session, [
-      {
-        ...primaryConfig,
-        sourceUrlPrefixes: serviceWorkerConfig?.sourceUrlPrefixes
-      },
-      ...(serviceWorkerConfig?.additionalConfig ?? [])
-    ]);
+    await this.sendServiceWorkerConfig(
+      session,
+      [
+        {
+          ...primaryConfig,
+          sourceUrlPrefixes: serviceWorkerConfig?.sourceUrlPrefixes
+        },
+        ...(serviceWorkerConfig?.additionalConfig ?? [])
+      ],
+      serviceWorkerConfig?.urlRewriteRules
+    );
   }
 
   private getServiceWorkerConfigRefreshEpoch(config: AuthSwConfigDto): number | undefined {
@@ -271,7 +296,11 @@ class AuthManagerImpl implements AuthManagerInterface {
     return earliestExpiry === undefined ? undefined : earliestExpiry - this.refreshBeforeExpirySeconds * 1000;
   }
 
-  private async sendServiceWorkerConfig(session: AuthSession, config: AuthSwConfigDto): Promise<void> {
+  private async sendServiceWorkerConfig(
+    session: AuthSession,
+    config: AuthSwConfigDto,
+    urlRewriteRules?: UrlRewriteRule[]
+  ): Promise<void> {
     if (session.authServiceWorker === undefined) {
       throw new Error("Service worker configuration cannot be applied because service workers are unavailable.");
     }
@@ -284,7 +313,8 @@ class AuthManagerImpl implements AuthManagerInterface {
           urlPrefix: `${entry.sourceUrlPrefixes === undefined ? "" : this.sourceScopedUrlPrefixMarker}${
             entry.urlPrefix
           }`
-        }))
+        })),
+        ...(urlRewriteRules === undefined ? {} : { urlRewriteRules })
       },
       session.authServiceWorker,
       this.serviceWorkerScriptFieldName

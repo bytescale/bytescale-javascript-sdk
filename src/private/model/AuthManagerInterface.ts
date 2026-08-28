@@ -1,6 +1,14 @@
 import { BytescaleApiClientConfig } from "../../public/shared";
 import { AuthSwConfigEntryDto } from "../dtos/AuthSwConfigEntryDto";
 
+export interface UrlRewriteRule {
+  /** URL prefix to replace. This URL must be covered by the service worker's origin and scope. */
+  fromUrlPrefix: string;
+
+  /** Replacement URL prefix. The remainder of the original URL is appended unchanged. */
+  toUrlPrefix: string;
+}
+
 export interface AuthManagerServiceWorkerConfig {
   /**
    * Additional download-only service-worker authorization rules.
@@ -14,6 +22,12 @@ export interface AuthManagerServiceWorkerConfig {
    * History API changes do not update the matched client URL.
    */
   sourceUrlPrefixes?: string[];
+
+  /**
+   * Rewrites matching service-worker requests before applying authorization rules. The first matching rule wins and
+   * rewritten URLs are not processed recursively.
+   */
+  urlRewriteRules?: UrlRewriteRule[];
 }
 
 export interface BeginAuthSessionParams {
@@ -41,7 +55,8 @@ export interface BeginAuthSessionParams {
 
   /**
    * Returns configuration for service-worker authorization. The primary JWT returned by `authUrl` is restricted using
-   * `sourceUrlPrefixes`; `additionalConfig` contains download-only rules and never authenticates SDK API operations.
+   * `sourceUrlPrefixes`; `additionalConfig` contains download-only rules and never authenticates SDK API operations;
+   * `urlRewriteRules` rewrites in-scope URLs before download authorization is evaluated.
    * Called when the session begins and again 20 seconds before the earliest additional entry expires. Entries without
    * an expiry do not trigger a refresh.
    *
