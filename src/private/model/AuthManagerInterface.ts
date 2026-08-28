@@ -1,9 +1,22 @@
 import { BytescaleApiClientConfig } from "../../public/shared";
 import { AuthSwConfigEntryDto } from "../dtos/AuthSwConfigEntryDto";
 
-export type BeginAuthSessionParams = BeginAuthSessionParamsV1 | BeginAuthSessionParamsV2;
+export interface AuthManagerServiceWorkerConfig {
+  /**
+   * Additional download-only service-worker authorization rules.
+   * An empty array clears all additional rules.
+   */
+  additionalConfig: AuthSwConfigEntryDto[];
 
-export interface BeginAuthSessionParamsV1 {
+  /**
+   * Restricts the primary JWT to pages and iframes whose URL starts with one of these prefixes.
+   * An empty array matches no clients. Omit this field to preserve the existing service-worker behavior.
+   * History API changes do not update the matched client URL.
+   */
+  sourceUrlPrefixes?: string[];
+}
+
+export interface BeginAuthSessionParams {
   /**
    * The account ID to authorize requests for.
    */
@@ -25,6 +38,19 @@ export interface BeginAuthSessionParamsV1 {
    * Optional configuration.
    */
   options?: Pick<BytescaleApiClientConfig, "fetchApi" | "cdnUrl">;
+
+  /**
+   * Returns configuration for service-worker authorization. The primary JWT returned by `authUrl` is restricted using
+   * `sourceUrlPrefixes`; `additionalConfig` contains download-only rules and never authenticates SDK API operations.
+   * Called when the session begins and again 20 seconds before the earliest additional entry expires. Entries without
+   * an expiry do not trigger a refresh.
+   *
+   * Requires `serviceWorkerScript` and browser service-worker support. Additional rules cannot use the CDN cookie
+   * fallback.
+   *
+   * IMPORTANT: do not call 'AuthManager.beginAuthSession' or 'AuthManager.endAuthSession' inside this callback, as this will cause a deadlock.
+   */
+  serviceWorkerConfig?: () => Promise<AuthManagerServiceWorkerConfig>;
 
   /**
    * Enables support for modern browsers that block third-party cookies (like Safari).
@@ -72,39 +98,14 @@ export interface BeginAuthSessionParamsV1 {
    * script must be hosted on your website's domain in the root directory.
    */
   serviceWorkerScript?: string;
-
-  /**
-   * Restricts service-worker authorization to pages and iframes whose URL starts with one of these prefixes.
-   * An empty array matches no clients. Omit this field to preserve the existing service-worker behavior.
-   * Applies only with `serviceWorkerScript`; History API changes do not update the matched client URL.
-   */
-  sourceUrlPrefixes?: string[];
-}
-
-export interface BeginAuthSessionParamsV2 {
-  /**
-   * Returns the complete replacement service-worker authorization config. Called when the session begins and again
-   * 20 seconds before the earliest configured expiry. Entries without an expiry do not trigger a refresh.
-   *
-   * IMPORTANT: do not call 'AuthManager.beginAuthSession' or 'AuthManager.endAuthSession' inside this callback, as this will cause a deadlock.
-   */
-  getServiceWorkerConfig: () => Promise<AuthSwConfigEntryDto[]>;
-
-  /**
-   * The path to the service worker JavaScript file hosted at the root of your website.
-   *
-   * Unlike V1 sessions, V2 sessions require service-worker support and do not create an SDK API access token or use
-   * CDN cookies as a fallback.
-   */
-  serviceWorkerScript: string;
 }
 
 export interface AuthManagerInterface {
   /**
    * Begins a JWT auth session with the Bytescale API and Bytescale CDN.
    *
-   * V1 sessions fetch and refresh a JWT using the supplied auth endpoint. V2 sessions instead refresh the complete
-   * service-worker configuration using `getServiceWorkerConfig`.
+   * The primary JWT authenticates Bytescale API operations and downloads for `accountId`. Optional additional
+   * service-worker rules authenticate downloads only.
    *
    * Specifically, calling this method will cause the SDK to periodically acquire a JWT from your JWT endpoint. The SDK will then automatically include this JWT in all subsequent Bytescale API requests (via the 'authorization-token' request header) and also in all Bytescale CDN download requests (via a session cookie, or an 'authorization' header if service workers are being used).
    *

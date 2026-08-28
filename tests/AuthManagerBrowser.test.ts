@@ -1,12 +1,27 @@
 import { jest } from "@jest/globals";
 import { Response as NodeFetchResponse } from "node-fetch";
-import type { AuthSwConfigEntryDto, BeginAuthSessionParamsV1, BeginAuthSessionParamsV2 } from "../src/index.browser";
+import { AuthSessionState } from "../src/private/AuthSessionState";
+import type {
+  AuthManagerServiceWorkerConfig,
+  AuthSwConfigEntryDto,
+  BeginAuthSessionParams
+} from "../src/index.browser";
+
+type FetchApi = NonNullable<NonNullable<BeginAuthSessionParams["options"]>["fetchApi"]>;
 
 interface AuthManagerApi {
-  beginAuthSession: (params: BeginAuthSessionParamsV1 | BeginAuthSessionParamsV2) => Promise<void>;
+  beginAuthSession: (params: BeginAuthSessionParams) => Promise<void>;
   endAuthSession: () => Promise<void>;
   isAuthSessionActive: () => boolean;
   isAuthSessionReady: () => boolean;
+}
+
+interface AuthManagerInternals extends AuthManagerApi {
+  refreshAccessToken: (
+    session: NonNullable<ReturnType<typeof AuthSessionState.getSession>>,
+    params: BeginAuthSessionParams
+  ) => Promise<void>;
+  scheduler: { unschedule: (handle: number) => void };
 }
 
 describe("AuthManager browser service-worker config", () => {
@@ -67,150 +82,24 @@ describe("AuthManager browser service-worker config", () => {
     jest.restoreAllMocks();
   });
 
-  test("V2 applies multiple entries and refreshes before the earliest expiry", async () => {
-    const firstConfig: AuthSwConfigEntryDto[] = [
-      {
-        expires: Date.now() + 21_000,
-        headers: [{ key: "Authorization", value: "Bearer account-a" }],
-        sourceUrlPrefixes: ["https://app.example.com/account-a/"],
-        urlPrefix: "https://upcdn.io/account-a/"
-      },
-      {
-        expires: Date.now() + 60_000,
-        headers: [{ key: "Authorization", value: "Bearer account-b" }],
-        urlPrefix: "https://upcdn.io/account-b/"
-      }
-    ];
-    const refreshedConfig: AuthSwConfigEntryDto[] = [
-      {
-        expires: undefined,
-        headers: [{ key: "Authorization", value: "Bearer refreshed" }],
-        urlPrefix: "https://upcdn.io/account-a/"
-      }
-    ];
-    const getServiceWorkerConfig = jest
-      .fn<BeginAuthSessionParamsV2["getServiceWorkerConfig"]>()
-      .mockResolvedValueOnce(firstConfig)
-      .mockResolvedValueOnce(refreshedConfig);
-
-    await AuthManager.beginAuthSession({
-      getServiceWorkerConfig,
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-
-    expect(AuthManager.isAuthSessionActive()).toBe(true);
-    expect(AuthManager.isAuthSessionReady()).toBe(true);
-    expect(postMessage.mock.calls[0][0]).toEqual({
-      config: [
-        {
-          ...firstConfig[0],
-          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
-        },
-        firstConfig[1]
-      ],
-      type: "SET_BYTESCALE_AUTH_CONFIG"
-    });
-    expect(firstConfig[0].urlPrefix).toBe("https://upcdn.io/account-a/");
-
-    await new Promise(resolve => setTimeout(resolve, 1_500));
-
-    expect(getServiceWorkerConfig).toHaveBeenCalledTimes(2);
-    expect(postMessage.mock.calls[1][0]).toEqual({
-      config: refreshedConfig,
-      type: "SET_BYTESCALE_AUTH_CONFIG"
-    });
-  });
-
-  test("V2 clears service-worker config without calling access-token endpoints", async () => {
-    await AuthManager.beginAuthSession({
-      getServiceWorkerConfig: async () => [
-        {
-          expires: undefined,
-          headers: [{ key: "Authorization", value: "Bearer account-a" }],
-          urlPrefix: "https://upcdn.io/account-a/"
-        }
-      ],
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-    await AuthManager.endAuthSession();
-
-    expect(globalFetch).not.toHaveBeenCalled();
-    expect(postMessage.mock.calls[1][0]).toEqual({ config: [], type: "SET_BYTESCALE_AUTH_CONFIG" });
-    expect(AuthManager.isAuthSessionActive()).toBe(false);
-    expect(AuthManager.isAuthSessionReady()).toBe(false);
-  });
-
-  test("V2 rejects instead of falling back to cookies when service workers are unavailable", async () => {
+  test("retains the existing cookie fallback when no additional config is requested", async () => {
     delete navigatorValue.serviceWorker;
-    const getServiceWorkerConfig = jest.fn(async (): Promise<AuthSwConfigEntryDto[]> => []);
+    const fetchApi = createPrimaryFetchApi();
 
-    await expect(
-      AuthManager.beginAuthSession({ getServiceWorkerConfig, serviceWorkerScript: "/bytescale-auth-sw.js" })
-    ).rejects.toThrow("requires service workers");
-
-    expect(getServiceWorkerConfig).not.toHaveBeenCalled();
-    expect(AuthManager.isAuthSessionActive()).toBe(false);
-  });
-
-  test("V1 retains cookie fallback when service workers are unavailable", async () => {
-    delete navigatorValue.serviceWorker;
-    const fetchApi = jest.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      switch (init?.method) {
-        case "GET":
-          return new NodeFetchResponse("jwt-a", {
-            headers: { "Content-Type": "text/plain" }
-          }) as unknown as Response;
-        case "PUT":
-          return new NodeFetchResponse(
-            JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
-          ) as unknown as Response;
-        case "DELETE":
-          return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
-        default:
-          throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
-      }
-    });
-
-    await AuthManager.beginAuthSession({
-      accountId: "account-a",
-      authHeaders: async (): Promise<Record<string, string>> => ({}),
-      authUrl: "https://app.example.com/auth",
-      options: { fetchApi },
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
+    await AuthManager.beginAuthSession(createParams(fetchApi));
 
     expect((fetchApi.mock.calls[1][0] as string).endsWith("?set-cookie=true")).toBe(true);
     expect(postMessage).not.toHaveBeenCalled();
     expect(AuthManager.isAuthSessionReady()).toBe(true);
   });
 
-  test("V1 retains the existing JWT, access-token, and single-entry service-worker flow", async () => {
-    const fetchApi = jest.fn(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-      switch (init?.method) {
-        case "GET":
-          return new NodeFetchResponse("jwt-a", {
-            headers: { "Content-Type": "text/plain" }
-          }) as unknown as Response;
-        case "PUT":
-          return new NodeFetchResponse(
-            JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
-          ) as unknown as Response;
-        case "DELETE":
-          return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
-        default:
-          throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
-      }
-    });
-    const params: BeginAuthSessionParamsV1 = {
-      accountId: "account-a",
-      authHeaders: async (): Promise<Record<string, string>> => ({ "X-App-Authorization": "app-token" }),
-      authUrl: "https://app.example.com/auth",
-      options: { fetchApi },
-      serviceWorkerScript: "/bytescale-auth-sw.js",
-      sourceUrlPrefixes: ["https://app.example.com/"]
-    };
+  test("retains the existing primary-only service-worker flow", async () => {
+    const fetchApi = createPrimaryFetchApi();
 
-    await AuthManager.beginAuthSession(params);
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
 
     expect(AuthManager.isAuthSessionReady()).toBe(true);
     expect(postMessage.mock.calls[0][0]).toEqual({
@@ -218,12 +107,62 @@ describe("AuthManager browser service-worker config", () => {
         {
           expires: expect.any(Number),
           headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
-          sourceUrlPrefixes: params.sourceUrlPrefixes,
-          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+          urlPrefix: "https://upcdn.io/account-a/"
         }
       ],
       type: "SET_BYTESCALE_AUTH_CONFIG"
     });
+    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
+  });
+
+  test("merges the primary API/download context with additional download-only contexts", async () => {
+    const fetchApi = createPrimaryFetchApi();
+    const additionalConfig: AuthSwConfigEntryDto[] = [
+      {
+        expires: Date.now() + 60_000,
+        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
+        sourceUrlPrefixes: ["https://app.example.com/account-b/"],
+        urlPrefix: "https://upcdn.io/account-b/"
+      },
+      {
+        expires: undefined,
+        headers: [{ key: "Authorization", value: "Bearer jwt-c" }],
+        urlPrefix: "https://upcdn.io/account-c/"
+      }
+    ];
+    const serviceWorkerConfig = jest.fn(
+      async (): Promise<AuthManagerServiceWorkerConfig> => ({
+        additionalConfig,
+        sourceUrlPrefixes: ["https://app.example.com/"]
+      })
+    );
+
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerConfig,
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
+
+    expect(AuthManager.isAuthSessionReady()).toBe(true);
+    expect(serviceWorkerConfig).toHaveBeenCalledTimes(1);
+    expect(postMessage.mock.calls[0][0]).toEqual({
+      config: [
+        {
+          expires: expect.any(Number),
+          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
+          sourceUrlPrefixes: ["https://app.example.com/"],
+          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+        },
+        {
+          ...additionalConfig[0],
+          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-b/"
+        },
+        additionalConfig[1]
+      ],
+      type: "SET_BYTESCALE_AUTH_CONFIG"
+    });
+    expect(additionalConfig[0].urlPrefix).toBe("https://upcdn.io/account-b/");
+    expect(AuthSessionState.getSession()?.accessToken).toBe("access-a");
     expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
 
     await AuthManager.endAuthSession();
@@ -231,4 +170,173 @@ describe("AuthManager browser service-worker config", () => {
     expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT", "DELETE"]);
     expect(postMessage.mock.calls[1][0]).toEqual({ config: [], type: "SET_BYTESCALE_AUTH_CONFIG" });
   });
+
+  test("refreshes additional rules independently while retaining the primary context", async () => {
+    const fetchApi = createPrimaryFetchApi();
+    const initialAdditionalConfig: AuthSwConfigEntryDto[] = [
+      {
+        expires: Date.now() + 21_000,
+        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
+        urlPrefix: "https://upcdn.io/account-b/"
+      }
+    ];
+    const serviceWorkerConfig = jest
+      .fn<() => Promise<AuthManagerServiceWorkerConfig>>()
+      .mockResolvedValueOnce({
+        additionalConfig: initialAdditionalConfig,
+        sourceUrlPrefixes: ["https://app.example.com/initial/"]
+      })
+      .mockResolvedValueOnce({
+        additionalConfig: [],
+        sourceUrlPrefixes: ["https://app.example.com/refreshed/"]
+      });
+
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerConfig,
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
+    await new Promise(resolve => setTimeout(resolve, 1_500));
+
+    expect(serviceWorkerConfig).toHaveBeenCalledTimes(2);
+    expect(postMessage.mock.calls[1][0]).toEqual({
+      config: [
+        {
+          expires: expect.any(Number),
+          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
+          sourceUrlPrefixes: ["https://app.example.com/refreshed/"],
+          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+        }
+      ],
+      type: "SET_BYTESCALE_AUTH_CONFIG"
+    });
+    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
+    expect(AuthManager.isAuthSessionReady()).toBe(true);
+  });
+
+  test("retains additional rules when the primary JWT refreshes", async () => {
+    const fetchApi = createPrimaryFetchApi();
+    const additionalConfig: AuthSwConfigEntryDto[] = [
+      {
+        expires: undefined,
+        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
+        urlPrefix: "https://upcdn.io/account-b/"
+      }
+    ];
+    const serviceWorkerConfig = jest.fn(
+      async (): Promise<AuthManagerServiceWorkerConfig> => ({
+        additionalConfig
+      })
+    );
+
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerConfig,
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
+
+    const session = AuthSessionState.getSession();
+    if (session?.accessTokenRefreshHandle === undefined) {
+      throw new Error("Expected the primary access-token refresh to be scheduled.");
+    }
+    const authManagerInternals = AuthManager as AuthManagerInternals;
+    authManagerInternals.scheduler.unschedule(session.accessTokenRefreshHandle);
+    await authManagerInternals.refreshAccessToken(session, session.params);
+
+    expect(serviceWorkerConfig).toHaveBeenCalledTimes(1);
+    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT", "GET", "PUT"]);
+    expect(postMessage.mock.calls[1][0]).toEqual({
+      config: [
+        {
+          expires: expect.any(Number),
+          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
+          urlPrefix: "https://upcdn.io/account-a/"
+        },
+        additionalConfig[0]
+      ],
+      type: "SET_BYTESCALE_AUTH_CONFIG"
+    });
+  });
+
+  test("fails closed until the initial service-worker config callback succeeds", async () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchApi = createPrimaryFetchApi();
+
+    await AuthManager.beginAuthSession({
+      ...createParams(fetchApi),
+      serviceWorkerConfig: async () => null as unknown as AuthManagerServiceWorkerConfig,
+      serviceWorkerScript: "/bytescale-auth-sw.js"
+    });
+
+    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
+    expect(postMessage).not.toHaveBeenCalled();
+    expect(AuthManager.isAuthSessionReady()).toBe(false);
+  });
+
+  test("requires a service-worker script for additional configuration", async () => {
+    const fetchApi = createPrimaryFetchApi();
+    const serviceWorkerConfig = jest.fn(
+      async (): Promise<AuthManagerServiceWorkerConfig> => ({
+        additionalConfig: []
+      })
+    );
+
+    await expect(AuthManager.beginAuthSession({ ...createParams(fetchApi), serviceWorkerConfig })).rejects.toThrow(
+      "'serviceWorkerScript' field is required"
+    );
+
+    expect(serviceWorkerConfig).not.toHaveBeenCalled();
+    expect(fetchApi).not.toHaveBeenCalled();
+    expect(AuthManager.isAuthSessionActive()).toBe(false);
+  });
+
+  test("rejects additional configuration when service workers are unavailable", async () => {
+    delete navigatorValue.serviceWorker;
+    const fetchApi = createPrimaryFetchApi();
+    const serviceWorkerConfig = jest.fn(
+      async (): Promise<AuthManagerServiceWorkerConfig> => ({
+        additionalConfig: []
+      })
+    );
+
+    await expect(
+      AuthManager.beginAuthSession({
+        ...createParams(fetchApi),
+        serviceWorkerConfig,
+        serviceWorkerScript: "/bytescale-auth-sw.js"
+      })
+    ).rejects.toThrow("requires service workers");
+
+    expect(serviceWorkerConfig).not.toHaveBeenCalled();
+    expect(fetchApi).not.toHaveBeenCalled();
+    expect(AuthManager.isAuthSessionActive()).toBe(false);
+  });
 });
+
+function createParams(fetchApi: FetchApi): BeginAuthSessionParams {
+  return {
+    accountId: "account-a",
+    authHeaders: async (): Promise<Record<string, string>> => ({ "X-App-Authorization": "app-token" }),
+    authUrl: "https://app.example.com/auth",
+    options: { fetchApi }
+  };
+}
+
+function createPrimaryFetchApi(): jest.MockedFunction<FetchApi> {
+  return jest.fn<FetchApi>(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    switch (init?.method) {
+      case "GET":
+        return new NodeFetchResponse("jwt-a", {
+          headers: { "Content-Type": "text/plain" }
+        }) as unknown as Response;
+      case "PUT":
+        return new NodeFetchResponse(
+          JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
+        ) as unknown as Response;
+      case "DELETE":
+        return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
+      default:
+        throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
+    }
+  });
+}

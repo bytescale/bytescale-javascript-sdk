@@ -1,8 +1,7 @@
 import {
+  AuthManagerServiceWorkerConfig,
   AuthManagerInterface,
-  BeginAuthSessionParams,
-  BeginAuthSessionParamsV1,
-  BeginAuthSessionParamsV2
+  BeginAuthSessionParams
 } from "../../private/model/AuthManagerInterface";
 import { AuthSessionState } from "../../private/AuthSessionState";
 import { ConsoleUtils } from "../../private/ConsoleUtils";
@@ -17,11 +16,7 @@ import { Scheduler } from "../../private/Scheduler";
 
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
-export type {
-  BeginAuthSessionParams,
-  BeginAuthSessionParamsV1,
-  BeginAuthSessionParamsV2
-} from "../../private/model/AuthManagerInterface";
+export type { AuthManagerServiceWorkerConfig, BeginAuthSessionParams } from "../../private/model/AuthManagerInterface";
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -45,7 +40,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
   isAuthSessionReady(): boolean {
     const session = AuthSessionState.getSession();
-    return session?.isReady === true || session?.accessToken !== undefined;
+    return session?.isReady ?? session?.accessToken !== undefined;
   }
 
   async beginAuthSession(params: BeginAuthSessionParams): Promise<void> {
@@ -58,8 +53,15 @@ class AuthManagerImpl implements AuthManagerInterface {
       }
 
       const canUseServiceWorkers = this.serviceWorkerUtils.canUseServiceWorkers();
-      if (this.isV2(params) && !canUseServiceWorkers) {
-        throw new Error("This auth session requires service workers, but this browser does not support them.");
+      if (params.serviceWorkerConfig !== undefined) {
+        if (params.serviceWorkerScript === undefined) {
+          throw new Error("The 'serviceWorkerScript' field is required when 'serviceWorkerConfig' is provided.");
+        }
+        if (!canUseServiceWorkers) {
+          throw new Error(
+            "The 'serviceWorkerConfig' field requires service workers, but this browser does not support them."
+          );
+        }
       }
 
       const newSession: AuthSession = {
@@ -74,7 +76,10 @@ class AuthManagerImpl implements AuthManagerInterface {
                 serviceWorkerScript: params.serviceWorkerScript,
                 type: "Uninitialized"
               }
-            : undefined
+            : undefined,
+        primaryAuthSwConfig: undefined,
+        serviceWorkerConfig: undefined,
+        serviceWorkerConfigRefreshHandle: undefined
       };
 
       AuthSessionState.setSession(newSession);
@@ -83,11 +88,10 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
 
     // IMPORTANT: must be called outside the above, else re-entrant deadlock will occur.
-    if (this.isV2(session.params)) {
+    if (session.params.serviceWorkerConfig !== undefined) {
       await this.refreshServiceWorkerConfig(session, session.params);
-    } else {
-      await this.refreshAccessToken(session, session.params);
     }
+    await this.refreshAccessToken(session, session.params);
   }
 
   async endAuthSession(): Promise<void> {
@@ -103,8 +107,13 @@ class AuthManagerImpl implements AuthManagerInterface {
       if (session.accessTokenRefreshHandle !== undefined) {
         this.scheduler.unschedule(session.accessTokenRefreshHandle);
       }
+      if (session.serviceWorkerConfigRefreshHandle !== undefined) {
+        this.scheduler.unschedule(session.serviceWorkerConfigRefreshHandle);
+      }
 
-      if (!this.isV2(session.params)) {
+      // AuthSessionState is shared between bundled SDK versions. Service-worker-only sessions from 3.56.0 did not
+      // contain an accountId, so allow a newer SDK instance to tear those sessions down without calling this endpoint.
+      if (typeof session.params.accountId === "string") {
         await this.deleteAccessToken(session.params);
       }
 
@@ -115,7 +124,7 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
   }
 
-  private async refreshAccessToken(session: AuthSession, params: BeginAuthSessionParamsV1): Promise<void> {
+  private async refreshAccessToken(session: AuthSession, params: BeginAuthSessionParams): Promise<void> {
     await this.authSessionMutex.safe(async () => {
       if (!session.isActive) {
         return;
@@ -137,19 +146,20 @@ class AuthManagerImpl implements AuthManagerInterface {
         const setTokenResult = await this.setAccessToken(params, jwt, setCookie);
 
         if (session.authServiceWorker !== undefined) {
-          await this.sendServiceWorkerConfig(session, [
-            {
-              headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
-              expires: secondsFromNow(setTokenResult.ttlSeconds),
-              sourceUrlPrefixes: params.sourceUrlPrefixes,
-              urlPrefix: `${this.getCdnUrl(params)}/${params.accountId}/`
-            }
-          ]);
+          const primaryAuthSwConfig = {
+            headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
+            expires: secondsFromNow(setTokenResult.ttlSeconds),
+            urlPrefix: `${this.getCdnUrl(params)}/${params.accountId}/`
+          };
 
-          // Allow time for the service worker to receive and process the message. Since this is asynchronous and not
-          // synchronized, we need to wait for a sufficient amount of time to ensure the service worker is ready to
-          // authenticate requests, so that after 'beginAuthSession' completes, users can start making requests.
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Fail closed until the initial serviceWorkerConfig callback succeeds: without its result, we do not know
+          // the source-page restrictions intended for the primary JWT.
+          if (params.serviceWorkerConfig === undefined || session.serviceWorkerConfig !== undefined) {
+            await this.sendMergedServiceWorkerConfig(session, primaryAuthSwConfig, session.serviceWorkerConfig);
+            await this.waitForServiceWorker();
+          }
+
+          session.primaryAuthSwConfig = primaryAuthSwConfig;
         }
 
         const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
@@ -162,7 +172,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
         // Set this at the end, as it's also used to signal 'isAuthSessionReady', so must be set after configuring the Service Worker, etc.
         session.accessToken = setTokenResult.accessToken;
-        session.isReady = true;
+        this.updateSessionReadiness(session);
       } catch (e) {
         // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
         ConsoleUtils.warn(`Unable to refresh JWT access token: ${e as string}`);
@@ -180,7 +190,12 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
   }
 
-  private async refreshServiceWorkerConfig(session: AuthSession, params: BeginAuthSessionParamsV2): Promise<void> {
+  private async refreshServiceWorkerConfig(session: AuthSession, params: BeginAuthSessionParams): Promise<void> {
+    const getServiceWorkerConfig = params.serviceWorkerConfig;
+    if (getServiceWorkerConfig === undefined) {
+      return;
+    }
+
     await this.authSessionMutex.safe(async () => {
       if (!session.isActive) {
         return;
@@ -189,23 +204,40 @@ class AuthManagerImpl implements AuthManagerInterface {
       let refreshAt: number | undefined;
 
       try {
-        const config = await params.getServiceWorkerConfig();
-        if (!Array.isArray(config)) {
-          throw new Error("The 'getServiceWorkerConfig' callback must return an array.");
+        const result = await getServiceWorkerConfig();
+        if (result === null || typeof result !== "object" || !Array.isArray(result.additionalConfig)) {
+          throw new Error("The 'serviceWorkerConfig' callback must return an object containing 'additionalConfig'.");
+        }
+        if (
+          result.sourceUrlPrefixes !== undefined &&
+          (!Array.isArray(result.sourceUrlPrefixes) ||
+            !result.sourceUrlPrefixes.every(prefix => typeof prefix === "string"))
+        ) {
+          throw new Error(
+            "The 'sourceUrlPrefixes' field returned by 'serviceWorkerConfig' must be an array of strings."
+          );
         }
 
-        await this.sendServiceWorkerConfig(session, config);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        const config: AuthManagerServiceWorkerConfig = {
+          additionalConfig: result.additionalConfig,
+          sourceUrlPrefixes: result.sourceUrlPrefixes
+        };
 
-        session.isReady = true;
-        refreshAt = this.getServiceWorkerConfigRefreshEpoch(config);
+        if (session.primaryAuthSwConfig !== undefined) {
+          await this.sendMergedServiceWorkerConfig(session, session.primaryAuthSwConfig, config);
+          await this.waitForServiceWorker();
+        }
+
+        session.serviceWorkerConfig = config;
+        this.updateSessionReadiness(session);
+        refreshAt = this.getServiceWorkerConfigRefreshEpoch(config.additionalConfig);
       } catch (e) {
         ConsoleUtils.warn(`Unable to refresh service worker auth config: ${e as string}`);
         refreshAt = Date.now() + this.retryAuthAfterErrorSeconds * 1000;
       }
 
       if (refreshAt !== undefined) {
-        session.accessTokenRefreshHandle = this.scheduler.schedule(refreshAt, () => {
+        session.serviceWorkerConfigRefreshHandle = this.scheduler.schedule(refreshAt, () => {
           this.refreshServiceWorkerConfig(session, params).then(
             () => {},
             e => ConsoleUtils.error(`Unexpected error when refreshing service worker auth config: ${e as string}`)
@@ -213,6 +245,20 @@ class AuthManagerImpl implements AuthManagerInterface {
         });
       }
     });
+  }
+
+  private async sendMergedServiceWorkerConfig(
+    session: AuthSession,
+    primaryConfig: AuthSwConfigDto[number],
+    serviceWorkerConfig: AuthManagerServiceWorkerConfig | undefined
+  ): Promise<void> {
+    await this.sendServiceWorkerConfig(session, [
+      {
+        ...primaryConfig,
+        sourceUrlPrefixes: serviceWorkerConfig?.sourceUrlPrefixes
+      },
+      ...(serviceWorkerConfig?.additionalConfig ?? [])
+    ]);
   }
 
   private getServiceWorkerConfigRefreshEpoch(config: AuthSwConfigDto): number | undefined {
@@ -245,17 +291,29 @@ class AuthManagerImpl implements AuthManagerInterface {
     );
   }
 
-  private getAccessTokenUrl(params: BeginAuthSessionParamsV1, setCookie: boolean): string {
+  private updateSessionReadiness(session: AuthSession): void {
+    session.isReady =
+      session.accessToken !== undefined &&
+      (session.params.serviceWorkerConfig === undefined || session.serviceWorkerConfig !== undefined);
+  }
+
+  private async waitForServiceWorker(): Promise<void> {
+    // Message delivery is asynchronous and has no acknowledgement, so allow the worker time to apply the config before
+    // beginAuthSession reports that authenticated requests are ready.
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+
+  private getAccessTokenUrl(params: BeginAuthSessionParams, setCookie: boolean): string {
     return `${this.getCdnUrl(params)}/api/v1/access_tokens/${params.accountId}?set-cookie=${
       setCookie ? "true" : "false"
     }`;
   }
 
-  private getCdnUrl(params: BeginAuthSessionParamsV1): string {
+  private getCdnUrl(params: BeginAuthSessionParams): string {
     return BytescaleApiClientConfigUtils.getCdnUrl(params.options ?? {});
   }
 
-  private async deleteAccessToken(params: BeginAuthSessionParamsV1): Promise<void> {
+  private async deleteAccessToken(params: BeginAuthSessionParams): Promise<void> {
     await BaseAPI.fetch(
       this.getAccessTokenUrl(params, true),
       {
@@ -271,7 +329,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   }
 
   private async setAccessToken(
-    params: BeginAuthSessionParamsV1,
+    params: BeginAuthSessionParams,
     jwt: string,
     setCookie: boolean
   ): Promise<SetAccessTokenResponseDto> {
@@ -297,7 +355,7 @@ class AuthManagerImpl implements AuthManagerInterface {
     return await response.json();
   }
 
-  private async getAccessToken(params: BeginAuthSessionParamsV1, headers: Record<string, string>): Promise<string> {
+  private async getAccessToken(params: BeginAuthSessionParams, headers: Record<string, string>): Promise<string> {
     const endpointName = "Your auth API endpoint";
     const requiredContentType = this.contentTypeText;
     const result = await BaseAPI.fetch(
@@ -333,10 +391,6 @@ class AuthManagerImpl implements AuthManagerInterface {
     }
 
     return jwt;
-  }
-
-  private isV2(params: BeginAuthSessionParams): params is BeginAuthSessionParamsV2 {
-    return "getServiceWorkerConfig" in params;
   }
 }
 

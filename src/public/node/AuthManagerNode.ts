@@ -3,11 +3,7 @@ import { EnvChecker } from "../../private/EnvChecker";
 
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
-export type {
-  BeginAuthSessionParams,
-  BeginAuthSessionParamsV1,
-  BeginAuthSessionParamsV2
-} from "../../private/model/AuthManagerInterface";
+export type { AuthManagerServiceWorkerConfig, BeginAuthSessionParams } from "../../private/model/AuthManagerInterface";
 
 class AuthManagerImpl implements AuthManagerInterface {
   async beginAuthSession(_params: BeginAuthSessionParams): Promise<void> {
