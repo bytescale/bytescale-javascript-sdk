@@ -1,5 +1,6 @@
-import { AuthSessionConfig, BeginAuthSessionParams } from "./AuthManagerInterface";
 import { ServiceWorkerConfig } from "./ServiceWorkerConfig";
+import { BeginAuthSessionParams } from "./BeginAuthSessionParams";
+import { AuthSessionConfig } from "./AuthSessionConfig";
 
 export interface AuthSessionConfigState {
   accessToken: string | undefined;

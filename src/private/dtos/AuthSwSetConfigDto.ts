@@ -1,5 +1,6 @@
 import { AuthSwConfigDto } from "./AuthSwConfigDto";
-import { UrlRewriteRule } from "../model/AuthManagerInterface";
+
+import { UrlRewriteRule } from "../model/UrlRewriteRule";
 
 export interface AuthSwSetConfigDto {
   config: AuthSwConfigDto;

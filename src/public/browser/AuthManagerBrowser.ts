@@ -1,12 +1,4 @@
-import {
-  AuthManagerInterface,
-  AuthSessionConfig,
-  AuthSessionConfigAuto,
-  BeginAuthSessionParams,
-  BeginAuthSessionParamsV1,
-  BeginAuthSessionParamsV2,
-  UrlRewriteRule
-} from "../../private/model/AuthManagerInterface";
+import { AuthManagerInterface } from "../../private/model/AuthManagerInterface";
 import { AuthSessionState } from "../../private/AuthSessionState";
 import { ConsoleUtils } from "../../private/ConsoleUtils";
 import { BaseAPI, BytescaleApiClientConfigUtils } from "../shared/generated";
@@ -17,21 +9,15 @@ import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
 import { AuthSwConfigDto } from "../../private/dtos/AuthSwConfigDto";
 import { ServiceWorkerUtils } from "../../private/ServiceWorkerUtils";
 import { Scheduler } from "../../private/Scheduler";
+import { BeginAuthSessionParamsV1 } from "../../private/model/BeginAuthSessionParamsV1";
+import { BeginAuthSessionParamsV2 } from "../../private/model/BeginAuthSessionParamsV2";
+import { BeginAuthSessionParams } from "../../private/model/BeginAuthSessionParams";
+import { AuthSessionConfigAuto } from "../../private/model/AuthSessionConfigAuto";
+import { AuthSessionConfig } from "../../private/model/AuthSessionConfig";
+import { UrlRewriteRule } from "../../private/model/UrlRewriteRule";
 
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
-export type {
-  AuthSessionConfig,
-  AuthSessionConfigAuto,
-  AuthSessionConfigBase,
-  AuthSessionConfigManual,
-  BeginAuthSessionParams,
-  BeginAuthSessionParamsOptions,
-  BeginAuthSessionParamsV1,
-  BeginAuthSessionParamsV2,
-  NonEmptyArray,
-  UrlRewriteRule
-} from "../../private/model/AuthManagerInterface";
 
 class InvalidAuthTokenError extends Error {}
 
@@ -595,3 +581,13 @@ class AuthManagerImpl implements AuthManagerInterface {
 
 /** Alternative to a static class that allows the implementation to satisfy an interface. */
 export const AuthManager = new AuthManagerImpl(new ServiceWorkerUtils<AuthSwSetConfigDto>());
+export { BeginAuthSessionParamsV1 } from "../../private/model/BeginAuthSessionParamsV1";
+export { BeginAuthSessionParamsV2 } from "../../private/model/BeginAuthSessionParamsV2";
+export { BeginAuthSessionParams } from "../../private/model/BeginAuthSessionParams";
+export { AuthSessionConfigAuto } from "../../private/model/AuthSessionConfigAuto";
+export { AuthSessionConfigManual } from "../../private/model/AuthSessionConfigManual";
+export { AuthSessionConfig } from "../../private/model/AuthSessionConfig";
+export { AuthSessionConfigBase } from "../../private/model/AuthSessionConfigBase";
+export { UrlRewriteRule } from "../../private/model/UrlRewriteRule";
+export { NonEmptyArray } from "../../private/model/NonEmptyArray";
+export { BeginAuthSessionParamsOptions } from "../../private/model/BeginAuthSessionParamsOptions";

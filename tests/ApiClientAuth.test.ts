@@ -2,8 +2,9 @@ import { jest } from "@jest/globals";
 import { Headers as NodeFetchHeaders, Response as NodeFetchResponse } from "node-fetch";
 import { AuthSessionState } from "../src/private/AuthSessionState";
 import { AuthSession, AuthSessionConfigState } from "../src/private/model/AuthSession";
-import { AuthSessionConfig, BeginAuthSessionParams } from "../src/private/model/AuthManagerInterface";
 import { BaseAPI, BytescaleApiClientConfig, FetchAPI, RequestOpts } from "../src/public/shared/generated/runtime";
+import { BeginAuthSessionParams } from "../src/private/model/BeginAuthSessionParams";
+import { AuthSessionConfig } from "../src/private/model/AuthSessionConfig";
 
 const accountA = "A123abc";
 const accountB = "B123abc";
