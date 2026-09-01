@@ -25,12 +25,14 @@ export interface BytescaleApiClientConfig {
    */
   fetchApi?: FetchAPI;
 
+  /** Must begin with "public_" or "secret_". Optional when an AuthManager configuration authenticates the request. */
+  apiKey?: string;
+
   /**
-   * Must begin with "public_" or "secret_".
-   *
-   * Please note: if you require JWT-based auth, you must provide an API key to this field, and then call 'AuthManager.beginAuthSession' to start a JWT-based auth session. The JWT's permissions will be merged with the API key's permissions, with precedence given to the JWT.
+   * Selects a named AuthManager configuration. Omit to use the default configuration, or use `false` to disable
+   * AuthManager authentication for this client.
    */
-  apiKey: string;
+  authConfigId?: string | false;
 
   /**
    * The base URL of the Bytescale API. (Excludes trailing "/".)
@@ -50,7 +52,8 @@ export interface BytescaleApiClientConfig {
   /**
    * Headers to include in all API requests.
    *
-   * These headers take precedence over any headers automatically added by the SDK (e.g. "Authorization", "Content-Type", etc.).
+   * These headers intentionally take precedence over headers automatically added by the SDK, including
+   * "Authorization" and "Authorization-Token". This preserves the SDK's existing custom-header precedence.
    */
   headers?: HTTPHeaders | (() => Promise<HTTPHeaders> | HTTPHeaders); // This should be present on all Bytescale SDKs, as it's how we instruct users to pass the "Authorization-Token" request header for non-cookie-based JWT auth.
 }
@@ -74,13 +77,53 @@ export class BytescaleApiClientConfigUtils {
     return config.fetchApi ?? fetch;
   }
 
-  static getAccountId(config: Pick<BytescaleApiClientConfig, "apiKey">): string {
+  static getAccountId(config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">): string {
+    return BytescaleApiClientConfigUtils.resolveAuthentication(config).accountId;
+  }
+
+  static resolveAuthentication(config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">): {
+    accountId: string;
+    headers: HTTPHeaders;
+  } {
+    const apiKey = config.apiKey ?? undefined;
+    const authConfig = AuthSessionState.resolveAuthConfig(config.authConfigId, apiKey === undefined);
+    const apiKeyAccountId = apiKey === undefined ? undefined : BytescaleApiClientConfigUtils.getApiKeyAccountId(apiKey);
+
+    if (apiKeyAccountId !== undefined && authConfig !== undefined && apiKeyAccountId !== authConfig.accountId) {
+      throw new Error(
+        `The API key belongs to account '${apiKeyAccountId}', but AuthManager configuration '${
+          config.authConfigId ?? "default"
+        }' belongs to account '${authConfig.accountId}'.`
+      );
+    }
+
+    if (apiKey !== undefined) {
+      return {
+        accountId: apiKeyAccountId as string,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          ...(authConfig === undefined ? {} : { "Authorization-Token": authConfig.accessToken })
+        }
+      };
+    }
+
+    if (authConfig?.jwt !== undefined) {
+      return {
+        accountId: authConfig.accountId,
+        headers: { Authorization: `Bearer ${authConfig.jwt}` }
+      };
+    }
+
+    throw new Error(`Please provide an API key via the 'apiKey' config parameter.`);
+  }
+
+  private static getApiKeyAccountId(apiKey: string): string {
     let accountId: string;
 
-    if (BytescaleApiClientConfigUtils.specialApiKeys.includes(config.apiKey)) {
+    if (BytescaleApiClientConfigUtils.specialApiKeys.includes(apiKey)) {
       accountId = BytescaleApiClientConfigUtils.specialApiKeyAccountId;
     } else {
-      accountId = config.apiKey.split("_")[1]?.substr(0, BytescaleApiClientConfigUtils.accountIdLength) ?? "";
+      accountId = apiKey.split("_")[1]?.substr(0, BytescaleApiClientConfigUtils.accountIdLength) ?? "";
       if (accountId.length !== BytescaleApiClientConfigUtils.accountIdLength) {
         throw new Error(`Invalid Bytescale API key.`);
       }
@@ -94,17 +137,21 @@ export class BytescaleApiClientConfigUtils {
     if ((config ?? undefined) === undefined) {
       throw new Error(`Config parameter required.`);
     }
-    if ((config.apiKey ?? undefined) === undefined) {
-      throw new Error(`Please provide an API key via the 'apiKey' config parameter.`);
+    if (config.authConfigId !== undefined && config.authConfigId !== false && typeof config.authConfigId !== "string") {
+      throw new Error(`The 'authConfigId' config parameter must be a string, false, or undefined.`);
     }
-    if (config.apiKey.trim() !== config.apiKey) {
+    if (config.apiKey !== undefined && typeof config.apiKey !== "string") {
+      throw new Error(`The 'apiKey' config parameter must be a string when provided.`);
+    }
+    if (config.apiKey !== undefined && config.apiKey.trim() !== config.apiKey) {
       // We do not support API keys with whitespace (by trimming ourselves) because otherwise we'd need to support this
       // everywhere in perpetuity (since removing the trimming would be a breaking change).
       throw new Error(`API key needs trimming (whitespace detected).`);
     }
 
-    // This performs futher validation on the API key...
-    BytescaleApiClientConfigUtils.getAccountId(config);
+    if (config.apiKey !== undefined) {
+      BytescaleApiClientConfigUtils.getApiKeyAccountId(config.apiKey);
+    }
   }
 }
 
@@ -195,13 +242,7 @@ export class BaseAPI {
     initOverrides: RequestInit | InitOverrideFunction | undefined,
     baseUrlOverride: string | undefined
   ): Promise<Response> {
-    const apiKey = this.config.apiKey;
-    context.headers["Authorization"] = `Bearer ${apiKey}`; // authorization-header authentication
-
-    const session = AuthSessionState.getSession();
-    if (session?.accessToken !== undefined) {
-      context.headers["Authorization-Token"] = session.accessToken;
-    }
+    Object.assign(context.headers, BytescaleApiClientConfigUtils.resolveAuthentication(this.config).headers);
 
     // Key: any possible value for 'baseUrlOverride'
     // Value: user-overridden value for that base URL from the config.
@@ -243,15 +284,23 @@ export class BaseAPI {
       url += "?" + querystring(context.query);
     }
     const configHeaders = this.config.headers;
+    const resolvedConfigHeaders =
+      configHeaders === undefined ? {} : typeof configHeaders === "function" ? await configHeaders() : configHeaders;
+    for (const key of Object.keys(resolvedConfigHeaders)) {
+      if (key.toLowerCase() === "authorization" || key.toLowerCase() === "authorization-token") {
+        for (const generatedKey of Object.keys(context.headers)) {
+          if (generatedKey.toLowerCase() === key.toLowerCase()) {
+            // Custom auth headers have documented precedence; remove the generated spelling to make that deterministic.
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+            delete context.headers[generatedKey];
+          }
+        }
+      }
+    }
     const headers = {
       ...context.headers,
-      // Headers from config take precedence, to allow us to override the "Authorization" header (which is added earlier
-      // on) with a JWT session token.
-      ...(configHeaders === undefined
-        ? {}
-        : typeof configHeaders === "function"
-        ? await configHeaders()
-        : configHeaders)
+      // Custom config headers intentionally retain their documented precedence over SDK-generated headers.
+      ...resolvedConfigHeaders
     };
     Object.keys(headers).forEach(key => (headers[key] === undefined ? delete headers[key] : {}));
 

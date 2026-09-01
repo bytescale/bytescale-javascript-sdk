@@ -20,18 +20,17 @@ import { UploadManagerParams, UploadProgress, UploadSource, UploadResult } from 
  */
 export abstract class UploadManagerBase<TSource, TInit> implements UploadManagerInterface {
   protected readonly stringMimeType = "text/plain";
-  private readonly accountId: string;
   private readonly defaultMaxConcurrentUploadParts = 4;
   private readonly intervalMs = 500;
   private readonly uploadApi: UploadApi;
 
   constructor(protected readonly config: BytescaleApiClientConfig) {
     this.uploadApi = new UploadApi(config);
-    this.accountId = BytescaleApiClientConfigUtils.getAccountId(config);
   }
 
   async upload(request: UploadManagerParams): Promise<UploadResult> {
     this.assertNotCancelled(request);
+    const accountId = BytescaleApiClientConfigUtils.getAccountId(this.config);
 
     const source = this.processUploadSource(request.data);
     const preUploadInfo = this.getPreUploadInfo(request, source);
@@ -44,7 +43,7 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
       request.onProgress(this.makeProgressEvent(0, bytesTotal));
     }
 
-    const uploadInfo = await this.beginUpload(request, preUploadInfo);
+    const uploadInfo = await this.beginUpload(request, preUploadInfo, accountId);
     const partCount = uploadInfo.uploadParts.count;
     const parts = [...Array(partCount).keys()];
     const { cancel, addCancellationHandler } = this.makeCancellationMethods();
@@ -56,7 +55,15 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
         parts,
         preUploadInfo.maxConcurrentUploadParts,
         async part =>
-          await this.uploadPart(request, source, part, uploadInfo, makeOnProgressForPart(), addCancellationHandler)
+          await this.uploadPart(
+            request,
+            source,
+            part,
+            uploadInfo,
+            makeOnProgressForPart(),
+            addCancellationHandler,
+            accountId
+          )
       );
       await this.postUpload(init);
     } finally {
@@ -150,10 +157,11 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
 
   private async beginUpload(
     request: UploadManagerParams,
-    { size, mime, originalFileName }: PreUploadInfo
+    { size, mime, originalFileName }: PreUploadInfo,
+    accountId: string
   ): Promise<BeginMultipartUploadResponse> {
     return await this.uploadApi.beginMultipartUpload({
-      accountId: this.accountId,
+      accountId,
       beginMultipartUploadRequest: {
         metadata: request.metadata,
         mime,
@@ -172,15 +180,16 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     partIndex: number,
     uploadInfo: BeginMultipartUploadResponse,
     onProgress: OnPartProgress,
-    addCancellationHandler: AddCancellationHandler
+    addCancellationHandler: AddCancellationHandler,
+    accountId: string
   ): Promise<CompleteMultipartUploadResponse> {
     this.assertNotCancelled(request);
-    const part = await this.getUploadPart(partIndex, uploadInfo);
+    const part = await this.getUploadPart(partIndex, uploadInfo, accountId);
     this.assertNotCancelled(request);
     const etag = await this.putUploadPart(part, source, onProgress, addCancellationHandler);
     this.assertNotCancelled(request);
     return await this.uploadApi.completeUploadPart({
-      accountId: this.accountId,
+      accountId,
       uploadId: uploadInfo.uploadId,
       uploadPartIndex: partIndex,
       completeUploadPartRequest: {
@@ -221,13 +230,17 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
     return etag;
   }
 
-  private async getUploadPart(partIndex: number, uploadInfo: BeginMultipartUploadResponse): Promise<UploadPart> {
+  private async getUploadPart(
+    partIndex: number,
+    uploadInfo: BeginMultipartUploadResponse,
+    accountId: string
+  ): Promise<UploadPart> {
     if (partIndex === 0) {
       return uploadInfo.uploadParts.first;
     }
     return await this.uploadApi.getUploadPart({
       uploadId: uploadInfo.uploadId,
-      accountId: this.accountId,
+      accountId,
       uploadPartIndex: partIndex
     });
   }

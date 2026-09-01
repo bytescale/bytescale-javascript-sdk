@@ -1,10 +1,11 @@
 import { jest } from "@jest/globals";
 import { Response as NodeFetchResponse } from "node-fetch";
 import { AuthSessionState } from "../src/private/AuthSessionState";
+import { AuthSessionConfigState } from "../src/private/model/AuthSession";
 import type {
-  AuthManagerServiceWorkerConfig,
-  AuthSwConfigEntryDto,
+  AuthSessionConfig,
   BeginAuthSessionParams,
+  BeginAuthSessionParamsV2,
   UrlRewriteRule
 } from "../src/index.browser";
 
@@ -18,14 +19,21 @@ interface AuthManagerApi {
 }
 
 interface AuthManagerInternals extends AuthManagerApi {
-  refreshAccessToken: (
+  refreshAuthConfig: (
     session: NonNullable<ReturnType<typeof AuthSessionState.getSession>>,
-    params: BeginAuthSessionParams
+    state: AuthSessionConfigState
   ) => Promise<void>;
   scheduler: { unschedule: (handle: number) => void };
 }
 
-describe("AuthManager browser service-worker config", () => {
+const accountA = "A123abc";
+const accountB = "B123abc";
+const accountC = "C123abc";
+const jwtA = "e30.e30.jwt-a";
+const jwtB = "e30.e30.jwt-b";
+const jwtC = "e30.e30.jwt-c";
+
+describe("AuthManager browser multi-configuration sessions", () => {
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
   const originalFetch = Object.getOwnPropertyDescriptor(globalThis, "fetch");
   const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
@@ -63,6 +71,12 @@ describe("AuthManager browser service-worker config", () => {
     serviceWorkerApi.register.mockClear();
   });
 
+  afterEach(async () => {
+    navigatorValue.serviceWorker = serviceWorkerApi;
+    await AuthManager.endAuthSession();
+    jest.restoreAllMocks();
+  });
+
   afterAll(() => {
     for (const [key, descriptor] of [
       ["fetch", originalFetch],
@@ -77,322 +91,372 @@ describe("AuthManager browser service-worker config", () => {
     }
   });
 
-  afterEach(async () => {
-    navigatorValue.serviceWorker = serviceWorkerApi;
-    await AuthManager.endAuthSession();
-    jest.restoreAllMocks();
-  });
-
-  test("retains the existing cookie fallback when no additional config is requested", async () => {
+  test("preserves the complete V1 cookie flow and legacy default token", async () => {
     delete navigatorValue.serviceWorker;
-    const fetchApi = createPrimaryFetchApi();
+    const fetchApi = createFetchApi();
 
-    await AuthManager.beginAuthSession(createParams(fetchApi));
+    await AuthManager.beginAuthSession(v1Params(fetchApi));
 
-    expect((fetchApi.mock.calls[1][0] as string).endsWith("?set-cookie=true")).toBe(true);
+    expect(AuthManager.isAuthSessionReady()).toBe(true);
+    expect(AuthSessionState.getSession()?.accessToken).toBe("access-a");
+    expect(fetchUrls(fetchApi)).toEqual([
+      "https://app.example.com/auth-a",
+      `https://upcdn.io/api/v1/access_tokens/${accountA}?set-cookie=true`
+    ]);
     expect(postMessage).not.toHaveBeenCalled();
-    expect(AuthManager.isAuthSessionReady()).toBe(true);
+
+    await AuthManager.endAuthSession();
+    expect(fetchUrls(fetchApi).at(-1)).toBe(`https://upcdn.io/api/v1/access_tokens/${accountA}?set-cookie=true`);
   });
 
-  test("retains the existing primary-only service-worker flow", async () => {
-    const fetchApi = createPrimaryFetchApi();
+  test("preserves V1 service-worker auth and unsupported-browser cookie fallback", async () => {
+    const supportedFetch = createFetchApi();
+    await AuthManager.beginAuthSession({ ...v1Params(supportedFetch), serviceWorkerScript: "/auth-sw.js" });
 
-    await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-
-    expect(AuthManager.isAuthSessionReady()).toBe(true);
-    expect(postMessage.mock.calls[0][0]).toEqual({
-      config: [
-        {
-          expires: expect.any(Number),
-          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
-          urlPrefix: "https://upcdn.io/account-a/"
-        }
-      ],
-      type: "SET_BYTESCALE_AUTH_CONFIG"
-    });
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
-  });
-
-  test("merges the primary API/download context with additional download-only contexts", async () => {
-    const fetchApi = createPrimaryFetchApi();
-    const additionalConfig: AuthSwConfigEntryDto[] = [
+    expect((postMessage.mock.calls.at(-1)?.[0] as any).config).toEqual([
       {
-        expires: Date.now() + 60_000,
-        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
-        sourceUrlPrefixes: ["https://app.example.com/account-b/"],
-        urlPrefix: "https://upcdn.io/account-b/"
+        expires: expect.any(Number),
+        headers: [{ key: "Authorization", value: `Bearer ${jwtA}` }],
+        sourceUrlPrefixes: undefined,
+        urlPrefix: `https://upcdn.io/${accountA}/`
+      }
+    ]);
+    expect(fetchUrls(supportedFetch)[1]).toContain("set-cookie=false");
+    await AuthManager.endAuthSession();
+
+    postMessage.mockClear();
+    delete navigatorValue.serviceWorker;
+    const fallbackFetch = createFetchApi();
+    await AuthManager.beginAuthSession({ ...v1Params(fallbackFetch), serviceWorkerScript: "/auth-sw.js" });
+
+    expect(fetchUrls(fallbackFetch)[1]).toContain("set-cookie=true");
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  test("initializes automatic and manual V2 configs and sends one aggregate worker model", async () => {
+    const fetchApi = createFetchApi();
+    const manualB = jest.fn(async () => jwtB);
+    const manualC = jest.fn(async () => jwtC);
+    const configs: [AuthSessionConfig, ...AuthSessionConfig[]] = [
+      {
+        accountId: accountA,
+        authConfigId: undefined,
+        authHeaders: async (): Promise<Record<string, string>> => ({ "X-App-Auth": "app-token" }),
+        authUrl: "https://app.example.com/auth-a",
+        sourceUrlPrefixes: ["https://app.example.com/"]
       },
       {
-        expires: undefined,
-        headers: [{ key: "Authorization", value: "Bearer jwt-c" }],
-        urlPrefix: "https://upcdn.io/account-c/"
+        accountId: accountB,
+        authConfigId: "customer-b",
+        getAuthorizationToken: manualB
+      },
+      {
+        accountId: accountC,
+        authConfigId: "cookie-c",
+        enableCookieAuth: true,
+        enableServiceWorkerAuth: false,
+        getAuthorizationToken: manualC
       }
     ];
+    const authConfigs = jest.fn(async () => configs);
     const urlRewriteRules: UrlRewriteRule[] = [
       {
-        fromUrlPrefix: "https://app.example.com/__authenticated-download/",
-        toUrlPrefix: "https://upcdn.io/account-b/"
+        fromUrlPrefix: "https://app.example.com/download/",
+        toUrlPrefix: `https://upcdn.io/${accountB}/`
       }
     ];
-    const serviceWorkerConfig = jest.fn(
-      async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig,
-        sourceUrlPrefixes: ["https://app.example.com/"],
-        urlRewriteRules
-      })
-    );
 
     await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerConfig,
-      serviceWorkerScript: "/bytescale-auth-sw.js"
+      authConfigs,
+      options: { fetchApi },
+      serviceWorkerScript: "/auth-sw.js",
+      urlRewriteRules
     });
 
     expect(AuthManager.isAuthSessionReady()).toBe(true);
-    expect(serviceWorkerConfig).toHaveBeenCalledTimes(1);
-    expect(postMessage.mock.calls[0][0]).toEqual({
+    expect(authConfigs).toHaveBeenCalledTimes(1);
+    expect(manualB).toHaveBeenCalledTimes(1);
+    expect(manualC).toHaveBeenCalledTimes(1);
+    const session = AuthSessionState.getSession();
+    expect(session?.authConfigs?.map(state => state.accessToken)).toEqual(["access-a", "access-b", "access-c"]);
+    expect(session?.accessToken).toBeUndefined();
+    expect(fetchUrls(fetchApi).filter(url => url.includes("set-cookie=true"))).toEqual([
+      `https://upcdn.io/api/v1/access_tokens/${accountC}?set-cookie=true`
+    ]);
+    expect(postMessage.mock.calls.at(-1)?.[0]).toEqual({
       config: [
         {
           expires: expect.any(Number),
-          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
+          headers: [{ key: "Authorization", value: `Bearer ${jwtA}` }],
           sourceUrlPrefixes: ["https://app.example.com/"],
-          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+          urlPrefix: `!bytescale-source-scoped!https://upcdn.io/${accountA}/`
         },
         {
-          ...additionalConfig[0],
-          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-b/"
-        },
-        additionalConfig[1]
+          expires: expect.any(Number),
+          headers: [{ key: "Authorization", value: `Bearer ${jwtB}` }],
+          sourceUrlPrefixes: undefined,
+          urlPrefix: `https://upcdn.io/${accountB}/`
+        }
       ],
       type: "SET_BYTESCALE_AUTH_CONFIG",
       urlRewriteRules
     });
-    expect(additionalConfig[0].urlPrefix).toBe("https://upcdn.io/account-b/");
-    expect(AuthSessionState.getSession()?.accessToken).toBe("access-a");
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
-
-    await AuthManager.endAuthSession();
-
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT", "DELETE"]);
-    expect(postMessage.mock.calls[1][0]).toEqual({ config: [], type: "SET_BYTESCALE_AUTH_CONFIG" });
   });
 
-  test("refreshes additional rules independently while retaining the primary context", async () => {
-    const fetchApi = createPrimaryFetchApi();
-    const initialAdditionalConfig: AuthSwConfigEntryDto[] = [
-      {
-        expires: Date.now() + 21_000,
-        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
-        urlPrefix: "https://upcdn.io/account-b/"
-      }
-    ];
-    const serviceWorkerConfig = jest
-      .fn<() => Promise<AuthManagerServiceWorkerConfig>>()
-      .mockResolvedValueOnce({
-        additionalConfig: initialAdditionalConfig,
-        sourceUrlPrefixes: ["https://app.example.com/initial/"],
-        urlRewriteRules: [
-          {
-            fromUrlPrefix: "https://app.example.com/download/",
-            toUrlPrefix: "https://upcdn.io/account-b/"
-          }
-        ]
-      })
-      .mockResolvedValueOnce({
-        additionalConfig: [],
-        sourceUrlPrefixes: ["https://app.example.com/refreshed/"],
-        urlRewriteRules: [
-          {
-            fromUrlPrefix: "https://app.example.com/download/",
-            toUrlPrefix: "https://upcdn.io/account-c/"
-          }
-        ]
-      });
+  test("supports a manual cookie-only V2 config without a service worker", async () => {
+    delete navigatorValue.serviceWorker;
+    const fetchApi = createFetchApi();
+    const provider = jest.fn(async () => jwtA);
 
     await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerConfig,
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-    await new Promise(resolve => setTimeout(resolve, 1_500));
-
-    expect(serviceWorkerConfig).toHaveBeenCalledTimes(2);
-    expect(postMessage.mock.calls[1][0]).toEqual({
-      config: [
+      authConfigs: async () => [
         {
-          expires: expect.any(Number),
-          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
-          sourceUrlPrefixes: ["https://app.example.com/refreshed/"],
-          urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+          accountId: accountA,
+          authConfigId: undefined,
+          enableCookieAuth: true,
+          enableServiceWorkerAuth: false,
+          getAuthorizationToken: provider
         }
       ],
-      type: "SET_BYTESCALE_AUTH_CONFIG",
-      urlRewriteRules: [
-        {
-          fromUrlPrefix: "https://app.example.com/download/",
-          toUrlPrefix: "https://upcdn.io/account-c/"
-        }
-      ]
+      options: { fetchApi }
     });
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
+
+    expect(AuthManager.isAuthSessionReady()).toBe(true);
+    expect(provider).toHaveBeenCalledTimes(1);
+    expect(fetchUrls(fetchApi)).toEqual([`https://upcdn.io/api/v1/access_tokens/${accountA}?set-cookie=true`]);
+    expect(postMessage).not.toHaveBeenCalled();
+  });
+
+  test("refreshes configs independently and preserves a still-valid token after failure", async () => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchApi = createFetchApi();
+    const providerA = jest.fn(async () => jwtA);
+    const providerB = jest.fn<() => Promise<string>>().mockResolvedValueOnce(jwtB).mockRejectedValueOnce("offline");
+
+    await AuthManager.beginAuthSession({
+      authConfigs: async () => [apiOnlyConfig(undefined, accountA, providerA), apiOnlyConfig("b", accountB, providerB)],
+      options: { fetchApi }
+    });
+    const session = AuthSessionState.getSession();
+    const stateB = session?.authConfigs?.[1];
+    if (session === undefined || stateB === undefined) {
+      throw new Error("Expected initialized auth state.");
+    }
+    const previousExpiry = stateB.expiresAt;
+    const internals = AuthManager as AuthManagerInternals;
+    await internals.refreshAuthConfig(session, stateB);
+
+    expect(providerA).toHaveBeenCalledTimes(1);
+    expect(providerB).toHaveBeenCalledTimes(2);
+    expect(stateB.accessToken).toBe("access-b");
+    expect(stateB.jwt).toBe(jwtB);
+    expect(stateB.expiresAt).toBe(previousExpiry);
     expect(AuthManager.isAuthSessionReady()).toBe(true);
   });
 
-  test("retains additional rules when the primary JWT refreshes", async () => {
-    const fetchApi = createPrimaryFetchApi();
-    const additionalConfig: AuthSwConfigEntryDto[] = [
-      {
-        expires: undefined,
-        headers: [{ key: "Authorization", value: "Bearer jwt-b" }],
-        urlPrefix: "https://upcdn.io/account-b/"
-      }
-    ];
-    const serviceWorkerConfig = jest.fn(
-      async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig,
-        urlRewriteRules: [
-          {
-            fromUrlPrefix: "https://app.example.com/download/",
-            toUrlPrefix: "https://upcdn.io/account-b/"
-          }
-        ]
-      })
-    );
-
+  test("clears the cookie-enabled config and the complete worker config on end", async () => {
+    const fetchApi = createFetchApi();
     await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerConfig,
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-
-    const session = AuthSessionState.getSession();
-    if (session?.accessTokenRefreshHandle === undefined) {
-      throw new Error("Expected the primary access-token refresh to be scheduled.");
-    }
-    const authManagerInternals = AuthManager as AuthManagerInternals;
-    authManagerInternals.scheduler.unschedule(session.accessTokenRefreshHandle);
-    await authManagerInternals.refreshAccessToken(session, session.params);
-
-    expect(serviceWorkerConfig).toHaveBeenCalledTimes(1);
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT", "GET", "PUT"]);
-    expect(postMessage.mock.calls[1][0]).toEqual({
-      config: [
+      authConfigs: async () => [
         {
-          expires: expect.any(Number),
-          headers: [{ key: "Authorization", value: "Bearer jwt-a" }],
-          urlPrefix: "https://upcdn.io/account-a/"
+          accountId: accountA,
+          authConfigId: "worker",
+          getAuthorizationToken: async () => jwtA
         },
-        additionalConfig[0]
-      ],
-      type: "SET_BYTESCALE_AUTH_CONFIG",
-      urlRewriteRules: [
         {
-          fromUrlPrefix: "https://app.example.com/download/",
-          toUrlPrefix: "https://upcdn.io/account-b/"
+          accountId: accountB,
+          authConfigId: "cookie",
+          enableCookieAuth: true,
+          enableServiceWorkerAuth: false,
+          getAuthorizationToken: async () => jwtB
         }
-      ]
+      ],
+      options: { fetchApi },
+      serviceWorkerScript: "/auth-sw.js"
     });
+
+    await AuthManager.endAuthSession();
+
+    expect(fetchApi.mock.calls.filter(([, init]) => init?.method === "DELETE")).toHaveLength(1);
+    expect(fetchUrls(fetchApi).at(-1)).toBe(`https://upcdn.io/api/v1/access_tokens/${accountB}?set-cookie=true`);
+    expect(postMessage.mock.calls.at(-1)?.[0]).toEqual({ config: [], type: "SET_BYTESCALE_AUTH_CONFIG" });
+    expect(AuthManager.isAuthSessionActive()).toBe(false);
+    await expect(AuthManager.endAuthSession()).resolves.toBeUndefined();
   });
 
-  test("rejects malformed URL rewrite rules", async () => {
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-    const fetchApi = createPrimaryFetchApi();
-
-    await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerConfig: async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig: [],
-        urlRewriteRules: [{ fromUrlPrefix: "https://app.example.com/download/" }] as UrlRewriteRule[]
+  test.each([
+    {
+      name: "empty auth config array",
+      params: (fetchApi: FetchApi) =>
+        ({ authConfigs: async () => [], options: { fetchApi } } as unknown as BeginAuthSessionParamsV2),
+      error: "non-empty array"
+    },
+    {
+      name: "duplicate named IDs",
+      params: (fetchApi: FetchApi) =>
+        v2Params(fetchApi, [
+          apiOnlyConfig("same", accountA, async () => jwtA),
+          apiOnlyConfig("same", accountB, async () => jwtB)
+        ]),
+      error: "Duplicate auth configuration ID"
+    },
+    {
+      name: "multiple defaults",
+      params: (fetchApi: FetchApi) =>
+        v2Params(fetchApi, [
+          apiOnlyConfig(undefined, accountA, async () => jwtA),
+          apiOnlyConfig(undefined, accountB, async () => jwtB)
+        ]),
+      error: "Only one default"
+    },
+    {
+      name: "multiple cookie configs",
+      params: (fetchApi: FetchApi) =>
+        v2Params(fetchApi, [
+          { ...apiOnlyConfig("a", accountA, async () => jwtA), enableCookieAuth: true },
+          { ...apiOnlyConfig("b", accountB, async () => jwtB), enableCookieAuth: true }
+        ]),
+      error: "Only one auth configuration may enable cookie"
+    },
+    {
+      name: "missing service-worker script",
+      params: (fetchApi: FetchApi) =>
+        v2Params(fetchApi, [{ ...apiOnlyConfig("a", accountA, async () => jwtA), enableServiceWorkerAuth: true }]),
+      error: "serviceWorkerScript"
+    },
+    {
+      name: "duplicate worker destination",
+      params: (fetchApi: FetchApi): BeginAuthSessionParamsV2 => ({
+        ...v2Params(fetchApi, [
+          { ...apiOnlyConfig("a", accountA, async () => jwtA), enableServiceWorkerAuth: true },
+          { ...apiOnlyConfig("b", accountA, async () => jwtB), enableServiceWorkerAuth: true }
+        ]),
+        serviceWorkerScript: "/auth-sw.js"
       }),
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
+      error: "same URL prefix"
+    },
+    {
+      name: "invalid account ID",
+      params: (fetchApi: FetchApi) => v2Params(fetchApi, [apiOnlyConfig("a", "A12/abc", async () => jwtA)]),
+      error: "Invalid Bytescale account ID"
+    },
+    {
+      name: "overlapping cookie and worker accounts",
+      params: (fetchApi: FetchApi): BeginAuthSessionParamsV2 => ({
+        ...v2Params(fetchApi, [
+          { ...apiOnlyConfig("cookie", accountA, async () => jwtA), enableCookieAuth: true },
+          { ...apiOnlyConfig("worker", accountA, async () => jwtB), enableServiceWorkerAuth: true }
+        ]),
+        serviceWorkerScript: "/auth-sw.js"
+      }),
+      error: "Cookie and service-worker authentication"
+    }
+  ])("rejects $name before invoking a provider", async ({ params, error }) => {
+    const fetchApi = createFetchApi();
 
-    expect(postMessage).not.toHaveBeenCalled();
-    expect(AuthManager.isAuthSessionReady()).toBe(false);
-  });
+    await expect(AuthManager.beginAuthSession(params(fetchApi))).rejects.toThrow(error);
 
-  test("fails closed until the initial service-worker config callback succeeds", async () => {
-    jest.spyOn(console, "warn").mockImplementation(() => {});
-    const fetchApi = createPrimaryFetchApi();
-
-    await AuthManager.beginAuthSession({
-      ...createParams(fetchApi),
-      serviceWorkerConfig: async () => null as unknown as AuthManagerServiceWorkerConfig,
-      serviceWorkerScript: "/bytescale-auth-sw.js"
-    });
-
-    expect(fetchApi.mock.calls.map(([, init]) => init?.method)).toEqual(["GET", "PUT"]);
-    expect(postMessage).not.toHaveBeenCalled();
-    expect(AuthManager.isAuthSessionReady()).toBe(false);
-  });
-
-  test("requires a service-worker script for additional configuration", async () => {
-    const fetchApi = createPrimaryFetchApi();
-    const serviceWorkerConfig = jest.fn(
-      async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig: []
-      })
-    );
-
-    await expect(AuthManager.beginAuthSession({ ...createParams(fetchApi), serviceWorkerConfig })).rejects.toThrow(
-      "'serviceWorkerScript' field is required"
-    );
-
-    expect(serviceWorkerConfig).not.toHaveBeenCalled();
     expect(fetchApi).not.toHaveBeenCalled();
+    expect(postMessage).not.toHaveBeenCalled();
     expect(AuthManager.isAuthSessionActive()).toBe(false);
   });
 
-  test("rejects additional configuration when service workers are unavailable", async () => {
+  test("rejects V2 service-worker features when the browser cannot enforce them", async () => {
     delete navigatorValue.serviceWorker;
-    const fetchApi = createPrimaryFetchApi();
-    const serviceWorkerConfig = jest.fn(
-      async (): Promise<AuthManagerServiceWorkerConfig> => ({
-        additionalConfig: []
-      })
-    );
+    const fetchApi = createFetchApi();
+    const provider = jest.fn(async () => jwtA);
 
     await expect(
       AuthManager.beginAuthSession({
-        ...createParams(fetchApi),
-        serviceWorkerConfig,
-        serviceWorkerScript: "/bytescale-auth-sw.js"
+        authConfigs: async () => [
+          {
+            accountId: accountA,
+            authConfigId: undefined,
+            getAuthorizationToken: provider
+          }
+        ],
+        options: { fetchApi },
+        serviceWorkerScript: "/auth-sw.js"
       })
-    ).rejects.toThrow("requires service workers");
+    ).rejects.toThrow("does not support");
 
-    expect(serviceWorkerConfig).not.toHaveBeenCalled();
+    expect(provider).not.toHaveBeenCalled();
+    expect(fetchApi).not.toHaveBeenCalled();
+  });
+
+  test.each(["", "not-a-jwt"])("rejects a malformed manual token and disposes the partial V2 session", async token => {
+    jest.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchApi = createFetchApi();
+
+    await expect(
+      AuthManager.beginAuthSession({
+        authConfigs: async () => [apiOnlyConfig(undefined, accountA, async () => token)],
+        options: { fetchApi }
+      })
+    ).rejects.toThrow("malformed");
+
     expect(fetchApi).not.toHaveBeenCalled();
     expect(AuthManager.isAuthSessionActive()).toBe(false);
   });
 });
 
-function createParams(fetchApi: FetchApi): BeginAuthSessionParams {
+function apiOnlyConfig(
+  authConfigId: string | undefined,
+  accountId: string,
+  provider: () => Promise<string>
+): AuthSessionConfig {
   return {
-    accountId: "account-a",
+    accountId,
+    authConfigId,
+    enableServiceWorkerAuth: false,
+    getAuthorizationToken: provider
+  };
+}
+
+function createFetchApi(): jest.MockedFunction<FetchApi> {
+  return jest.fn<FetchApi>(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const url = inputUrl(input);
+    if (init?.method === "GET") {
+      const suffix = url.split("auth-")[1] ?? "a";
+      const jwt = suffix === "a" ? jwtA : suffix === "b" ? jwtB : jwtC;
+      return new NodeFetchResponse(jwt, {
+        headers: { "Content-Type": "text/plain" }
+      }) as unknown as Response;
+    }
+    if (init?.method === "PUT") {
+      const accountId = url.split("/access_tokens/")[1]?.split("?")[0];
+      const suffix = accountId === accountA ? "a" : accountId === accountB ? "b" : "c";
+      return new NodeFetchResponse(
+        JSON.stringify({ accessToken: `access-${suffix}`, ttlSeconds: 3600 })
+      ) as unknown as Response;
+    }
+    if (init?.method === "DELETE") {
+      return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
+    }
+    throw new Error(`Unexpected request: ${init?.method ?? "undefined"} ${url}`);
+  });
+}
+
+function fetchUrls(fetchApi: jest.MockedFunction<FetchApi>): string[] {
+  return fetchApi.mock.calls.map(([input]) => inputUrl(input));
+}
+
+function v1Params(fetchApi: FetchApi): BeginAuthSessionParams {
+  return {
+    accountId: accountA,
     authHeaders: async (): Promise<Record<string, string>> => ({ "X-App-Authorization": "app-token" }),
-    authUrl: "https://app.example.com/auth",
+    authUrl: "https://app.example.com/auth-a",
     options: { fetchApi }
   };
 }
 
-function createPrimaryFetchApi(): jest.MockedFunction<FetchApi> {
-  return jest.fn<FetchApi>(async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    switch (init?.method) {
-      case "GET":
-        return new NodeFetchResponse("jwt-a", {
-          headers: { "Content-Type": "text/plain" }
-        }) as unknown as Response;
-      case "PUT":
-        return new NodeFetchResponse(
-          JSON.stringify({ accessToken: "access-a", ttlSeconds: 3600 })
-        ) as unknown as Response;
-      case "DELETE":
-        return new NodeFetchResponse(null, { status: 204 }) as unknown as Response;
-      default:
-        throw new Error(`Unexpected method: ${init?.method ?? "undefined"}`);
-    }
-  });
+function inputUrl(input: RequestInfo | URL): string {
+  return typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+}
+
+function v2Params(fetchApi: FetchApi, configs: AuthSessionConfig[]): BeginAuthSessionParamsV2 {
+  return {
+    authConfigs: async () => configs as [AuthSessionConfig, ...AuthSessionConfig[]],
+    options: { fetchApi }
+  };
 }

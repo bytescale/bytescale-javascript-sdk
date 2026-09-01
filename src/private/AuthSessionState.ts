@@ -1,6 +1,12 @@
 import { AuthSession } from "./model/AuthSession";
 import { FairMutex } from "./FairMutex";
 
+export interface ResolvedAuthSessionConfig {
+  accessToken: string;
+  accountId: string;
+  jwt: string | undefined;
+}
+
 /**
  * Maintains a global session state, even across package versions.
  *
@@ -47,5 +53,64 @@ export class AuthSessionState {
       return undefined;
     }
     return (window as any)[AuthSessionState.stateKey];
+  }
+
+  /** Resolves request-time auth while remaining compatible with the single-token session used by SDK 3.54.0. */
+  static resolveAuthConfig(
+    authConfigId: string | false | undefined,
+    requireReadyDefault: boolean
+  ): ResolvedAuthSessionConfig | undefined {
+    if (authConfigId === false) {
+      return undefined;
+    }
+
+    const session = AuthSessionState.getSession();
+    if (session === undefined || !session.isActive) {
+      if (typeof authConfigId === "string") {
+        throw new Error(`No active AuthManager configuration has ID '${authConfigId}'.`);
+      }
+      return undefined;
+    }
+
+    if (Array.isArray(session.authConfigs)) {
+      const state = session.authConfigs.find(config => config.config.authConfigId === authConfigId);
+      if (state === undefined) {
+        if (typeof authConfigId === "string") {
+          throw new Error(`No active AuthManager configuration has ID '${authConfigId}'.`);
+        }
+        return undefined;
+      }
+
+      if (
+        state.accessToken === undefined ||
+        state.expiresAt === undefined ||
+        state.expiresAt <= Date.now() ||
+        state.jwt === undefined
+      ) {
+        const isV2Session = typeof (session.params as { authConfigs?: unknown }).authConfigs === "function";
+        if (typeof authConfigId === "string" || requireReadyDefault || isV2Session) {
+          throw new Error(`AuthManager configuration '${authConfigId ?? "default"}' is not ready.`);
+        }
+        return undefined;
+      }
+
+      return {
+        accessToken: state.accessToken,
+        accountId: state.config.accountId,
+        jwt: state.jwt
+      };
+    }
+
+    if (typeof authConfigId === "string") {
+      throw new Error(`No active AuthManager configuration has ID '${authConfigId}'.`);
+    }
+    if (session.accessToken === undefined || typeof session.params.accountId !== "string") {
+      return undefined;
+    }
+    return {
+      accessToken: session.accessToken,
+      accountId: session.params.accountId,
+      jwt: undefined
+    };
   }
 }

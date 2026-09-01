@@ -1,13 +1,16 @@
 import {
-  AuthManagerServiceWorkerConfig,
   AuthManagerInterface,
+  AuthSessionConfig,
+  AuthSessionConfigAuto,
   BeginAuthSessionParams,
+  BeginAuthSessionParamsV1,
+  BeginAuthSessionParamsV2,
   UrlRewriteRule
 } from "../../private/model/AuthManagerInterface";
 import { AuthSessionState } from "../../private/AuthSessionState";
 import { ConsoleUtils } from "../../private/ConsoleUtils";
 import { BaseAPI, BytescaleApiClientConfigUtils } from "../shared/generated";
-import { AuthSession } from "../../private/model/AuthSession";
+import { AuthSession, AuthSessionConfigState } from "../../private/model/AuthSession";
 import { SetAccessTokenRequestDto } from "../../private/dtos/SetAccessTokenRequestDto";
 import { SetAccessTokenResponseDto } from "../../private/dtos/SetAccessTokenResponseDto";
 import { AuthSwSetConfigDto } from "../../private/dtos/AuthSwSetConfigDto";
@@ -18,10 +21,19 @@ import { Scheduler } from "../../private/Scheduler";
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
 export type {
-  AuthManagerServiceWorkerConfig,
+  AuthSessionConfig,
+  AuthSessionConfigAuto,
+  AuthSessionConfigBase,
+  AuthSessionConfigManual,
   BeginAuthSessionParams,
+  BeginAuthSessionParamsOptions,
+  BeginAuthSessionParamsV1,
+  BeginAuthSessionParamsV2,
+  NonEmptyArray,
   UrlRewriteRule
 } from "../../private/model/AuthManagerInterface";
+
+class InvalidAuthTokenError extends Error {}
 
 class AuthManagerImpl implements AuthManagerInterface {
   private readonly authSessionMutex;
@@ -45,58 +57,76 @@ class AuthManagerImpl implements AuthManagerInterface {
 
   isAuthSessionReady(): boolean {
     const session = AuthSessionState.getSession();
-    return session?.isReady ?? session?.accessToken !== undefined;
+    if (session !== undefined && Array.isArray(session.authConfigs)) {
+      return session.isReady === true && session.authConfigs.every(state => this.isConfigUsable(state));
+    }
+    return session?.accessToken !== undefined;
   }
 
   async beginAuthSession(params: BeginAuthSessionParams): Promise<void> {
     const session = await this.authSessionMutex.safe(async () => {
-      // We check both 'session' and 'sessionDisposing' here, as we don't want to call 'beginAuthSession' until the session is fully disposed.
       if (this.isAuthSessionActive()) {
         throw new Error(
           "Auth session already active. Please call 'await endAuthSession()' and then call 'await beginAuthSession(...)' to start a new auth session."
         );
       }
 
-      const canUseServiceWorkers = this.serviceWorkerUtils.canUseServiceWorkers();
-      if (params.serviceWorkerConfig !== undefined) {
-        if (params.serviceWorkerScript === undefined) {
-          throw new Error("The 'serviceWorkerScript' field is required when 'serviceWorkerConfig' is provided.");
-        }
-        if (!canUseServiceWorkers) {
-          throw new Error(
-            "The 'serviceWorkerConfig' field requires service workers, but this browser does not support them."
-          );
-        }
+      if (
+        Object.prototype.hasOwnProperty.call(params, "authConfigs") &&
+        typeof (params as { authConfigs?: unknown }).authConfigs !== "function"
+      ) {
+        throw new Error("The 'authConfigs' field must be a callback returning a non-empty array.");
       }
+      const isV2 = this.isV2Params(params);
+      const configs = isV2 ? await this.getV2Configs(params) : [this.normalizeV1Config(params)];
+      const canUseServiceWorkers = this.serviceWorkerUtils.canUseServiceWorkers();
+      const requiresServiceWorker =
+        configs.some(config => config !== null && typeof config === "object" && this.isServiceWorkerEnabled(config)) ||
+        (isV2 && (params.urlRewriteRules?.length ?? 0) > 0);
+
+      this.validateSessionConfig(params, configs, canUseServiceWorkers, requiresServiceWorker);
 
       const newSession: AuthSession = {
         accessToken: undefined,
         accessTokenRefreshHandle: undefined,
-        params,
-        isActive: true,
-        isReady: false,
+        authConfigs: configs.map(
+          (config): AuthSessionConfigState => ({
+            accessToken: undefined,
+            config,
+            expiresAt: undefined,
+            jwt: undefined,
+            refreshHandle: undefined
+          })
+        ),
         authServiceWorker:
-          params.serviceWorkerScript !== undefined && canUseServiceWorkers
+          requiresServiceWorker && params.serviceWorkerScript !== undefined && canUseServiceWorkers
             ? {
                 serviceWorkerScript: params.serviceWorkerScript,
                 type: "Uninitialized"
               }
             : undefined,
-        primaryAuthSwConfig: undefined,
-        serviceWorkerConfig: undefined,
-        serviceWorkerConfigRefreshHandle: undefined
+        isActive: true,
+        isReady: false,
+        params,
+        serviceWorkerConfigured: false
       };
 
       AuthSessionState.setSession(newSession);
-
       return newSession;
     });
 
-    // IMPORTANT: must be called outside the above, else re-entrant deadlock will occur.
-    if (session.params.serviceWorkerConfig !== undefined) {
-      await this.refreshServiceWorkerConfig(session, session.params);
+    try {
+      for (const config of session.authConfigs ?? []) {
+        await this.refreshAuthConfig(session, config, this.isV2Params(session.params));
+      }
+    } catch (e) {
+      try {
+        await this.endAuthSession();
+      } catch (_cleanupError) {
+        // Preserve the validation error that caused session initialization to fail.
+      }
+      throw e;
     }
-    await this.refreshAccessToken(session, session.params);
   }
 
   async endAuthSession(): Promise<void> {
@@ -109,191 +139,151 @@ class AuthManagerImpl implements AuthManagerInterface {
       AuthSessionState.setSession(undefined);
       session.isActive = false;
 
-      if (session.accessTokenRefreshHandle !== undefined) {
-        this.scheduler.unschedule(session.accessTokenRefreshHandle);
-      }
-      if (session.serviceWorkerConfigRefreshHandle !== undefined) {
-        this.scheduler.unschedule(session.serviceWorkerConfigRefreshHandle);
+      if (session.authConfigs === undefined) {
+        if (session.accessTokenRefreshHandle !== undefined) {
+          this.scheduler.unschedule(session.accessTokenRefreshHandle);
+        }
+      } else {
+        for (const state of session.authConfigs) {
+          if (state.refreshHandle !== undefined) {
+            this.scheduler.unschedule(state.refreshHandle);
+          }
+        }
       }
 
-      // AuthSessionState is shared between bundled SDK versions. Service-worker-only sessions from 3.56.0 did not
-      // contain an accountId, so allow a newer SDK instance to tear those sessions down without calling this endpoint.
-      if (typeof session.params.accountId === "string") {
-        await this.deleteAccessToken(session.params);
+      let cleanupError: unknown;
+      const cookieConfigs = this.isV2Params(session.params)
+        ? session.authConfigs?.filter(state => state.config.enableCookieAuth === true) ?? []
+        : session.authConfigs ?? [];
+
+      // A 3.54.0 session will not contain authConfigs, but a newer bundle must still be able to end it.
+      if (session.authConfigs === undefined && typeof session.params.accountId === "string") {
+        try {
+          await this.deleteAccessToken(session.params.options, session.params.accountId);
+        } catch (e) {
+          cleanupError = e;
+        }
+      } else {
+        for (const state of cookieConfigs) {
+          try {
+            await this.deleteAccessToken(session.params.options, state.config.accountId);
+          } catch (e) {
+            cleanupError ??= e;
+          }
+        }
       }
 
       if (session.authServiceWorker !== undefined) {
-        // Prevent service worker from authorizing subsequent requests.
-        await this.sendServiceWorkerConfig(session, []);
+        try {
+          await this.sendServiceWorkerConfig(session, []);
+        } catch (e) {
+          cleanupError ??= e;
+        }
+      }
+
+      if (cleanupError !== undefined) {
+        throw cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError));
       }
     });
   }
 
-  private async refreshAccessToken(session: AuthSession, params: BeginAuthSessionParams): Promise<void> {
+  private async refreshAuthConfig(
+    session: AuthSession,
+    state: AuthSessionConfigState,
+    rejectInvalidInitialToken = false
+  ): Promise<void> {
     await this.authSessionMutex.safe(async () => {
       if (!session.isActive) {
         return;
       }
 
-      const secondsFromNow = (seconds: number): number => Date.now() + seconds * 1000;
+      if (state.refreshHandle !== undefined) {
+        this.scheduler.unschedule(state.refreshHandle);
+      }
 
-      let expires = secondsFromNow(this.retryAuthAfterErrorSeconds);
+      const previous = {
+        accessToken: state.accessToken,
+        expiresAt: state.expiresAt,
+        jwt: state.jwt,
+        serviceWorkerConfigured: session.serviceWorkerConfigured
+      };
+      let refreshAt = Date.now() + this.retryAuthAfterErrorSeconds * 1000;
 
       try {
-        const jwt = await this.getAccessToken(params, await params.authHeaders());
+        const jwt = await this.getAuthorizationToken(session.params, state.config);
+        const setCookie = this.shouldSetCookie(session, state.config);
+        const token = await this.setAccessToken(session.params.options, state.config.accountId, jwt, setCookie);
+        const expiresAt = Date.now() + token.ttlSeconds * 1000;
 
-        // We don't use cookie-based auth if the browser supports service worker-based auth, as using both will cause
-        // confusion for us in the future (i.e. we may question "do we need to use both together? was there a reason?").
-        // Also: if the user has omitted "allowedOrigins" from their JWT, then service worker-based auth is more secure
-        // than cookie-based auth, which is another reason to prevent these cookies from being set unless required.
-        const setCookie = session.authServiceWorker === undefined;
+        state.accessToken = token.accessToken;
+        state.expiresAt = expiresAt;
+        state.jwt = jwt;
 
-        const setTokenResult = await this.setAccessToken(params, jwt, setCookie);
-
-        if (session.authServiceWorker !== undefined) {
-          const primaryAuthSwConfig = {
-            headers: [{ key: "Authorization", value: `Bearer ${jwt}` }],
-            expires: secondsFromNow(setTokenResult.ttlSeconds),
-            urlPrefix: `${this.getCdnUrl(params)}/${params.accountId}/`
-          };
-
-          // Fail closed until the initial serviceWorkerConfig callback succeeds: without its result, we do not know
-          // the source-page restrictions intended for the primary JWT.
-          if (params.serviceWorkerConfig === undefined || session.serviceWorkerConfig !== undefined) {
-            await this.sendMergedServiceWorkerConfig(session, primaryAuthSwConfig, session.serviceWorkerConfig);
-            await this.waitForServiceWorker();
-          }
-
-          session.primaryAuthSwConfig = primaryAuthSwConfig;
+        if (
+          session.authServiceWorker !== undefined &&
+          (this.isServiceWorkerEnabled(state.config) || session.serviceWorkerConfigured !== true)
+        ) {
+          await this.sendCurrentServiceWorkerConfig(session);
+          await this.waitForServiceWorker();
+          session.serviceWorkerConfigured = true;
         }
 
-        const desiredTtl = setTokenResult.ttlSeconds - this.refreshBeforeExpirySeconds;
+        const desiredTtl = token.ttlSeconds - this.refreshBeforeExpirySeconds;
         const actualTtl = Math.max(desiredTtl, this.minJwtTtlSeconds);
         if (desiredTtl !== actualTtl) {
           ConsoleUtils.warn(`JWT expiration is too short: waiting for ${actualTtl} seconds before refreshing.`);
         }
-
-        expires = secondsFromNow(actualTtl);
-
-        // Set this at the end, as it's also used to signal 'isAuthSessionReady', so must be set after configuring the Service Worker, etc.
-        session.accessToken = setTokenResult.accessToken;
-        this.updateSessionReadiness(session);
+        refreshAt = Date.now() + actualTtl * 1000;
       } catch (e) {
-        // Use 'warn' instead of 'error' since this happens frequently, i.e. user goes through a tunnel, and some customers report these errors to systems like Sentry, so we don't want to spam.
-        ConsoleUtils.warn(`Unable to refresh JWT access token: ${e as string}`);
+        state.accessToken = previous.accessToken;
+        state.expiresAt = previous.expiresAt;
+        state.jwt = previous.jwt;
+        session.serviceWorkerConfigured = previous.serviceWorkerConfigured;
+        ConsoleUtils.warn(
+          `Unable to refresh JWT access token for auth config '${state.config.authConfigId ?? "default"}': ${
+            e as string
+          }`
+        );
+        if (rejectInvalidInitialToken && e instanceof InvalidAuthTokenError) {
+          throw e;
+        }
       } finally {
-        // 'setTimeout' can be paused (e.g., during hibernation), risking JWT expiration before it triggers. We use a
-        // scheduler to check wall-clock time every second and execute the callback at the scheduled time (below).
-        session.accessTokenRefreshHandle = this.scheduler.schedule(expires, () => {
-          this.refreshAccessToken(session, params).then(
+        state.refreshHandle = this.scheduler.schedule(refreshAt, () => {
+          this.refreshAuthConfig(session, state).then(
             () => {},
-            // Should not occur, as this method shouldn't throw errors.
             e => ConsoleUtils.error(`Unexpected error when refreshing JWT access token: ${e as string}`)
           );
         });
+        this.updateSessionState(session);
       }
     });
   }
 
-  private async refreshServiceWorkerConfig(session: AuthSession, params: BeginAuthSessionParams): Promise<void> {
-    const getServiceWorkerConfig = params.serviceWorkerConfig;
-    if (getServiceWorkerConfig === undefined) {
-      return;
-    }
-
-    await this.authSessionMutex.safe(async () => {
-      if (!session.isActive) {
-        return;
+  private async sendCurrentServiceWorkerConfig(session: AuthSession): Promise<void> {
+    const now = Date.now();
+    const config = (session.authConfigs ?? []).flatMap((state): AuthSwConfigDto => {
+      if (
+        !this.isServiceWorkerEnabled(state.config) ||
+        state.jwt === undefined ||
+        state.expiresAt === undefined ||
+        state.expiresAt <= now
+      ) {
+        return [];
       }
-
-      let refreshAt: number | undefined;
-
-      try {
-        const result = await getServiceWorkerConfig();
-        if (result === null || typeof result !== "object" || !Array.isArray(result.additionalConfig)) {
-          throw new Error("The 'serviceWorkerConfig' callback must return an object containing 'additionalConfig'.");
+      return [
+        {
+          expires: state.expiresAt,
+          headers: [{ key: "Authorization", value: `Bearer ${state.jwt}` }],
+          sourceUrlPrefixes: state.config.sourceUrlPrefixes,
+          urlPrefix: `${this.getCdnUrl(session.params)}/${state.config.accountId}/`
         }
-        if (
-          result.sourceUrlPrefixes !== undefined &&
-          (!Array.isArray(result.sourceUrlPrefixes) ||
-            !result.sourceUrlPrefixes.every(prefix => typeof prefix === "string"))
-        ) {
-          throw new Error(
-            "The 'sourceUrlPrefixes' field returned by 'serviceWorkerConfig' must be an array of strings."
-          );
-        }
-        if (
-          result.urlRewriteRules !== undefined &&
-          (!Array.isArray(result.urlRewriteRules) ||
-            !result.urlRewriteRules.every(
-              rule =>
-                rule !== null &&
-                typeof rule === "object" &&
-                typeof rule.fromUrlPrefix === "string" &&
-                typeof rule.toUrlPrefix === "string"
-            ))
-        ) {
-          throw new Error(
-            "The 'urlRewriteRules' field returned by 'serviceWorkerConfig' must be an array of URL rewrite rules."
-          );
-        }
-
-        const config: AuthManagerServiceWorkerConfig = {
-          additionalConfig: result.additionalConfig,
-          sourceUrlPrefixes: result.sourceUrlPrefixes,
-          urlRewriteRules: result.urlRewriteRules
-        };
-
-        if (session.primaryAuthSwConfig !== undefined) {
-          await this.sendMergedServiceWorkerConfig(session, session.primaryAuthSwConfig, config);
-          await this.waitForServiceWorker();
-        }
-
-        session.serviceWorkerConfig = config;
-        this.updateSessionReadiness(session);
-        refreshAt = this.getServiceWorkerConfigRefreshEpoch(config.additionalConfig);
-      } catch (e) {
-        ConsoleUtils.warn(`Unable to refresh service worker auth config: ${e as string}`);
-        refreshAt = Date.now() + this.retryAuthAfterErrorSeconds * 1000;
-      }
-
-      if (refreshAt !== undefined) {
-        session.serviceWorkerConfigRefreshHandle = this.scheduler.schedule(refreshAt, () => {
-          this.refreshServiceWorkerConfig(session, params).then(
-            () => {},
-            e => ConsoleUtils.error(`Unexpected error when refreshing service worker auth config: ${e as string}`)
-          );
-        });
-      }
+      ];
     });
-  }
-
-  private async sendMergedServiceWorkerConfig(
-    session: AuthSession,
-    primaryConfig: AuthSwConfigDto[number],
-    serviceWorkerConfig: AuthManagerServiceWorkerConfig | undefined
-  ): Promise<void> {
     await this.sendServiceWorkerConfig(
       session,
-      [
-        {
-          ...primaryConfig,
-          sourceUrlPrefixes: serviceWorkerConfig?.sourceUrlPrefixes
-        },
-        ...(serviceWorkerConfig?.additionalConfig ?? [])
-      ],
-      serviceWorkerConfig?.urlRewriteRules
+      config,
+      this.isV2Params(session.params) ? session.params.urlRewriteRules : undefined
     );
-  }
-
-  private getServiceWorkerConfigRefreshEpoch(config: AuthSwConfigDto): number | undefined {
-    let earliestExpiry: number | undefined;
-    for (const entry of config) {
-      if (entry.expires !== undefined && (earliestExpiry === undefined || entry.expires < earliestExpiry)) {
-        earliestExpiry = entry.expires;
-      }
-    }
-    return earliestExpiry === undefined ? undefined : earliestExpiry - this.refreshBeforeExpirySeconds * 1000;
   }
 
   private async sendServiceWorkerConfig(
@@ -321,20 +311,192 @@ class AuthManagerImpl implements AuthManagerInterface {
     );
   }
 
-  private updateSessionReadiness(session: AuthSession): void {
+  private async getV2Configs(params: BeginAuthSessionParamsV2): Promise<AuthSessionConfig[]> {
+    const configs = await params.authConfigs();
+    if (!Array.isArray(configs) || configs.length === 0) {
+      throw new Error("The 'authConfigs' callback must return a non-empty array.");
+    }
+    return configs.map(config =>
+      config === null || typeof config !== "object"
+        ? config
+        : {
+            ...config,
+            sourceUrlPrefixes: Array.isArray(config.sourceUrlPrefixes)
+              ? [...config.sourceUrlPrefixes]
+              : config.sourceUrlPrefixes
+          }
+    );
+  }
+
+  private normalizeV1Config(params: BeginAuthSessionParamsV1): AuthSessionConfigAuto {
+    return {
+      accountId: params.accountId,
+      authConfigId: undefined,
+      authHeaders: params.authHeaders,
+      authUrl: params.authUrl,
+      enableCookieAuth: params.serviceWorkerScript === undefined,
+      enableServiceWorkerAuth: params.serviceWorkerScript !== undefined
+    };
+  }
+
+  private validateSessionConfig(
+    params: BeginAuthSessionParams,
+    configs: AuthSessionConfig[],
+    canUseServiceWorkers: boolean,
+    requiresServiceWorker: boolean
+  ): void {
+    const isV2 = this.isV2Params(params);
+    if (isV2 && (params.accountId !== undefined || params.authHeaders !== undefined || params.authUrl !== undefined)) {
+      throw new Error("V2 auth sessions must use 'authConfigs' instead of top-level auth fields.");
+    }
+
+    const ids = new Set<string | undefined>();
+    let cookieConfig: AuthSessionConfig | undefined;
+    const workerConfigsByPrefix = new Map<string, AuthSessionConfig>();
+
+    for (const config of configs) {
+      if (config === null || typeof config !== "object") {
+        throw new Error("Each auth configuration must be an object.");
+      }
+      if (!Object.prototype.hasOwnProperty.call(config, "authConfigId")) {
+        throw new Error("Each auth configuration must explicitly provide 'authConfigId'.");
+      }
+      if (config.authConfigId !== undefined && typeof config.authConfigId !== "string") {
+        throw new Error("The 'authConfigId' field must be a string or undefined.");
+      }
+      if (ids.has(config.authConfigId)) {
+        throw new Error(
+          config.authConfigId === undefined
+            ? "Only one default auth configuration is allowed."
+            : `Duplicate auth configuration ID: '${config.authConfigId}'.`
+        );
+      }
+      ids.add(config.authConfigId);
+
+      if (isV2 && !this.isValidAccountId(config.accountId)) {
+        throw new Error(`Invalid Bytescale account ID: '${String(config.accountId)}'.`);
+      }
+      if (
+        (config.enableCookieAuth !== undefined && typeof config.enableCookieAuth !== "boolean") ||
+        (config.enableServiceWorkerAuth !== undefined && typeof config.enableServiceWorkerAuth !== "boolean")
+      ) {
+        throw new Error("Authentication enablement flags must be booleans when provided.");
+      }
+      if (
+        config.sourceUrlPrefixes !== undefined &&
+        (!Array.isArray(config.sourceUrlPrefixes) ||
+          !config.sourceUrlPrefixes.every(prefix => typeof prefix === "string"))
+      ) {
+        throw new Error("The 'sourceUrlPrefixes' field must be an array of strings.");
+      }
+
+      const isManual = typeof config.getAuthorizationToken === "function";
+      const isAutomatic = typeof config.authUrl === "string" && typeof config.authHeaders === "function";
+      if (
+        isManual === isAutomatic ||
+        (isManual && (config.authUrl !== undefined || config.authHeaders !== undefined))
+      ) {
+        throw new Error(
+          "Each auth configuration must provide either 'getAuthorizationToken' or both 'authUrl' and 'authHeaders'."
+        );
+      }
+
+      if (config.enableCookieAuth === true) {
+        if (cookieConfig !== undefined) {
+          throw new Error("Only one auth configuration may enable cookie authentication.");
+        }
+        cookieConfig = config;
+      }
+
+      if (this.isServiceWorkerEnabled(config)) {
+        const prefix = `${this.getCdnUrl(params)}/${config.accountId}/`;
+        if (workerConfigsByPrefix.has(prefix)) {
+          throw new Error(`Multiple service-worker auth configurations target the same URL prefix: '${prefix}'.`);
+        }
+        workerConfigsByPrefix.set(prefix, config);
+      }
+    }
+
+    if (cookieConfig !== undefined) {
+      const prefix = `${this.getCdnUrl(params)}/${cookieConfig.accountId}/`;
+      const workerConfig = workerConfigsByPrefix.get(prefix);
+      if (workerConfig !== undefined && workerConfig !== cookieConfig) {
+        throw new Error(
+          "Cookie and service-worker authentication cannot target the same account from different configs."
+        );
+      }
+    }
+
+    if (isV2) {
+      this.validateUrlRewriteRules(params.urlRewriteRules);
+      if (requiresServiceWorker && params.serviceWorkerScript === undefined) {
+        throw new Error(
+          "The 'serviceWorkerScript' field is required when service-worker authentication or URL rewriting is enabled."
+        );
+      }
+      if (requiresServiceWorker && !canUseServiceWorkers) {
+        throw new Error("This auth session requires service workers, but this browser does not support them.");
+      }
+    }
+  }
+
+  private validateUrlRewriteRules(rules: UrlRewriteRule[] | undefined): void {
+    if (
+      rules !== undefined &&
+      (!Array.isArray(rules) ||
+        !rules.every(
+          rule =>
+            rule !== null &&
+            typeof rule === "object" &&
+            typeof rule.fromUrlPrefix === "string" &&
+            typeof rule.toUrlPrefix === "string"
+        ))
+    ) {
+      throw new Error("The 'urlRewriteRules' field must be an array of URL rewrite rules.");
+    }
+  }
+
+  private updateSessionState(session: AuthSession): void {
+    const configs = session.authConfigs ?? [];
+    const defaultConfig = configs.find(state => state.config.authConfigId === undefined);
+    const exposeLegacyDefault = !this.isV2Params(session.params);
+    session.accessToken =
+      exposeLegacyDefault && defaultConfig !== undefined && this.isConfigUsable(defaultConfig)
+        ? defaultConfig.accessToken
+        : undefined;
+    session.accessTokenRefreshHandle = exposeLegacyDefault ? defaultConfig?.refreshHandle : undefined;
     session.isReady =
-      session.accessToken !== undefined &&
-      (session.params.serviceWorkerConfig === undefined || session.serviceWorkerConfig !== undefined);
+      configs.length > 0 &&
+      configs.every(state => this.isConfigUsable(state)) &&
+      (session.authServiceWorker === undefined || session.serviceWorkerConfigured === true);
+  }
+
+  private isConfigUsable(state: AuthSessionConfigState | undefined): boolean {
+    return state?.accessToken !== undefined && state.expiresAt !== undefined && state.expiresAt > Date.now();
+  }
+
+  private isServiceWorkerEnabled(config: AuthSessionConfig): boolean {
+    return config.enableServiceWorkerAuth !== false;
+  }
+
+  private isV2Params(params: BeginAuthSessionParams): params is BeginAuthSessionParamsV2 {
+    return typeof (params as BeginAuthSessionParamsV2).authConfigs === "function";
+  }
+
+  private isValidAccountId(accountId: unknown): accountId is string {
+    return typeof accountId === "string" && /^[1-9A-HJ-NP-Za-km-z]{7}$/.test(accountId);
+  }
+
+  private shouldSetCookie(session: AuthSession, config: AuthSessionConfig): boolean {
+    return this.isV2Params(session.params) ? config.enableCookieAuth === true : session.authServiceWorker === undefined;
   }
 
   private async waitForServiceWorker(): Promise<void> {
-    // Message delivery is asynchronous and has no acknowledgement, so allow the worker time to apply the config before
-    // beginAuthSession reports that authenticated requests are ready.
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  private getAccessTokenUrl(params: BeginAuthSessionParams, setCookie: boolean): string {
-    return `${this.getCdnUrl(params)}/api/v1/access_tokens/${params.accountId}?set-cookie=${
+  private getAccessTokenUrl(options: BeginAuthSessionParams["options"], accountId: string, setCookie: boolean): string {
+    return `${BytescaleApiClientConfigUtils.getCdnUrl(options ?? {})}/api/v1/access_tokens/${accountId}?set-cookie=${
       setCookie ? "true" : "false"
     }`;
   }
@@ -343,88 +505,93 @@ class AuthManagerImpl implements AuthManagerInterface {
     return BytescaleApiClientConfigUtils.getCdnUrl(params.options ?? {});
   }
 
-  private async deleteAccessToken(params: BeginAuthSessionParams): Promise<void> {
+  private async deleteAccessToken(options: BeginAuthSessionParams["options"], accountId: string): Promise<void> {
     await BaseAPI.fetch(
-      this.getAccessTokenUrl(params, true),
+      this.getAccessTokenUrl(options, accountId, true),
       {
         method: "DELETE",
-        credentials: "include", // Required, else Bytescale CDN response's `Set-Cookie` header will be silently ignored.
+        credentials: "include",
         headers: {}
       },
       {
         isBytescaleApi: true,
-        fetchApi: params.options?.fetchApi
+        fetchApi: options?.fetchApi
       }
     );
   }
 
   private async setAccessToken(
-    params: BeginAuthSessionParams,
+    options: BeginAuthSessionParams["options"],
+    accountId: string,
     jwt: string,
     setCookie: boolean
   ): Promise<SetAccessTokenResponseDto> {
-    const request: SetAccessTokenRequestDto = {
-      accessToken: jwt
-    };
+    const request: SetAccessTokenRequestDto = { accessToken: jwt };
     const response = await BaseAPI.fetch(
-      this.getAccessTokenUrl(params, setCookie),
+      this.getAccessTokenUrl(options, accountId, setCookie),
       {
         method: "PUT",
-        credentials: "include", // Required, else Bytescale CDN response's `Set-Cookie` header will be silently ignored.
-        headers: {
-          [this.contentType]: this.contentTypeJson
-        },
+        credentials: "include",
+        headers: { [this.contentType]: this.contentTypeJson },
         body: JSON.stringify(request)
       },
       {
         isBytescaleApi: true,
-        fetchApi: params.options?.fetchApi
+        fetchApi: options?.fetchApi
       }
     );
-
-    return await response.json();
+    const result = (await response.json()) as SetAccessTokenResponseDto;
+    if (
+      typeof result.accessToken !== "string" ||
+      result.accessToken.length === 0 ||
+      typeof result.ttlSeconds !== "number" ||
+      !Number.isFinite(result.ttlSeconds) ||
+      result.ttlSeconds <= 0
+    ) {
+      throw new Error("Bytescale returned an invalid access-token registration response.");
+    }
+    return result;
   }
 
-  private async getAccessToken(params: BeginAuthSessionParams, headers: Record<string, string>): Promise<string> {
+  private async getAuthorizationToken(params: BeginAuthSessionParams, config: AuthSessionConfig): Promise<string> {
+    if (typeof config.getAuthorizationToken === "function") {
+      return this.validateJwt(await config.getAuthorizationToken(), "The 'getAuthorizationToken' callback");
+    }
+
     const endpointName = "Your auth API endpoint";
-    const requiredContentType = this.contentTypeText;
     const result = await BaseAPI.fetch(
-      params.authUrl,
-      {
-        method: "GET",
-        headers
-      },
+      config.authUrl,
+      { method: "GET", headers: await config.authHeaders() },
       {
         isBytescaleApi: false,
         fetchApi: params.options?.fetchApi
       }
     );
-
     const actualContentType = result.headers.get(this.contentType) ?? "";
-
-    // Support content types like "text/plain; charset=utf-8" and "text/plain"
-    if (actualContentType.split(";")[0] !== requiredContentType) {
+    if (actualContentType.split(";")[0] !== this.contentTypeText) {
       throw new Error(
-        `${endpointName} returned "${actualContentType}" for the ${this.contentType} response header, but the Bytescale SDK requires "${requiredContentType}".`
+        `${endpointName} returned "${actualContentType}" for the ${this.contentType} response header, but the Bytescale SDK requires "${this.contentTypeText}".`
       );
     }
+    return this.validateJwt(await result.text(), endpointName);
+  }
 
-    const jwt = await result.text();
-
-    if (jwt.length === 0) {
-      throw new Error(`${endpointName} returned an empty string. Please return a valid JWT instead.`);
+  private validateJwt(jwt: unknown, source: string): string {
+    if (typeof jwt !== "string" || jwt.length === 0) {
+      throw new InvalidAuthTokenError(
+        `${source} returned an empty or malformed token. Please return a valid JWT instead.`
+      );
     }
-
     if (jwt.trim().length !== jwt.length) {
-      // Whitespace can be a nightmare to spot/debug, so we fail early here.
-      throw new Error(`${endpointName} returned whitespace around the JWT, please remove it.`);
+      throw new InvalidAuthTokenError(`${source} returned whitespace around the JWT, please remove it.`);
     }
-
+    const parts = jwt.split(".");
+    if (parts.length !== 3 || parts.some(part => part.length === 0 || !/^[A-Za-z0-9_-]+$/.test(part))) {
+      throw new InvalidAuthTokenError(`${source} returned a malformed JWT.`);
+    }
     return jwt;
   }
 }
 
-/**
- * Alternative way of implementing a static class (i.e. all methods static). We do this so we can use a interface on the class (interfaces can't define static methods).
- */
+/** Alternative to a static class that allows the implementation to satisfy an interface. */
 export const AuthManager = new AuthManagerImpl(new ServiceWorkerUtils<AuthSwSetConfigDto>());

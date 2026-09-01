@@ -106,6 +106,10 @@ function interceptRequest(event, config, urlRewriteRules) {
     for (const { expires, urlPrefix, headers, sourceUrlPrefixes } of config) {
       const makeNewRequest = overwrite => {
         const newHeaders = new Headers(event.request.headers);
+        if (overwrite) {
+          newHeaders.delete("Authorization");
+          newHeaders.delete("Authorization-Token");
+        }
         for (const { key, value } of headers) {
           if (overwrite || !newHeaders.has(key)) {
             newHeaders.set(key, value);

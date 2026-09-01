@@ -4,8 +4,15 @@ import { EnvChecker } from "../../private/EnvChecker";
 export type { AuthSwConfigEntryDto } from "../../private/dtos/AuthSwConfigEntryDto";
 export type { AuthSwHeaderDto } from "../../private/dtos/AuthSwHeaderDto";
 export type {
-  AuthManagerServiceWorkerConfig,
+  AuthSessionConfig,
+  AuthSessionConfigAuto,
+  AuthSessionConfigBase,
+  AuthSessionConfigManual,
   BeginAuthSessionParams,
+  BeginAuthSessionParamsOptions,
+  BeginAuthSessionParamsV1,
+  BeginAuthSessionParamsV2,
+  NonEmptyArray,
   UrlRewriteRule
 } from "../../private/model/AuthManagerInterface";
 

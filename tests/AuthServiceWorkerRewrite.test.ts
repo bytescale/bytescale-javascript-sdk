@@ -149,9 +149,64 @@ describe("Auth service-worker URL rewriting", () => {
     expect(authenticated.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
     expect(untouched.responded).toBe(false);
   });
+
+  test("keeps source-page authorization independent across multiple client IDs", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    harness.setWindowClient("client-a", "https://app.example.com/a/");
+    harness.setWindowClient("client-b", "https://app.example.com/b/");
+    await harness.setConfig([
+      {
+        ...authConfig("account-a/", "token-a"),
+        sourceUrlPrefixes: ["https://app.example.com/a/"],
+        urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+      },
+      {
+        ...authConfig("account-b/", "token-b"),
+        sourceUrlPrefixes: ["https://app.example.com/b/"],
+        urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-b/"
+      }
+    ]);
+
+    const a = await harness.dispatchFetch("https://upcdn.io/account-a/file.pdf", { clientId: "client-a" });
+    const wrongSource = await harness.dispatchFetch("https://upcdn.io/account-a/file.pdf", {
+      clientId: "client-b"
+    });
+    const b = await harness.dispatchFetch("https://upcdn.io/account-b/file.pdf", { clientId: "client-b" });
+
+    expect(a.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+    expect(wrongSource.responded).toBe(true);
+    expect(wrongSource.outboundRequest?.headers.has("Authorization")).toBe(false);
+    expect(b.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-b");
+  });
+
+  test("source-scoped auth replaces both authentication headers and preserves unrelated headers", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    harness.setWindowClient("client-a", "https://app.example.com/a/");
+    await harness.setConfig([
+      {
+        ...authConfig("account-a/", "token-a"),
+        sourceUrlPrefixes: ["https://app.example.com/a/"],
+        urlPrefix: "!bytescale-source-scoped!https://upcdn.io/account-a/"
+      }
+    ]);
+
+    const result = await harness.dispatchFetch("https://upcdn.io/account-a/file.pdf", {
+      clientId: "client-a",
+      headers: {
+        "Authorization": "Bearer stale",
+        "Authorization-Token": "stale-token",
+        "X-Trace-Id": "trace"
+      }
+    });
+
+    expect(result.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+    expect(result.outboundRequest?.headers.has("Authorization-Token")).toBe(false);
+    expect(result.outboundRequest?.headers.get("X-Trace-Id")).toBe("trace");
+  });
 });
 
 interface FetchOptions {
+  clientId?: string;
   headers?: HeadersInit;
   navigation?: boolean;
 }
@@ -165,6 +220,7 @@ interface FetchResult {
 type WorkerEventListener = (event: unknown) => void;
 
 class AuthServiceWorkerHarness {
+  private readonly clientsById = new Map<string, { type: "window"; url: string }>();
   private readonly context: {
     getRewrittenUrl: (url: string, rules: UrlRewriteRule[]) => string | undefined;
     setConfig: (config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]) => Promise<void>;
@@ -184,7 +240,8 @@ class AuthServiceWorkerHarness {
       },
       clients: {
         claim: async (): Promise<void> => {},
-        get: async (): Promise<undefined> => undefined
+        get: async (clientId: string): Promise<{ type: "window"; url: string } | undefined> =>
+          this.clientsById.get(clientId)
       },
       skipWaiting: async (): Promise<void> => {}
     };
@@ -223,6 +280,10 @@ class AuthServiceWorkerHarness {
     return this.context.getRewrittenUrl(url, rules);
   }
 
+  setWindowClient(clientId: string, url: string): void {
+    this.clientsById.set(clientId, { type: "window", url });
+  }
+
   async dispatchFetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
     const request = new TestRequest(url, { headers: options.headers as NodeFetchRequestInit["headers"] });
     if (options.navigation === true) {
@@ -231,7 +292,7 @@ class AuthServiceWorkerHarness {
 
     let responsePromise: Promise<NodeFetchResponse> | undefined;
     this.fetchListener({
-      clientId: "",
+      clientId: options.clientId ?? "",
       request,
       respondWith: (response: NodeFetchResponse | Promise<NodeFetchResponse>): void => {
         responsePromise = Promise.resolve(response);

@@ -1,15 +1,23 @@
-import { AuthManagerServiceWorkerConfig, BeginAuthSessionParams } from "./AuthManagerInterface";
-import { AuthSwConfigEntryDto } from "../dtos/AuthSwConfigEntryDto";
+import { AuthSessionConfig, BeginAuthSessionParams } from "./AuthManagerInterface";
 import { ServiceWorkerConfig } from "./ServiceWorkerConfig";
 
+export interface AuthSessionConfigState {
+  accessToken: string | undefined;
+  config: AuthSessionConfig;
+  expiresAt: number | undefined;
+  jwt: string | undefined;
+  refreshHandle: number | undefined;
+}
+
 export interface AuthSession {
+  /** Legacy default-token fields retained for SDK 3.54.0 bundles sharing this global state. */
   accessToken: string | undefined;
   accessTokenRefreshHandle: number | undefined;
+
+  authConfigs?: AuthSessionConfigState[];
   authServiceWorker: ServiceWorkerConfig | undefined;
   isActive: boolean;
-  isReady?: boolean; // Optional because AuthSessionState is shared with older SDK versions.
+  isReady?: boolean;
   params: BeginAuthSessionParams;
-  primaryAuthSwConfig: AuthSwConfigEntryDto | undefined;
-  serviceWorkerConfig: AuthManagerServiceWorkerConfig | undefined;
-  serviceWorkerConfigRefreshHandle: number | undefined;
+  serviceWorkerConfigured?: boolean;
 }
