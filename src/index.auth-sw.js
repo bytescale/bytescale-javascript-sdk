@@ -73,7 +73,7 @@ self.addEventListener("fetch", function (event) {
   // Called only for the initial request after this Service Worker is restarted after going idle (e.g. after 30s on Firefox/Windows).
   const interceptAsync = async () =>
     await handleRequestErrors(
-      (await withTimeout(getState())
+      (await getState()
         .then(state => (state === undefined ? undefined : interceptRequest(event, state.config, state.urlRewriteRules)))
         .catch(() => undefined)) ?? event.request
     );

@@ -150,6 +150,15 @@ describe("Auth service-worker URL rewriting", () => {
     expect(untouched.responded).toBe(false);
   });
 
+  test("waits for delayed persistent authentication state on a cold start", async () => {
+    const harness = new AuthServiceWorkerHarness();
+    harness.setPersistentConfig([authConfig("account-a/", "token-a")], 300);
+
+    const result = await harness.dispatchFetch("https://upcdn.io/account-a/file.pdf");
+
+    expect(result.outboundRequest?.headers.get("Authorization")).toBe("Bearer token-a");
+  });
+
   test("keeps source-page authorization independent across multiple client IDs", async () => {
     const harness = new AuthServiceWorkerHarness();
     harness.setWindowClient("client-a", "https://app.example.com/a/");
@@ -221,6 +230,8 @@ type WorkerEventListener = (event: unknown) => void;
 
 class AuthServiceWorkerHarness {
   private readonly clientsById = new Map<string, { type: "window"; url: string }>();
+  private readonly cacheEntries = new Map<string, NodeFetchResponse>();
+  private cacheReadDelayMilliseconds = 0;
   private readonly context: {
     getRewrittenUrl: (url: string, rules: UrlRewriteRule[]) => string | undefined;
     setConfig: (config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]) => Promise<void>;
@@ -231,7 +242,6 @@ class AuthServiceWorkerHarness {
 
   constructor(private readonly upstreamResponse: NodeFetchResponse = new NodeFetchResponse("ok")) {
     const listeners = new Map<string, WorkerEventListener>();
-    const cacheEntries = new Map<string, NodeFetchResponse>();
     this.fetchMock = jest.fn(async (_request: TestRequest): Promise<NodeFetchResponse> => this.upstreamResponse);
 
     const self = {
@@ -246,9 +256,14 @@ class AuthServiceWorkerHarness {
       skipWaiting: async (): Promise<void> => {}
     };
     const cache = {
-      match: async (key: string): Promise<NodeFetchResponse | undefined> => cacheEntries.get(key)?.clone(),
+      match: async (key: string): Promise<NodeFetchResponse | undefined> => {
+        if (this.cacheReadDelayMilliseconds > 0) {
+          await new Promise(resolve => setTimeout(resolve, this.cacheReadDelayMilliseconds));
+        }
+        return this.cacheEntries.get(key)?.clone();
+      },
       put: async (key: string, value: NodeFetchResponse): Promise<void> => {
-        cacheEntries.set(key, value.clone());
+        this.cacheEntries.set(key, value.clone());
       }
     };
     const sandbox = {
@@ -282,6 +297,11 @@ class AuthServiceWorkerHarness {
 
   setWindowClient(clientId: string, url: string): void {
     this.clientsById.set(clientId, { type: "window", url });
+  }
+
+  setPersistentConfig(config: AuthSwConfigEntryDto[], cacheReadDelayMilliseconds: number): void {
+    this.cacheEntries.set("config", new NodeFetchResponse(JSON.stringify(config)));
+    this.cacheReadDelayMilliseconds = cacheReadDelayMilliseconds;
   }
 
   async dispatchFetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
