@@ -145,14 +145,22 @@ class AuthManagerImpl implements AuthManagerInterface {
       // A 3.54.0 session will not contain authConfigs, but a newer bundle must still be able to end it.
       if (session.authConfigs === undefined && typeof session.params.accountId === "string") {
         try {
-          await this.deleteAccessToken(session.params.options, session.params.accountId);
+          await this.deleteAccessToken(
+            session.params.options,
+            this.getCdnUrl(session.params),
+            session.params.accountId
+          );
         } catch (e) {
           cleanupError = e;
         }
       } else {
         for (const state of cookieConfigs) {
           try {
-            await this.deleteAccessToken(session.params.options, state.config.accountId);
+            await this.deleteAccessToken(
+              session.params.options,
+              this.getConfigCdnUrl(session.params, state.config),
+              state.config.accountId
+            );
           } catch (e) {
             cleanupError ??= e;
           }
@@ -198,7 +206,13 @@ class AuthManagerImpl implements AuthManagerInterface {
       try {
         const jwt = await this.getAuthorizationToken(session.params, state.config);
         const setCookie = this.shouldSetCookie(session, state.config);
-        const token = await this.setAccessToken(session.params.options, state.config.accountId, jwt, setCookie);
+        const token = await this.setAccessToken(
+          session.params.options,
+          this.getConfigCdnUrl(session.params, state.config),
+          state.config.accountId,
+          jwt,
+          setCookie
+        );
         const expiresAt = Date.now() + token.ttlSeconds * 1000;
 
         state.accessToken = token.accessToken;
@@ -261,7 +275,7 @@ class AuthManagerImpl implements AuthManagerInterface {
           expires: state.expiresAt,
           headers: [{ key: "Authorization", value: `Bearer ${state.jwt}` }],
           sourceUrlPrefixes: state.config.sourceUrlPrefixes,
-          urlPrefix: `${this.getCdnUrl(session.params)}/${state.config.accountId}/`
+          urlPrefix: `${this.getConfigCdnUrl(session.params, state.config)}/${state.config.accountId}/`
         }
       ];
     });
@@ -362,6 +376,9 @@ class AuthManagerImpl implements AuthManagerInterface {
       if (isV2 && !this.isValidAccountId(config.accountId)) {
         throw new Error(`Invalid Bytescale account ID: '${String(config.accountId)}'.`);
       }
+      if (config.cdnUrl !== undefined && typeof config.cdnUrl !== "string") {
+        throw new Error("The 'cdnUrl' field must be a string when provided.");
+      }
       if (
         (config.enableCookieAuth !== undefined && typeof config.enableCookieAuth !== "boolean") ||
         (config.enableServiceWorkerAuth !== undefined && typeof config.enableServiceWorkerAuth !== "boolean")
@@ -395,7 +412,7 @@ class AuthManagerImpl implements AuthManagerInterface {
       }
 
       if (this.isServiceWorkerEnabled(config)) {
-        const prefix = `${this.getCdnUrl(params)}/${config.accountId}/`;
+        const prefix = `${this.getConfigCdnUrl(params, config)}/${config.accountId}/`;
         if (workerConfigsByPrefix.has(prefix)) {
           throw new Error(`Multiple service-worker auth configurations target the same URL prefix: '${prefix}'.`);
         }
@@ -404,7 +421,7 @@ class AuthManagerImpl implements AuthManagerInterface {
     }
 
     if (cookieConfig !== undefined) {
-      const prefix = `${this.getCdnUrl(params)}/${cookieConfig.accountId}/`;
+      const prefix = `${this.getConfigCdnUrl(params, cookieConfig)}/${cookieConfig.accountId}/`;
       const workerConfig = workerConfigsByPrefix.get(prefix);
       if (workerConfig !== undefined && workerConfig !== cookieConfig) {
         throw new Error(
@@ -481,19 +498,25 @@ class AuthManagerImpl implements AuthManagerInterface {
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
-  private getAccessTokenUrl(options: BeginAuthSessionParams["options"], accountId: string, setCookie: boolean): string {
-    return `${BytescaleApiClientConfigUtils.getCdnUrl(options ?? {})}/api/v1/access_tokens/${accountId}?set-cookie=${
-      setCookie ? "true" : "false"
-    }`;
+  private getAccessTokenUrl(cdnUrl: string, accountId: string, setCookie: boolean): string {
+    return `${cdnUrl}/api/v1/access_tokens/${accountId}?set-cookie=${setCookie ? "true" : "false"}`;
   }
 
   private getCdnUrl(params: BeginAuthSessionParams): string {
     return BytescaleApiClientConfigUtils.getCdnUrl(params.options ?? {});
   }
 
-  private async deleteAccessToken(options: BeginAuthSessionParams["options"], accountId: string): Promise<void> {
+  private getConfigCdnUrl(params: BeginAuthSessionParams, config: AuthSessionConfig): string {
+    return BytescaleApiClientConfigUtils.getCdnUrl({ cdnUrl: config.cdnUrl ?? params.options?.cdnUrl });
+  }
+
+  private async deleteAccessToken(
+    options: BeginAuthSessionParams["options"],
+    cdnUrl: string,
+    accountId: string
+  ): Promise<void> {
     await BaseAPI.fetch(
-      this.getAccessTokenUrl(options, accountId, true),
+      this.getAccessTokenUrl(cdnUrl, accountId, true),
       {
         method: "DELETE",
         credentials: "include",
@@ -508,13 +531,14 @@ class AuthManagerImpl implements AuthManagerInterface {
 
   private async setAccessToken(
     options: BeginAuthSessionParams["options"],
+    cdnUrl: string,
     accountId: string,
     jwt: string,
     setCookie: boolean
   ): Promise<SetAccessTokenResponseDto> {
     const request: SetAccessTokenRequestDto = { accessToken: jwt };
     const response = await BaseAPI.fetch(
-      this.getAccessTokenUrl(options, accountId, setCookie),
+      this.getAccessTokenUrl(cdnUrl, accountId, setCookie),
       {
         method: "PUT",
         credentials: "include",

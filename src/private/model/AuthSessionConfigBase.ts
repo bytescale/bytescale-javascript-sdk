@@ -5,6 +5,9 @@ export interface AuthSessionConfigBase {
   /** A string names this configuration. `undefined` deliberately marks it as the session default. */
   authConfigId: string | undefined;
 
+  /** Overrides `options.cdnUrl` for this configuration. Excludes the trailing "/". */
+  cdnUrl?: string;
+
   /** Enables CDN cookie authentication. Defaults to false. */
   enableCookieAuth?: boolean;
 

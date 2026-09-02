@@ -203,6 +203,60 @@ describe("AuthManager browser multi-configuration sessions", () => {
     });
   });
 
+  test("uses each config's effective CDN URL for registration, worker prefixes, cleanup, and collisions", async () => {
+    const fetchApi = createFetchApi();
+    const defaultCdnUrl = "https://downloads-default.example.com";
+    const customCdnUrl = "https://downloads-custom.example.com";
+    const cookieCdnUrl = "https://downloads-cookie.example.com";
+
+    await AuthManager.beginAuthSession({
+      authConfigs: async () => [
+        {
+          ...apiOnlyConfig("custom-worker", accountA, async () => jwtA),
+          cdnUrl: customCdnUrl,
+          enableServiceWorkerAuth: true
+        },
+        {
+          ...apiOnlyConfig("default-worker", accountA, async () => jwtB),
+          enableServiceWorkerAuth: true
+        },
+        {
+          ...apiOnlyConfig("cookie", accountA, async () => jwtC),
+          cdnUrl: cookieCdnUrl,
+          enableCookieAuth: true
+        }
+      ],
+      options: { cdnUrl: defaultCdnUrl, fetchApi },
+      serviceWorkerScript: "/auth-sw.js"
+    });
+
+    expect(fetchApi.mock.calls.filter(([, init]) => init?.method === "PUT").map(([input]) => inputUrl(input))).toEqual([
+      `${customCdnUrl}/api/v1/access_tokens/${accountA}?set-cookie=false`,
+      `${defaultCdnUrl}/api/v1/access_tokens/${accountA}?set-cookie=false`,
+      `${cookieCdnUrl}/api/v1/access_tokens/${accountA}?set-cookie=true`
+    ]);
+    expect((postMessage.mock.calls.at(-1)?.[0] as any).config).toEqual([
+      {
+        expires: expect.any(Number),
+        headers: [{ key: "Authorization", value: `Bearer ${jwtA}` }],
+        sourceUrlPrefixes: undefined,
+        urlPrefix: `${customCdnUrl}/${accountA}/`
+      },
+      {
+        expires: expect.any(Number),
+        headers: [{ key: "Authorization", value: `Bearer ${jwtB}` }],
+        sourceUrlPrefixes: undefined,
+        urlPrefix: `${defaultCdnUrl}/${accountA}/`
+      }
+    ]);
+
+    await AuthManager.endAuthSession();
+
+    expect(
+      fetchApi.mock.calls.filter(([, init]) => init?.method === "DELETE").map(([input]) => inputUrl(input))
+    ).toEqual([`${cookieCdnUrl}/api/v1/access_tokens/${accountA}?set-cookie=true`]);
+  });
+
   test("supports a manual cookie-only V2 config without a service worker", async () => {
     delete navigatorValue.serviceWorker;
     const fetchApi = createFetchApi();
@@ -339,6 +393,14 @@ describe("AuthManager browser multi-configuration sessions", () => {
       name: "invalid account ID",
       params: (fetchApi: FetchApi) => v2Params(fetchApi, [apiOnlyConfig("a", "A12/abc", async () => jwtA)]),
       error: "Invalid Bytescale account ID"
+    },
+    {
+      name: "invalid config CDN URL",
+      params: (fetchApi: FetchApi) =>
+        v2Params(fetchApi, [
+          { ...apiOnlyConfig("a", accountA, async () => jwtA), cdnUrl: 123 } as unknown as AuthSessionConfig
+        ]),
+      error: "cdnUrl"
     },
     {
       name: "overlapping cookie and worker accounts",
