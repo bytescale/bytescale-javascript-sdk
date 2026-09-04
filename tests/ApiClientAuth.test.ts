@@ -60,6 +60,80 @@ describe("API-client AuthManager configuration", () => {
     expect(requestHeaders(fetchApi, 1).get("Authorization-Token")).toBe("access-refreshed");
   });
 
+  test("awaits manager-owned authentication at the expiry boundary", async () => {
+    const configState = state("customer", accountA, "jwt-old", "access-old");
+    configState.expiresAt = Date.now();
+    let completeRefresh = (): void => {
+      throw new Error("Refresh completion callback was not initialized.");
+    };
+    const authenticationPromise = new Promise<void>(resolve => {
+      completeRefresh = () => {
+        configState.accessToken = "access-new";
+        configState.expiresAt = Date.now() + 60_000;
+        configState.jwt = "jwt-new";
+        configState.refreshPromise = undefined;
+        resolve();
+      };
+    });
+    configState.authenticationPromise = authenticationPromise;
+    configState.refreshPromise = authenticationPromise;
+    setModernSession([configState]);
+    const { api, fetchApi } = createApi({ apiKey: apiKeyA, authConfigId: "customer" });
+
+    const requests = [api.get(), api.get()];
+    expect(fetchApi).not.toHaveBeenCalled();
+    completeRefresh();
+    await Promise.all(requests);
+
+    expect(requestHeaders(fetchApi, 0).get("Authorization-Token")).toBe("access-new");
+    expect(requestHeaders(fetchApi, 1).get("Authorization-Token")).toBe("access-new");
+  });
+
+  test("observes authentication that starts while resolving custom headers", async () => {
+    const configState = state("customer", accountB, "jwt-old", "access-old");
+    let completeRefresh = (): void => {
+      throw new Error("Refresh completion callback was not initialized.");
+    };
+    const authenticationPromise = new Promise<void>(resolve => {
+      completeRefresh = () => {
+        configState.accessToken = "access-new";
+        configState.expiresAt = Date.now() + 60_000;
+        configState.jwt = "jwt-new";
+        configState.refreshPromise = undefined;
+        resolve();
+      };
+    });
+    setModernSession([configState]);
+    const { api, fetchApi } = createApi({
+      authConfigId: "customer",
+      headers: async (): Promise<Record<string, string>> => {
+        configState.authenticationPromise = authenticationPromise;
+        configState.refreshPromise = authenticationPromise;
+        return {};
+      }
+    });
+
+    const request = api.get();
+    expect(fetchApi).not.toHaveBeenCalled();
+    completeRefresh();
+    await request;
+
+    expect(requestHeaders(fetchApi).get("Authorization")).toBe("Bearer jwt-new");
+  });
+
+  test("never invokes the token provider when authentication is not in progress", async () => {
+    const getAuthorizationToken = jest.fn(async () => "jwt-new");
+    const configState = state("customer", accountB, "jwt-old", "access-old", getAuthorizationToken);
+    configState.expiresAt = Date.now();
+    setModernSession([configState]);
+    const { api, fetchApi } = createApi({ authConfigId: "customer" });
+
+    await expect(api.get()).rejects.toThrow("not ready");
+
+    expect(getAuthorizationToken).not.toHaveBeenCalled();
+    expect(fetchApi).not.toHaveBeenCalled();
+  });
+
   test("uses the raw JWT as sole authentication for an API-key-less named client", async () => {
     setModernSession([state("customer", accountB, "jwt-b", "access-b")]);
     const { api, fetchApi } = createApi({ authConfigId: "customer" });
@@ -126,6 +200,29 @@ describe("API-client AuthManager configuration", () => {
     expect(requestHeaders(optedOut.fetchApi).get("Authorization")).toBe(`Bearer ${apiKeyA}`);
   });
 
+  test("fails closed for an expired V1 default instead of falling back to its API key", async () => {
+    const expired = state(undefined, accountA, "jwt-a", "access-a");
+    expired.expiresAt = Date.now() - 1;
+    AuthSessionState.setSession({
+      accessToken: undefined,
+      accessTokenRefreshHandle: undefined,
+      authConfigs: [expired],
+      authServiceWorker: undefined,
+      isActive: true,
+      isReady: false,
+      params: {
+        accountId: accountA,
+        authHeaders: async (): Promise<Record<string, string>> => ({}),
+        authUrl: "https://app.example.com/auth"
+      },
+      serviceWorkerConfigured: false
+    });
+    const { api, fetchApi } = createApi({ apiKey: apiKeyA });
+
+    await expect(api.get()).rejects.toThrow("not ready");
+    expect(fetchApi).not.toHaveBeenCalled();
+  });
+
   test("recognizes a 3.54 session as the default supplemental token", async () => {
     AuthSessionState.setSession({
       accessToken: "legacy-access",
@@ -184,16 +281,18 @@ function state(
   authConfigId: string | undefined,
   accountId: string,
   jwt: string,
-  accessToken: string
+  accessToken: string,
+  getAuthorizationToken: () => Promise<string> = async () => jwt
 ): AuthSessionConfigState {
   const config: AuthSessionConfig = {
     accountId,
     authConfigId,
     enableServiceWorkerAuth: false,
-    getAuthorizationToken: async () => jwt
+    getAuthorizationToken
   };
   return {
     accessToken,
+    authenticationPromise: Promise.resolve(),
     config,
     expiresAt: Date.now() + 60_000,
     jwt,

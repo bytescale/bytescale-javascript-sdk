@@ -113,4 +113,40 @@ export class AuthSessionState {
       jwt: undefined
     };
   }
+
+  /** Waits for request-time auth to be current before resolving it. */
+  static async resolveAuthConfigAsync(
+    authConfigId: string | false | undefined,
+    requireReadyDefault: boolean
+  ): Promise<ResolvedAuthSessionConfig | undefined> {
+    if (authConfigId === false) {
+      return undefined;
+    }
+
+    while (true) {
+      const session = AuthSessionState.getSession();
+      if (session === undefined || !session.isActive || !Array.isArray(session.authConfigs)) {
+        return AuthSessionState.resolveAuthConfig(authConfigId, requireReadyDefault);
+      }
+
+      const state = session.authConfigs.find(config => config.config.authConfigId === authConfigId);
+      if (state === undefined) {
+        return AuthSessionState.resolveAuthConfig(authConfigId, requireReadyDefault);
+      }
+
+      const authenticationPromise = state.authenticationPromise ?? state.refreshPromise;
+      if (authenticationPromise !== undefined) {
+        await authenticationPromise;
+      }
+
+      if (AuthSessionState.getSession() !== session || !session.isActive) {
+        continue;
+      }
+
+      const currentAuthenticationPromise = state.authenticationPromise ?? state.refreshPromise;
+      if (currentAuthenticationPromise === undefined || currentAuthenticationPromise === authenticationPromise) {
+        return AuthSessionState.resolveAuthConfig(authConfigId, true);
+      }
+    }
+  }
 }

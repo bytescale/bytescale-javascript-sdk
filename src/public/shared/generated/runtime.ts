@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import { ErrorResponse } from "./models";
-import { AuthSessionState } from "../../../private/AuthSessionState";
+import { AuthSessionState, ResolvedAuthSessionConfig } from "../../../private/AuthSessionState";
 import { ConsoleUtils } from "../../../private/ConsoleUtils";
 import { FilePathUtils } from "../../../private/FilePathUtils";
 
@@ -81,12 +81,32 @@ export class BytescaleApiClientConfigUtils {
     return BytescaleApiClientConfigUtils.resolveAuthentication(config).accountId;
   }
 
+  static async getAccountIdAsync(config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">): Promise<string> {
+    return (await BytescaleApiClientConfigUtils.resolveAuthenticationAsync(config)).accountId;
+  }
+
   static resolveAuthentication(config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">): {
     accountId: string;
     headers: HTTPHeaders;
   } {
     const apiKey = config.apiKey ?? undefined;
     const authConfig = AuthSessionState.resolveAuthConfig(config.authConfigId, apiKey === undefined);
+    return BytescaleApiClientConfigUtils.resolveAuthenticationWithAuthConfig(config, authConfig);
+  }
+
+  static async resolveAuthenticationAsync(
+    config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">
+  ): Promise<{ accountId: string; headers: HTTPHeaders }> {
+    const apiKey = config.apiKey ?? undefined;
+    const authConfig = await AuthSessionState.resolveAuthConfigAsync(config.authConfigId, apiKey === undefined);
+    return BytescaleApiClientConfigUtils.resolveAuthenticationWithAuthConfig(config, authConfig);
+  }
+
+  private static resolveAuthenticationWithAuthConfig(
+    config: Pick<BytescaleApiClientConfig, "apiKey" | "authConfigId">,
+    authConfig: ResolvedAuthSessionConfig | undefined
+  ): { accountId: string; headers: HTTPHeaders } {
+    const apiKey = config.apiKey ?? undefined;
     const apiKeyAccountId = apiKey === undefined ? undefined : BytescaleApiClientConfigUtils.getApiKeyAccountId(apiKey);
 
     if (apiKeyAccountId !== undefined && authConfig !== undefined && apiKeyAccountId !== authConfig.accountId) {
@@ -242,8 +262,6 @@ export class BaseAPI {
     initOverrides: RequestInit | InitOverrideFunction | undefined,
     baseUrlOverride: string | undefined
   ): Promise<Response> {
-    Object.assign(context.headers, BytescaleApiClientConfigUtils.resolveAuthentication(this.config).headers);
-
     // Key: any possible value for 'baseUrlOverride'
     // Value: user-overridden value for that base URL from the config.
     const nonDefaultBasePaths = {
@@ -286,6 +304,10 @@ export class BaseAPI {
     const configHeaders = this.config.headers;
     const resolvedConfigHeaders =
       configHeaders === undefined ? {} : typeof configHeaders === "function" ? await configHeaders() : configHeaders;
+    Object.assign(
+      context.headers,
+      (await BytescaleApiClientConfigUtils.resolveAuthenticationAsync(this.config)).headers
+    );
     for (const key of Object.keys(resolvedConfigHeaders)) {
       if (key.toLowerCase() === "authorization" || key.toLowerCase() === "authorization-token") {
         for (const generatedKey of Object.keys(context.headers)) {

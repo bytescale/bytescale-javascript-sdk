@@ -78,10 +78,12 @@ class AuthManagerImpl implements AuthManagerInterface {
         authConfigs: configs.map(
           (config): AuthSessionConfigState => ({
             accessToken: undefined,
+            authenticationPromise: Promise.resolve(),
             config,
             expiresAt: undefined,
             jwt: undefined,
-            refreshHandle: undefined
+            refreshHandle: undefined,
+            refreshPromise: undefined
           })
         ),
         authServiceWorker:
@@ -103,7 +105,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
     try {
       for (const config of session.authConfigs ?? []) {
-        await this.refreshAuthConfig(session, config, this.isV2Params(session.params));
+        await this.refreshAuthConfig(session, config);
       }
     } catch (e) {
       try {
@@ -181,11 +183,26 @@ class AuthManagerImpl implements AuthManagerInterface {
     });
   }
 
-  private async refreshAuthConfig(
-    session: AuthSession,
-    state: AuthSessionConfigState,
-    rejectInvalidInitialToken = false
-  ): Promise<void> {
+  private async refreshAuthConfig(session: AuthSession, state: AuthSessionConfigState): Promise<void> {
+    if (state.refreshPromise !== undefined) {
+      await state.refreshPromise;
+      return;
+    }
+
+    // Publish the pending operation before provider code can run, including provider code that calls back into the SDK.
+    const refreshPromise = Promise.resolve().then(async () => await this.performRefreshAuthConfig(session, state));
+    state.authenticationPromise = refreshPromise;
+    state.refreshPromise = refreshPromise;
+    const clearRefreshPromise = (): void => {
+      if (state.refreshPromise === refreshPromise) {
+        state.refreshPromise = undefined;
+      }
+    };
+    refreshPromise.then(clearRefreshPromise, clearRefreshPromise);
+    await refreshPromise;
+  }
+
+  private async performRefreshAuthConfig(session: AuthSession, state: AuthSessionConfigState): Promise<void> {
     await this.authSessionMutex.safe(async () => {
       if (!session.isActive) {
         return;
@@ -193,6 +210,7 @@ class AuthManagerImpl implements AuthManagerInterface {
 
       if (state.refreshHandle !== undefined) {
         this.scheduler.unschedule(state.refreshHandle);
+        state.refreshHandle = undefined;
       }
 
       const previous = {
@@ -244,7 +262,11 @@ class AuthManagerImpl implements AuthManagerInterface {
             e as string
           }`
         );
-        if (rejectInvalidInitialToken && e instanceof InvalidAuthTokenError) {
+        if (
+          this.isV2Params(session.params) &&
+          previous.accessToken === undefined &&
+          e instanceof InvalidAuthTokenError
+        ) {
           throw e;
         }
       } finally {

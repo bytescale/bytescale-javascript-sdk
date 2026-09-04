@@ -308,6 +308,53 @@ describe("AuthManager browser multi-configuration sessions", () => {
     expect(AuthManager.isAuthSessionReady()).toBe(true);
   });
 
+  test("deduplicates concurrent refreshes for the same auth config", async () => {
+    const fetchApi = createFetchApi();
+    let resolveRefresh = (_jwt: string): void => {
+      throw new Error("Refresh resolver was not initialized.");
+    };
+    const refreshResult = new Promise<string>(resolve => {
+      resolveRefresh = resolve;
+    });
+    let markRefreshStarted = (): void => {
+      throw new Error("Refresh-start resolver was not initialized.");
+    };
+    const refreshStarted = new Promise<void>(resolve => {
+      markRefreshStarted = resolve;
+    });
+    const provider = jest
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce(jwtA)
+      .mockImplementationOnce(async () => {
+        markRefreshStarted();
+        return await refreshResult;
+      });
+
+    await AuthManager.beginAuthSession({
+      authConfigs: async () => [apiOnlyConfig("customer", accountA, provider)],
+      options: { fetchApi }
+    });
+    const session = AuthSessionState.getSession();
+    const configState = session?.authConfigs?.[0];
+    if (session === undefined || configState === undefined) {
+      throw new Error("Expected initialized auth state.");
+    }
+    const internals = AuthManager as AuthManagerInternals;
+
+    const firstRefresh = internals.refreshAuthConfig(session, configState);
+    const secondRefresh = internals.refreshAuthConfig(session, configState);
+    await refreshStarted;
+    expect(provider).toHaveBeenCalledTimes(2);
+    expect(configState.authenticationPromise).toBe(configState.refreshPromise);
+
+    resolveRefresh(jwtB);
+    await Promise.all([firstRefresh, secondRefresh]);
+
+    expect(configState.jwt).toBe(jwtB);
+    expect(configState.authenticationPromise).toBeDefined();
+    expect(configState.refreshPromise).toBeUndefined();
+  });
+
   test("clears the cookie-enabled config and the complete worker config on end", async () => {
     const fetchApi = createFetchApi();
     await AuthManager.beginAuthSession({

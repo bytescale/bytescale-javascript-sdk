@@ -30,7 +30,7 @@ export abstract class UploadManagerBase<TSource, TInit> implements UploadManager
 
   async upload(request: UploadManagerParams): Promise<UploadResult> {
     this.assertNotCancelled(request);
-    const accountId = BytescaleApiClientConfigUtils.getAccountId(this.config);
+    const accountId = await BytescaleApiClientConfigUtils.getAccountIdAsync(this.config);
 
     const source = this.processUploadSource(request.data);
     const preUploadInfo = this.getPreUploadInfo(request, source);

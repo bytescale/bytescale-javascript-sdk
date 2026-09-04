@@ -80,6 +80,35 @@ describe("UploadManager AuthManager configuration", () => {
     await expect(manager.upload({ data: "x" })).rejects.toThrow("provide an API key");
     expect(uploadApi.beginMultipartUpload).not.toHaveBeenCalled();
   });
+
+  test("awaits manager-owned authentication before starting an upload", async () => {
+    const configState = state("customer", accountA);
+    configState.expiresAt = Date.now();
+    let completeRefresh = (): void => {
+      throw new Error("Refresh completion callback was not initialized.");
+    };
+    const refreshPromise = new Promise<void>(resolve => {
+      completeRefresh = () => {
+        configState.accessToken = "access-token-new";
+        configState.expiresAt = Date.now() + 60_000;
+        configState.jwt = "jwt-new";
+        configState.refreshPromise = undefined;
+        resolve();
+      };
+    });
+    configState.authenticationPromise = refreshPromise;
+    configState.refreshPromise = refreshPromise;
+    setSession(configState);
+    const manager = new TestUploadManager({ authConfigId: "customer" });
+    const uploadApi = installUploadApiMock(manager);
+
+    const upload = manager.upload({ data: "x" });
+    expect(uploadApi.beginMultipartUpload).not.toHaveBeenCalled();
+    completeRefresh();
+    await upload;
+
+    expect(uploadApi.beginMultipartUpload).toHaveBeenCalled();
+  });
 });
 
 interface UploadApiMock {
@@ -127,6 +156,7 @@ function installUploadApiMock(manager: TestUploadManager): UploadApiMock {
 function state(authConfigId: string, accountId: string): AuthSessionConfigState {
   return {
     accessToken: "access-token",
+    authenticationPromise: Promise.resolve(),
     config: {
       accountId,
       authConfigId,

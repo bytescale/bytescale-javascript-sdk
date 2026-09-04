@@ -4,10 +4,14 @@ import { AuthSessionConfig } from "./AuthSessionConfig";
 
 export interface AuthSessionConfigState {
   accessToken: string | undefined;
+  /** The latest AuthManager-owned authentication operation; settled while idle and pending during refresh. */
+  authenticationPromise?: Promise<void>;
   config: AuthSessionConfig;
   expiresAt: number | undefined;
   jwt: string | undefined;
   refreshHandle: number | undefined;
+  /** Present only while AuthManager is refreshing, so concurrent manager refresh attempts can be deduplicated. */
+  refreshPromise?: Promise<void>;
 }
 
 export interface AuthSession {
