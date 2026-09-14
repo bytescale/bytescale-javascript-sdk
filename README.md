@@ -432,6 +432,97 @@ With JWTs, the user can also perform API requests, such as file deletions, as th
 
 [Learn more about the `AuthManager` and JWTs »](https://www.bytescale.com/docs/auth)
 
+### Authenticate private URL aliases while keeping public CDN requests cacheable
+
+Automatic (`AuthSessionConfigAuto`) and manual (`AuthSessionConfigManual`) configurations both accept
+`requestUrlPrefixes?: string[]`. This restricts **service-worker authentication** by matching the original
+`event.request.url`, before `urlRewriteRules` are applied. The rewritten destination must still match the
+configuration's CDN URL and account, and the configuration must not have expired.
+
+- Omit the field (or set it to `undefined`) to preserve existing behavior.
+- Set it to `[]` to authenticate no requests through the service worker.
+- Provide multiple prefixes to match any of them using case-sensitive `startsWith` comparisons.
+
+Prefixes follow the same string-array validation as `sourceUrlPrefixes`: they are not parsed or normalized.
+Use complete URL prefixes with a trailing `/` when restricting an origin or directory. An empty string matches
+any URL. `sourceUrlPrefixes` independently restricts the initiating page or iframe URL; when both fields are
+provided, both must match. Request prefixes alone do not require an initiating client, so new-tab downloads
+can use them.
+
+Serve the current Bytescale auth service worker as `/auth-sw.js` on your application's origin, then initialize
+an automatic configuration:
+
+```javascript
+import { AuthManager } from "@bytescale/sdk";
+
+await AuthManager.beginAuthSession({
+  serviceWorkerScript: "/auth-sw.js",
+  urlRewriteRules: [
+    { fromUrlPrefix: "https://app.example.com/media-auth/", toUrlPrefix: "https://upcdn.io/" },
+    { fromUrlPrefix: "https://app.example.com/download/", toUrlPrefix: "https://upcdn.io/" }
+  ],
+  authConfigs: async () => [
+    {
+      accountId: "A123abc", // Replace with your Bytescale account ID.
+      authConfigId: undefined,
+      authUrl: "https://app.example.com/auth", // Your endpoint returning a JWT as text/plain.
+      authHeaders: async () => ({}),
+      requestUrlPrefixes: ["https://app.example.com/media-auth/", "https://app.example.com/download/"],
+      enableCookieAuth: false
+    }
+  ]
+});
+```
+
+For a manual configuration, replace `authUrl` and `authHeaders` with your `getAuthorizationToken` callback;
+keep `requestUrlPrefixes` and the other fields:
+
+```javascript
+const manualConfig = {
+  accountId: "A123abc",
+  authConfigId: undefined,
+  requestUrlPrefixes: ["https://app.example.com/media-auth/", "https://app.example.com/download/"],
+  getAuthorizationToken: async () => {
+    const response = await fetch("/auth");
+    return await response.text();
+  }
+};
+```
+
+With the example configuration:
+
+| Original resource URL                                                    | Final destination                                        | AuthManager-injected headers |
+| ------------------------------------------------------------------------ | -------------------------------------------------------- | ---------------------------- |
+| `https://upcdn.io/A123abc/image/example.jpg`                             | Unchanged                                                | None                         |
+| `https://app.example.com/media-auth/A123abc/image/example.jpg`           | `https://upcdn.io/A123abc/image/example.jpg`             | Account A123abc's JWT        |
+| `https://app.example.com/download/A123abc/raw/example.jpg?download=true` | `https://upcdn.io/A123abc/raw/example.jpg?download=true` | Account A123abc's JWT        |
+| `https://app.example.com/media-auth/B123abc/image/example.jpg`           | `https://upcdn.io/B123abc/image/example.jpg`             | None                         |
+
+The download alias supports a normal link after initialization:
+
+```html
+<a href="https://app.example.com/download/A123abc/raw/example.jpg?download=true" target="_blank" rel="noopener">
+  Download
+</a>
+```
+
+Rewriting uses the first matching rule once and continues even when authentication does not match. Responses
+remain streamed, and range headers, query parameters, and navigation behavior are preserved. A rejected request
+restriction allows the worker to consider later authentication entries. Existing rules preventing duplicate
+service-worker destinations within an AuthManager session still apply.
+
+This field does not change API-client authentication, cookie authentication, token acquisition, or refresh.
+It does not remove caller-provided headers or existing CDN cookies. Leave cookie authentication disabled and
+avoid other broad authentication configurations for CDN requests you want to keep unauthenticated.
+
+**Compatibility and rollout:** deploy the auth worker shipped with SDK **3.62.0 or later** before enabling
+`requestUrlPrefixes` in the application. Update any self-hosted worker copies and allow the updated worker to
+activate in existing browser sessions. A distinct compatibility marker makes older workers skip the entire
+request-restricted configuration, even when `sourceUrlPrefixes` is also present. They cannot silently turn it
+into broad authentication. Private downloads may remain unauthenticated until the worker is updated; versions
+without rewrite support also cannot serve aliases. The updated worker can recover these restrictions and
+rewrite rules from persisted state after restart, and continues to support older configurations.
+
 ## UrlBuilder
 
 Use the `UrlBuilder` to construct URLs for your uploaded files:

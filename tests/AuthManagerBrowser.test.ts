@@ -4,10 +4,13 @@ import { AuthSessionState } from "../src/private/AuthSessionState";
 import { AuthSessionConfigState } from "../src/private/model/AuthSession";
 import type {
   AuthSessionConfig,
+  AuthSwConfigEntryDto,
   BeginAuthSessionParams,
   BeginAuthSessionParamsV2,
   UrlRewriteRule
 } from "../src/index.browser";
+
+import { AuthServiceWorkerHarness } from "./utils/AuthServiceWorkerHarness";
 
 type FetchApi = NonNullable<NonNullable<BeginAuthSessionParams["options"]>["fetchApi"]>;
 
@@ -143,11 +146,13 @@ describe("AuthManager browser multi-configuration sessions", () => {
         authConfigId: undefined,
         authHeaders: async (): Promise<Record<string, string>> => ({ "X-App-Auth": "app-token" }),
         authUrl: "https://app.example.com/auth-a",
+        requestUrlPrefixes: ["https://app.example.com/media-auth/"],
         sourceUrlPrefixes: ["https://app.example.com/"]
       },
       {
         accountId: accountB,
         authConfigId: "customer-b",
+        requestUrlPrefixes: ["https://app.example.com/download/"],
         getAuthorizationToken: manualB
       },
       {
@@ -188,19 +193,109 @@ describe("AuthManager browser multi-configuration sessions", () => {
         {
           expires: expect.any(Number),
           headers: [{ key: "Authorization", value: `Bearer ${jwtA}` }],
+          requestUrlPrefixes: ["https://app.example.com/media-auth/"],
           sourceUrlPrefixes: ["https://app.example.com/"],
-          urlPrefix: `!bytescale-source-scoped!https://upcdn.io/${accountA}/`
+          urlPrefix: `!bytescale-request-scoped!!bytescale-source-scoped!https://upcdn.io/${accountA}/`
         },
         {
           expires: expect.any(Number),
           headers: [{ key: "Authorization", value: `Bearer ${jwtB}` }],
+          requestUrlPrefixes: ["https://app.example.com/download/"],
           sourceUrlPrefixes: undefined,
-          urlPrefix: `https://upcdn.io/${accountB}/`
+          urlPrefix: `!bytescale-request-scoped!https://upcdn.io/${accountB}/`
         }
       ],
       type: "SET_BYTESCALE_AUTH_CONFIG",
       urlRewriteRules
     });
+  });
+
+  test.each(
+    [undefined, [], ["https://app.example.com/media-auth/", "https://app.example.com/download/"]].map(
+      (prefixes): { prefixes: typeof prefixes } => ({
+        prefixes
+      })
+    )
+  )("sends request prefixes through messages and restores them in the worker: $prefixes", async ({ prefixes }) => {
+    const fetchApi = createFetchApi();
+    await AuthManager.beginAuthSession({
+      authConfigs: async () => [
+        {
+          accountId: accountA,
+          authConfigId: undefined,
+          getAuthorizationToken: async () => jwtA,
+          requestUrlPrefixes: prefixes
+        }
+      ],
+      options: { fetchApi },
+      serviceWorkerScript: "/auth-sw.js",
+      urlRewriteRules: [{ fromUrlPrefix: "https://app.example.com/media-auth/", toUrlPrefix: "https://upcdn.io/" }]
+    });
+    const message = postMessage.mock.calls.at(-1)?.[0] as {
+      config: AuthSwConfigEntryDto[];
+      type: "SET_BYTESCALE_AUTH_CONFIG";
+      urlRewriteRules: UrlRewriteRule[];
+    };
+    expect(message.config[0].requestUrlPrefixes).toEqual(prefixes);
+    expect(message.config[0].urlPrefix).toBe(
+      `${prefixes === undefined ? "" : "!bytescale-request-scoped!"}https://upcdn.io/${accountA}/`
+    );
+    const worker = new AuthServiceWorkerHarness();
+    await worker.dispatchMessage(message);
+    const restarted = worker.restart();
+    const result = await restarted.dispatchFetch(`https://app.example.com/media-auth/${accountA}/image/example.jpg`);
+    expect(result.outboundRequest?.headers.get("Authorization")).toBe(prefixes?.length === 0 ? null : `Bearer ${jwtA}`);
+    const direct = await restarted.dispatchFetch(`https://upcdn.io/${accountA}/image/example.jpg`);
+    expect(direct.responded).toBe(prefixes === undefined);
+  });
+
+  test("snapshots request prefixes and keeps them through token refresh", async () => {
+    const requestUrlPrefixes = ["https://app.example.com/media-auth/"];
+    const provider = jest.fn<() => Promise<string>>().mockResolvedValueOnce(jwtA).mockResolvedValueOnce(jwtB);
+    await AuthManager.beginAuthSession({
+      authConfigs: async () => [
+        { accountId: accountA, authConfigId: undefined, getAuthorizationToken: provider, requestUrlPrefixes }
+      ],
+      options: { fetchApi: createFetchApi() },
+      serviceWorkerScript: "/auth-sw.js"
+    });
+    requestUrlPrefixes.length = 0;
+    const session = AuthSessionState.getSession();
+    const state = session?.authConfigs?.[0];
+    if (session === undefined || state === undefined) {
+      throw new Error("Expected initialized auth state.");
+    }
+    await (AuthManager as AuthManagerInternals).refreshAuthConfig(session, state);
+    expect(provider).toHaveBeenCalledTimes(2);
+    expect(state.config.requestUrlPrefixes).toEqual(["https://app.example.com/media-auth/"]);
+    expect(state.refreshHandle).toBeDefined();
+    expect((postMessage.mock.calls.at(-1)?.[0] as { config: AuthSwConfigEntryDto[] }).config[0]).toMatchObject({
+      headers: [{ key: "Authorization", value: `Bearer ${jwtB}` }],
+      requestUrlPrefixes: ["https://app.example.com/media-auth/"]
+    });
+  });
+
+  test.each(
+    [null, "https://app.example.com/", [42], ["https://app.example.com/", null]].map(
+      (prefixes): { prefixes: typeof prefixes } => ({ prefixes })
+    )
+  )("rejects malformed request prefixes before acquiring tokens: $prefixes", async ({ prefixes }) => {
+    const provider = jest.fn(async () => jwtA);
+    const fetchApi = createFetchApi();
+    await expect(
+      AuthManager.beginAuthSession(
+        v2Params(fetchApi, [
+          {
+            ...apiOnlyConfig(undefined, accountA, provider),
+            requestUrlPrefixes: prefixes as unknown as string[]
+          }
+        ])
+      )
+    ).rejects.toThrow("The 'requestUrlPrefixes' field must be an array of strings.");
+    expect(provider).not.toHaveBeenCalled();
+    expect(fetchApi).not.toHaveBeenCalled();
+    expect(postMessage).not.toHaveBeenCalled();
+    expect(AuthManager.isAuthSessionActive()).toBe(false);
   });
 
   test("uses each config's effective CDN URL for registration, worker prefixes, cleanup, and collisions", async () => {
@@ -269,6 +364,7 @@ describe("AuthManager browser multi-configuration sessions", () => {
           authConfigId: undefined,
           enableCookieAuth: true,
           enableServiceWorkerAuth: false,
+          requestUrlPrefixes: [],
           getAuthorizationToken: provider
         }
       ],

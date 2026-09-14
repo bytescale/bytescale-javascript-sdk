@@ -16,6 +16,7 @@ const persistentCacheName = "bytescale-sw-config";
 const persistentCacheKey = "config";
 const persistentUrlRewriteRulesCacheKey = "url-rewrite-rules";
 const sourceScopedUrlPrefixMarker = "!bytescale-source-scoped!";
+const requestScopedUrlPrefixMarker = "!bytescale-request-scoped!";
 const sourceUrlsByClientId = new Map();
 
 console.log(`[bytescale] Auth SW Registered`);
@@ -43,9 +44,10 @@ self.addEventListener("message", event => {
       // in the user's application, so while the user may sign out in one tab, they may remain signed in to another tab,
       // which may subsequently send a follow-up 'SET_CONFIG' which will resume auth.
       case "SET_BYTESCALE_AUTH_CONFIG":
-        setConfig(event.data.config, event.data.urlRewriteRules).then(
-          () => {},
-          e => console.error(`[bytescale] Auth SW failed to persist config.`, e)
+        event.waitUntil(
+          setConfig(event.data.config, event.data.urlRewriteRules).catch(e =>
+            console.error(`[bytescale] Auth SW failed to persist config.`, e)
+          )
         );
         break;
     }
@@ -103,7 +105,16 @@ function interceptRequest(event, config, urlRewriteRules) {
 
   if (config !== undefined) {
     // Config is an array to support multiple different accounts within a single website, if needed.
-    for (const { expires, urlPrefix, headers, sourceUrlPrefixes } of config) {
+    for (const { expires, urlPrefix, headers, sourceUrlPrefixes, requestUrlPrefixes } of config) {
+      // Resource restrictions apply before rewriting; the account/CDN scope below applies after rewriting.
+      if (
+        requestUrlPrefixes !== undefined &&
+        (!Array.isArray(requestUrlPrefixes) ||
+          !requestUrlPrefixes.some(prefix => typeof prefix === "string" && event.request.url.startsWith(prefix)))
+      ) {
+        continue;
+      }
+
       const makeNewRequest = overwrite => {
         const newHeaders = new Headers(event.request.headers);
         if (overwrite) {
@@ -121,14 +132,7 @@ function interceptRequest(event, config, urlRewriteRules) {
       if (expires === undefined || expires > Date.now()) {
         const isSourceScoped = sourceUrlPrefixes !== undefined;
 
-        // AuthManager adds the 'sourceScopedUrlPrefixMarker' prefix to the 'urlPrefix' when 'sourceUrlPrefixes' is provided,
-        // as this prevents old versions of the service worker (that don't support 'sourceUrlPrefixes') from intercepting the requests,
-        // since it would end up intercepting ALL requests, whereas the user's intention is to intercept only source-filtered requests.
-        const actualUrlPrefix = isSourceScoped
-          ? urlPrefix.startsWith(sourceScopedUrlPrefixMarker)
-            ? urlPrefix.substring(sourceScopedUrlPrefixMarker.length)
-            : undefined
-          : urlPrefix;
+        const actualUrlPrefix = getAuthUrlPrefix(urlPrefix, requestUrlPrefixes !== undefined, isSourceScoped);
 
         if (
           actualUrlPrefix !== undefined &&
@@ -159,6 +163,23 @@ function interceptRequest(event, config, urlRewriteRules) {
   }
 
   return fallbackRequest;
+}
+
+function getAuthUrlPrefix(urlPrefix, isRequestScoped, isSourceScoped) {
+  // Each restriction has its own marker so workers that cannot enforce it cannot match the destination.
+  // The request marker wraps the existing source marker, including when both restrictions are present.
+  for (const marker of [
+    isRequestScoped ? requestScopedUrlPrefixMarker : undefined,
+    isSourceScoped ? sourceScopedUrlPrefixMarker : undefined
+  ]) {
+    if (marker !== undefined) {
+      if (!urlPrefix.startsWith(marker)) {
+        return undefined;
+      }
+      urlPrefix = urlPrefix.substring(marker.length);
+    }
+  }
+  return urlPrefix;
 }
 
 function getRewrittenUrl(url, urlRewriteRules) {

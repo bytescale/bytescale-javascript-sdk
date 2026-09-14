@@ -32,6 +32,7 @@ class AuthManagerImpl implements AuthManagerInterface {
   private readonly refreshBeforeExpirySeconds = 20;
   private readonly scheduler = new Scheduler();
   private readonly sourceScopedUrlPrefixMarker = "!bytescale-source-scoped!";
+  private readonly requestScopedUrlPrefixMarker = "!bytescale-request-scoped!";
 
   constructor(private readonly serviceWorkerUtils: ServiceWorkerUtils<AuthSwSetConfigDto>) {
     this.authSessionMutex = AuthSessionState.getMutex();
@@ -296,6 +297,7 @@ class AuthManagerImpl implements AuthManagerInterface {
         {
           expires: state.expiresAt,
           headers: [{ key: "Authorization", value: `Bearer ${state.jwt}` }],
+          requestUrlPrefixes: state.config.requestUrlPrefixes,
           sourceUrlPrefixes: state.config.sourceUrlPrefixes,
           urlPrefix: `${this.getConfigCdnUrl(session.params, state.config)}/${state.config.accountId}/`
         }
@@ -322,9 +324,9 @@ class AuthManagerImpl implements AuthManagerInterface {
         type: "SET_BYTESCALE_AUTH_CONFIG",
         config: config.map((entry): AuthSwConfigDto[number] => ({
           ...entry,
-          urlPrefix: `${entry.sourceUrlPrefixes === undefined ? "" : this.sourceScopedUrlPrefixMarker}${
-            entry.urlPrefix
-          }`
+          urlPrefix: `${entry.requestUrlPrefixes === undefined ? "" : this.requestScopedUrlPrefixMarker}${
+            entry.sourceUrlPrefixes === undefined ? "" : this.sourceScopedUrlPrefixMarker
+          }${entry.urlPrefix}`
         })),
         ...(urlRewriteRules === undefined ? {} : { urlRewriteRules })
       },
@@ -343,6 +345,9 @@ class AuthManagerImpl implements AuthManagerInterface {
         ? config
         : {
             ...config,
+            requestUrlPrefixes: Array.isArray(config.requestUrlPrefixes)
+              ? [...config.requestUrlPrefixes]
+              : config.requestUrlPrefixes,
             sourceUrlPrefixes: Array.isArray(config.sourceUrlPrefixes)
               ? [...config.sourceUrlPrefixes]
               : config.sourceUrlPrefixes
@@ -407,13 +412,8 @@ class AuthManagerImpl implements AuthManagerInterface {
       ) {
         throw new Error("Authentication enablement flags must be booleans when provided.");
       }
-      if (
-        config.sourceUrlPrefixes !== undefined &&
-        (!Array.isArray(config.sourceUrlPrefixes) ||
-          !config.sourceUrlPrefixes.every(prefix => typeof prefix === "string"))
-      ) {
-        throw new Error("The 'sourceUrlPrefixes' field must be an array of strings.");
-      }
+      this.validateUrlPrefixes(config.sourceUrlPrefixes, "sourceUrlPrefixes");
+      this.validateUrlPrefixes(config.requestUrlPrefixes, "requestUrlPrefixes");
 
       const isManual = typeof config.getAuthorizationToken === "function";
       const isAutomatic = typeof config.authUrl === "string" && typeof config.authHeaders === "function";
@@ -462,6 +462,12 @@ class AuthManagerImpl implements AuthManagerInterface {
       if (requiresServiceWorker && !canUseServiceWorkers) {
         throw new Error("This auth session requires service workers, but this browser does not support them.");
       }
+    }
+  }
+
+  private validateUrlPrefixes(prefixes: string[] | undefined, fieldName: string): void {
+    if (prefixes !== undefined && (!Array.isArray(prefixes) || !prefixes.every(prefix => typeof prefix === "string"))) {
+      throw new Error(`The '${fieldName}' field must be an array of strings.`);
     }
   }
 

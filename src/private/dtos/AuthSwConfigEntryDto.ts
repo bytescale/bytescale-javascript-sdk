@@ -7,9 +7,12 @@ export interface AuthSwConfigEntryDto {
   /** Headers to add to matching requests. */
   headers: AuthSwHeaderDto[];
 
+  /** Optional original resource URL prefixes, before rewriting. An empty array matches no requests. */
+  requestUrlPrefixes?: string[];
+
   /** Optional page or iframe URL prefixes. An empty array matches no clients. */
   sourceUrlPrefixes?: string[];
 
-  /** Request URL prefix. Use the actual URL; AuthManager applies any internal compatibility marker. */
+  /** Final destination URL prefix. Use the actual URL; AuthManager applies any internal compatibility marker. */
   urlPrefix: string;
 }

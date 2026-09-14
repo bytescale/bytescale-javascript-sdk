@@ -60,6 +60,20 @@ describe("API-client AuthManager configuration", () => {
     expect(requestHeaders(fetchApi, 1).get("Authorization-Token")).toBe("access-refreshed");
   });
 
+  test.each(
+    [[], ["https://app.example.com/media-auth/"]].map((prefixes): { prefixes: typeof prefixes } => ({ prefixes }))
+  )("ignores service-worker request restrictions in API clients: $prefixes", async ({ prefixes }) => {
+    const configState = state(undefined, accountA, "jwt-a", "access-a");
+    configState.config.requestUrlPrefixes = prefixes;
+    setModernSession([configState]);
+    const withKey = createApi({ apiKey: apiKeyA });
+    const withoutKey = createApi({});
+    await withKey.api.get();
+    await withoutKey.api.get();
+    expect(requestHeaders(withKey.fetchApi).get("Authorization-Token")).toBe("access-a");
+    expect(requestHeaders(withoutKey.fetchApi).get("Authorization")).toBe("Bearer jwt-a");
+  });
+
   test("awaits manager-owned authentication at the expiry boundary", async () => {
     const configState = state("customer", accountA, "jwt-old", "access-old");
     configState.expiresAt = Date.now();

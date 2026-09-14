@@ -1,12 +1,6 @@
 import { jest } from "@jest/globals";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { runInNewContext } from "node:vm";
-import { Headers as NodeFetchHeaders, Request as NodeFetchRequest, Response as NodeFetchResponse } from "node-fetch";
-import type { RequestInit as NodeFetchRequestInit } from "node-fetch";
-import type { AuthSwConfigEntryDto, UrlRewriteRule } from "../src/index.browser";
-
-const workerSource = readFileSync(resolve(process.cwd(), "src/index.auth-sw.js"), "utf8");
+import { Response as NodeFetchResponse } from "node-fetch";
+import { AuthServiceWorkerHarness, authConfig, authConfigForUrl, rewriteRule } from "./utils/AuthServiceWorkerHarness";
 
 describe("Auth service-worker URL rewriting", () => {
   test("preserves the remaining path, query string, and fragment", async () => {
@@ -24,7 +18,11 @@ describe("Auth service-worker URL rewriting", () => {
     );
   });
 
-  test("matches authentication against the rewritten URL and supports navigation requests", async () => {
+  test.each(
+    [undefined, ["https://dashboard.example.com/download/"]].map((prefixes): { prefixes: typeof prefixes } => ({
+      prefixes
+    }))
+  )("preserves streaming, range, and navigation behavior with request prefixes $prefixes", async ({ prefixes }) => {
     const upstreamResponse = new NodeFetchResponse("streamed-body", {
       headers: {
         "Accept-Ranges": "bytes",
@@ -38,7 +36,16 @@ describe("Auth service-worker URL rewriting", () => {
     const blob = jest.spyOn(upstreamResponse, "blob");
     const arrayBuffer = jest.spyOn(upstreamResponse, "arrayBuffer");
     const harness = new AuthServiceWorkerHarness(upstreamResponse);
-    await harness.setConfig([authConfig("account-a/", "token-a")], [rewriteRule("download/", "account-a/")]);
+    await harness.setConfig(
+      [
+        {
+          ...authConfig("account-a/", "token-a"),
+          requestUrlPrefixes: prefixes,
+          urlPrefix: `${prefixes === undefined ? "" : "!bytescale-request-scoped!"}https://upcdn.io/account-a/`
+        }
+      ],
+      [rewriteRule("download/", "account-a/")]
+    );
 
     const result = await harness.dispatchFetch("https://dashboard.example.com/download/file.pdf", {
       headers: {
@@ -213,145 +220,3 @@ describe("Auth service-worker URL rewriting", () => {
     expect(result.outboundRequest?.headers.get("X-Trace-Id")).toBe("trace");
   });
 });
-
-interface FetchOptions {
-  clientId?: string;
-  headers?: HeadersInit;
-  navigation?: boolean;
-}
-
-interface FetchResult {
-  outboundRequest: TestRequest | undefined;
-  responded: boolean;
-  response: NodeFetchResponse | undefined;
-}
-
-type WorkerEventListener = (event: unknown) => void;
-
-class AuthServiceWorkerHarness {
-  private readonly clientsById = new Map<string, { type: "window"; url: string }>();
-  private readonly cacheEntries = new Map<string, NodeFetchResponse>();
-  private cacheReadDelayMilliseconds = 0;
-  private readonly context: {
-    getRewrittenUrl: (url: string, rules: UrlRewriteRule[]) => string | undefined;
-    setConfig: (config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]) => Promise<void>;
-  };
-
-  private readonly fetchListener: WorkerEventListener;
-  private readonly fetchMock: jest.MockedFunction<(request: TestRequest) => Promise<NodeFetchResponse>>;
-
-  constructor(private readonly upstreamResponse: NodeFetchResponse = new NodeFetchResponse("ok")) {
-    const listeners = new Map<string, WorkerEventListener>();
-    this.fetchMock = jest.fn(async (_request: TestRequest): Promise<NodeFetchResponse> => this.upstreamResponse);
-
-    const self = {
-      addEventListener: (type: string, listener: WorkerEventListener): void => {
-        listeners.set(type, listener);
-      },
-      clients: {
-        claim: async (): Promise<void> => {},
-        get: async (clientId: string): Promise<{ type: "window"; url: string } | undefined> =>
-          this.clientsById.get(clientId)
-      },
-      skipWaiting: async (): Promise<void> => {}
-    };
-    const cache = {
-      match: async (key: string): Promise<NodeFetchResponse | undefined> => {
-        if (this.cacheReadDelayMilliseconds > 0) {
-          await new Promise(resolve => setTimeout(resolve, this.cacheReadDelayMilliseconds));
-        }
-        return this.cacheEntries.get(key)?.clone();
-      },
-      put: async (key: string, value: NodeFetchResponse): Promise<void> => {
-        this.cacheEntries.set(key, value.clone());
-      }
-    };
-    const sandbox = {
-      caches: { open: async (): Promise<typeof cache> => cache },
-      console: { error: jest.fn(), log: jest.fn() },
-      fetch: this.fetchMock,
-      Headers: NodeFetchHeaders,
-      Promise,
-      Request: TestRequest,
-      Response: NodeFetchResponse,
-      self,
-      setTimeout
-    };
-    runInNewContext(workerSource, sandbox);
-
-    this.context = sandbox as typeof sandbox & AuthServiceWorkerHarness["context"];
-    const fetchListener = listeners.get("fetch");
-    if (fetchListener === undefined) {
-      throw new Error("Auth service worker did not register a fetch listener.");
-    }
-    this.fetchListener = fetchListener;
-  }
-
-  async setConfig(config: AuthSwConfigEntryDto[], rules?: UrlRewriteRule[]): Promise<void> {
-    await this.context.setConfig(config, rules);
-  }
-
-  getRewrittenUrl(url: string, rules: UrlRewriteRule[]): string | undefined {
-    return this.context.getRewrittenUrl(url, rules);
-  }
-
-  setWindowClient(clientId: string, url: string): void {
-    this.clientsById.set(clientId, { type: "window", url });
-  }
-
-  setPersistentConfig(config: AuthSwConfigEntryDto[], cacheReadDelayMilliseconds: number): void {
-    this.cacheEntries.set("config", new NodeFetchResponse(JSON.stringify(config)));
-    this.cacheReadDelayMilliseconds = cacheReadDelayMilliseconds;
-  }
-
-  async dispatchFetch(url: string, options: FetchOptions = {}): Promise<FetchResult> {
-    const request = new TestRequest(url, { headers: options.headers as NodeFetchRequestInit["headers"] });
-    if (options.navigation === true) {
-      Object.defineProperty(request, "mode", { configurable: true, value: "navigate" });
-    }
-
-    let responsePromise: Promise<NodeFetchResponse> | undefined;
-    this.fetchListener({
-      clientId: options.clientId ?? "",
-      request,
-      respondWith: (response: NodeFetchResponse | Promise<NodeFetchResponse>): void => {
-        responsePromise = Promise.resolve(response);
-      }
-    });
-
-    const response = await responsePromise;
-    return {
-      outboundRequest: this.fetchMock.mock.calls.at(-1)?.[0],
-      responded: responsePromise !== undefined,
-      response
-    };
-  }
-}
-
-class TestRequest extends NodeFetchRequest {
-  readonly mode: RequestMode;
-
-  constructor(input: string | NodeFetchRequest, init: NodeFetchRequestInit & { mode?: RequestMode } = {}) {
-    super(input, init);
-    this.mode = init.mode ?? (input instanceof TestRequest ? input.mode : "cors");
-  }
-}
-
-function authConfig(accountPath: string, token: string): AuthSwConfigEntryDto {
-  return authConfigForUrl(`https://upcdn.io/${accountPath}`, token);
-}
-
-function authConfigForUrl(urlPrefix: string, token: string): AuthSwConfigEntryDto {
-  return {
-    expires: undefined,
-    headers: [{ key: "Authorization", value: `Bearer ${token}` }],
-    urlPrefix
-  };
-}
-
-function rewriteRule(fromPath: string, toPath: string): UrlRewriteRule {
-  return {
-    fromUrlPrefix: `https://dashboard.example.com/${fromPath}`,
-    toUrlPrefix: `https://upcdn.io/${toPath}`
-  };
-}
