@@ -6,5 +6,7 @@ module.exports = {
   moduleNameMapper: {
     "^(\\.{1,2}/.*)\\.js$": "$1"
   },
-  transform: {}
+  transform: {
+    "^.+\\.tsx?$": ["ts-jest", { useESM: true, tsconfig: { module: "ESNext" } }]
+  }
 };

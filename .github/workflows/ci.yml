@@ -21,7 +21,7 @@ jobs:
       - name: "Install node & npm"
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 24.x
       - name: "Install dependencies"
         run: npm ci
       - name: "Type checks"
